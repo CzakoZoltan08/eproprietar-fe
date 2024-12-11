@@ -1,0 +1,13 @@
+export const COLOR_PRIMARY = "#1967d2";
+export const COLOR_SECONDARY = "rgba(110,148,215,1)";
+export const COLOR_BLUE_BUTTON = "#5867dd";
+export const COLOR_RED_BUTTON = "#ef2809";
+export const COLOR_RED_BUTTON_HOVER = "#bf1f06";
+export const COLOR_ERROR = "#d32f2f";
+export const COLOR_CONTRAST = "rgba(25,103,210,0.55)";
+export const COLOR_WHITE = "#FFFFFF";
+export const COLOR_GREY = "#B3B3B3";
+export const COLOR_LIGHT_GREY = "rgba(211, 211, 211, 0.41)";
+export const COLOR_TEXT = "rgba(0, 0, 0, 0.87)";
+export const COLOR_TEXT_LIGHT = "rgba(0, 0, 0, 0.54)";
+export const COLOR_BORDER_PRIMARY = "#E5E7EB";
