@@ -64,10 +64,32 @@ export class AnnouncementStore {
   }
 
   async fetchPaginatedAnnouncements(data: FetchAnnouncementsModel) {
-    const resp = await this.announcementApi.fetchPaginatedAnnouncements(data);
-
-    this.setAnnouncements(resp.data);
-    this.setMeta(resp.meta);
+    try {
+      const resp = await this.announcementApi.fetchPaginatedAnnouncements(data);
+  
+      // Set default values if data is missing
+      const announcements = resp?.data ?? [];
+      const meta = resp?.meta ?? {
+        currentPage: 1,
+        totalPages: 0,
+        totalCount: 0,
+        pageSize: 10, // Default page size
+      };
+  
+      this.setAnnouncements(announcements);
+      this.setMeta(meta);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+  
+      // Fallback to empty defaults
+      this.setAnnouncements([]);
+      this.setMeta({
+        currentPage: 1,
+        totalPages: 0,
+        totalCount: 0,
+        pageSize: 10,
+      });
+    }
   }
 
   async fetchSavedAnnouncements(userId: string) {

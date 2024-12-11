@@ -5,3 +5,4 @@ NextJs with MobX frontend for EProprietar project
 vercel login
 vercel dev # debugging locally
 vercel # deploy
+vercel --prod --force # clear cache and force deploy

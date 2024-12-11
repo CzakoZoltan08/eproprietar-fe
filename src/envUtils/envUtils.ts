@@ -1,1 +1,1 @@
-export const apiServer = "https://eproprietar-kiacvg0vf-czakozoltan08s-projects.vercel.app/v1";
+export const apiServer = "https://eproprietar-be-czakozoltan08-czakozoltan08s-projects.vercel.app/v1";
