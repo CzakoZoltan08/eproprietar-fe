@@ -1,1 +1,1 @@
-export const apiServer = "eproprietar-be:3001";
+export const apiServer = "https://eproprietar-be-00or.onrender.com";
