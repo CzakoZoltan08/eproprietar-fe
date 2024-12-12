@@ -21,11 +21,14 @@ export class ApiConfig {
       const accessToken = localStorage.getItem(StorageKeys.token);
       const url = `${this.api}${endpoint}`;
 
-      const config: AxiosRequestConfig = {
+      const config = {
         method,
         url,
         data,
-        params
+        params,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       };
 
       const response = await axios<T>(config);
