@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { Box } from "@mui/material";
+import { COLOR_PRIMARY } from "@/constants/colors";
+import Image from "next/image";
 import logo from "../../assets/logo.svg";
-import { COLOR_PRIMARY, COLOR_WHITE } from "@/constants/colors";
 
 export const RightSide = () => {
   return (
@@ -10,7 +10,9 @@ export const RightSide = () => {
       bgcolor={COLOR_PRIMARY}
       display="flex"
       justifyContent="center"
-      alignItems="center"
+      sx={{
+        alignItems: "center",
+      }}
       padding={12}
     >
       <Image src={logo} alt="eproprietar" width={152} />

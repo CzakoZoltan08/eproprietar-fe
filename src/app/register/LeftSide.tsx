@@ -1,30 +1,30 @@
 "use client";
-import { ChangeEvent, useEffect, useState } from "react";
-import TextField from "@mui/material/TextField";
-import Joi from "joi";
-import { Box, Divider, Typography } from "@mui/material";
-import { FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
-import GoogleIcon from "@mui/icons-material/Google";
-import { useRouter } from "next/navigation";
 
+import { Box, Divider, Typography } from "@mui/material";
 import {
   COLOR_RED_BUTTON,
   COLOR_RED_BUTTON_HOVER,
   COLOR_WHITE,
 } from "@/constants/colors";
+import { ChangeEvent, useEffect, useState } from "react";
+import { FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
 
-import { generalValidation } from "@/utils/generalValidation";
-import { useStore } from "@/hooks/useStore";
-import { ErrorText } from "../../style/formStyledComponents";
-import { googleAuth } from "@/config/firebase";
 import { CommonButton } from "../../common/button/CommonButton";
-import { PrimaryButton } from "@/common/button/PrimaryButton";
-import { InputField } from "@/common/input/InputField";
-import { useMediaQuery } from "@/hooks/useMediaquery";
-import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import { Container } from "@/style/authStyledComponents";
+import { ErrorText } from "../../style/formStyledComponents";
+import GoogleIcon from "@mui/icons-material/Google";
 import Image from "next/image";
+import { InputField } from "@/common/input/InputField";
+import Joi from "joi";
+import { PrimaryButton } from "@/common/button/PrimaryButton";
+import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import TextField from "@mui/material/TextField";
+import { generalValidation } from "@/utils/generalValidation";
+import { googleAuth } from "@/config/firebase";
 import logo from "@/assets/logo.svg";
+import { useMediaQuery } from "@/hooks/useMediaquery";
+import { useRouter } from "next/navigation";
+import { useStore } from "@/hooks/useStore";
 
 const INITIAL_DATA = {
   email: "",
@@ -196,7 +196,14 @@ const LeftSide = () => {
         <Divider>
           <Typography sx={{ color: "rgba(0, 0, 0, 0.12)" }}>or</Typography>
         </Divider>
-        <Box display="flex" flexDirection="column" gap={2} marginBottom={2}>
+        <Box
+          display="flex"
+          sx={{
+            flexDirection: "column",
+            gap: "2px",
+            marginBottom: "2px",
+          }}
+        >
           <TextField
             id="register-email-field"
             label={"Email"}

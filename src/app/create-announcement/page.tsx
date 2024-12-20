@@ -1,16 +1,17 @@
 "use client";
-import React, { useState } from "react";
-import styled from "styled-components";
-import HouseIcon from "@mui/icons-material/House";
-import LocationCityIcon from "@mui/icons-material/LocationCity";
-import { Box } from "@mui/material";
 
 import * as breakpoints from "@/constants/breakpoints";
-
-import { AuthLayout } from "@/common/layout/AuthLayout";
-import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
-import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
 import * as palette from "@/constants/colors";
+
+import React, { useState } from "react";
+
+import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
+import { AuthLayout } from "@/common/layout/AuthLayout";
+import { Box } from "@mui/material";
+import HouseIcon from "@mui/icons-material/House";
+import LocationCityIcon from "@mui/icons-material/LocationCity";
+import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
+import styled from "styled-components";
 
 const Subtitle = styled.h1`
   font-weight: 500;
@@ -49,16 +50,23 @@ export default function CreateAnnounce() {
     <AuthLayout>
       <Box
         display="flex"
-        flexDirection={"column"}
-        justifyContent="center"
-        alignItems="center"
-        gap={"12px"}
+        sx={{
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          gap: "12px",
+        }}
       >
         <Subtitle>Adauga acum anunțul tău</Subtitle>
         <SubtitleAdvice>
           Urmează pașii, e mai simplu ca niciodată!
         </SubtitleAdvice>
-        <Box display="flex" alignItems="center">
+        <Box
+          display="flex"
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <HouseIcon
             sx={selectedTab === 0 ? selectedIconStyle : iconStyle}
             onClick={() => setSelectedTab(0)}

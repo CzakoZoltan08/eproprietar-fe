@@ -15,9 +15,11 @@ export const Card = styled(Flex)`
   color: ${palette.COLOR_TEXT};
 `;
 
-export const TitleCard = styled(Card)`
+export const TitleCard = styled(Card).withConfig({
+  shouldForwardProp: (prop) => prop !== "alignItems",
+})`
   flex-direction: column;
-  align-items: ${(props) => props.alignItems || "flex-start"};
+  align-items: ${(props) => props.$alignItems || "flex-start"};
 `;
 
 interface TitleProps {

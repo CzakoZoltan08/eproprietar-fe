@@ -125,7 +125,16 @@ const LeftSide = () => {
           gap: "16px",
         }}
       >
-        <Box display="flex" flexDirection="column" gap={2} marginBottom={2}>
+        <Box 
+          display="flex"
+          sx={{
+            justifyContent: "center",
+            alignItems: "flex-start",
+            flexDirection: "column",
+            gap: "2px",
+            marginBottom: "2px"
+          }}
+        >
           <TextField
             id="register-email-field"
             label={"Email"}

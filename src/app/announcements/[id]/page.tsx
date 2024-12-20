@@ -17,11 +17,13 @@ import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
-const DetailsContainer = styled(Box)<{ flexdirection?: string }>`
+const DetailsContainer = styled(({ $flexdirection, children, ...rest }: { $flexdirection: string, children: React.ReactNode }) => (
+  <Box {...rest}>{children}</Box>
+))`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  flex-direction: ${(props) => props.flexdirection};
+  flex-direction: ${(props) => props.$flexdirection};
   gap: 16px;
 
   div:first-of-type {
@@ -56,7 +58,7 @@ const AnnouncementDetailPage = () => {
             <Box display={"flex"} sx={{ flexDirection: "column" }}>
               {currentAnnouncement && <TitleCard />}
 
-              <DetailsContainer flexdirection={isMobile ? "column" : "row"}>
+              <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
                 <ImagesCardComponent />
                 {currentAnnouncement?.description && <DescriptionCard />}
                 <CharacteristicsCard />
@@ -68,7 +70,7 @@ const AnnouncementDetailPage = () => {
           ) : (
             <>
               {currentAnnouncement && <TitleCard />}
-              <DetailsContainer>
+              <DetailsContainer $flexdirection="row">
                 <div>
                   <ImagesCardComponent />
                   {currentAnnouncement?.description && <DescriptionCard />}

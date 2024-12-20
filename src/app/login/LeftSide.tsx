@@ -158,7 +158,14 @@ const LeftSide = () => {
           gap: "16px",
         }}
       >
-        <Box display="flex" flexDirection="column" gap={2} marginBottom={6}>
+        <Box 
+          display="flex" 
+          sx={{
+            flexDirection: "column",
+            gap: "2px",
+            marginBottom: "6px"
+          }}
+        >
           <InputField
             label="Email"
             name="email"
@@ -179,7 +186,13 @@ const LeftSide = () => {
           ) : null}
         </Box>
 
-        <Box display={"flex"} width={"100%"} justifyContent={"space-between"}>
+        <Box
+          display={"flex"}
+          sx={{
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
           <Typography
             variant="subtitle1"
             sx={{
@@ -212,9 +225,11 @@ const LeftSide = () => {
 
         <Box
           display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
-          gap={2}
+          sx={{
+            justifyContent: "space-between",
+            flexDirection: "row",
+            gap: "2px",
+          }}
         >
           <CommonButton
             onClick={() => handleLogin(googleAuth)}

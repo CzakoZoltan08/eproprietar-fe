@@ -16,7 +16,7 @@ const ContactCardComponent = () => {
   } = useStore();
   console.log("currentAnnouncement", currentAnnouncement);
   return (
-    <TitleCard alignItems={"center"}>
+    <TitleCard $alignItems={"center"}>
       <PersonIcon
         sx={{
           fontSize: "64px",

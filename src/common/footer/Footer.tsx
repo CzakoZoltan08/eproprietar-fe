@@ -13,12 +13,12 @@ import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
 import youTubeIcon from "../../assets/youtube-logo.svg";
 
-const FooterContainer = styled.footer<{ padding: string }>`
+const FooterContainer = styled.footer<{ $padding: string }>`
   background: #eee;
   box-shadow: 0 4px 10px #000;
   height: 250px;
   color: #575f7f;
-  padding: ${(props) => props.padding};
+  padding: ${(props) => props.$padding};
 `;
 
 const Link = styled.div`
@@ -110,16 +110,16 @@ const Footer = () => {
   const date = new Date();
 
   return (
-    <FooterContainer padding={isMobile ? "16px 24px" : "16px 120px"}>
+    <FooterContainer $padding={isMobile ? "16px 24px" : "16px 120px"}>
       <Flex>
-        <Flex flexDirection={"column"} alignItems={"flex-start"}>
+        <Flex $flexDirection={"column"} $alignItems={"flex-start"}>
           {appPages.map((item, index) => (
             <Link key={`link-${index}-${item.name}`} onClick={() => goTo(item)}>
               {item.name}
             </Link>
           ))}
         </Flex>
-        <Flex flexDirection={"column"} alignItems={"flex-start"}>
+        <Flex $flexDirection={"column"} $alignItems={"flex-start"}>
           <h4>INFORMAȚII</h4>
           {infoPages.map((item, index) => (
             <Link
@@ -132,8 +132,8 @@ const Footer = () => {
         </Flex>
       </Flex>
       <Title>Suntem prezenți și pe social media:</Title>
-      <Flex justifycontent={"space-between"}>
-        <Flex alignItems={"flex-start"} width={"unset"} gap={"12px"}>
+      <Flex $justifyContent={"space-between"}>
+        <Flex $alignItems={"flex-start"} width={"unset"} $gap={"12px"}>
           <LinkIcon
             key={`link-facebook`}
             href={"https://www.facebook.com/www.eproprietar.ro"}
@@ -166,7 +166,7 @@ const Footer = () => {
         <Image src={logo} alt="eproprietar" width={100} />
       </Flex>
       <Subfooter
-        justifycontent={"flex-start"}
+        $justifyContent={"flex-start"}
       >{`© ${date.getFullYear()}  eProprietar.ro - Imo Casa Solutions S.R.L., CIF: 36270153, REG. COM.: J12/2530/2016`}</Subfooter>
     </FooterContainer>
   );

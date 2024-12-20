@@ -1,15 +1,15 @@
-import React from "react";
-import { observer } from "mobx-react";
-
-import { Flex } from "@/common/flex/Flex";
 import {
-  TitleCard,
-  Title,
   Divider,
   Price,
   PriceMP,
   Subtitle,
+  Title,
+  TitleCard,
 } from "@/style/announcementDetailStyledComponents";
+
+import { Flex } from "@/common/flex/Flex";
+import React from "react";
+import { observer } from "mobx-react";
 import { useStore } from "@/hooks/useStore";
 
 const TitleCardComponent = () => {
@@ -21,7 +21,7 @@ const TitleCardComponent = () => {
     <TitleCard>
       <Title>{currentAnnouncement?.title}</Title>
       <Divider />
-      <Flex justifycontent={"space-between"}>
+      <Flex $justifyContent={"space-between"}>
         <Price>
           {currentAnnouncement?.price} EUR
           <PriceMP>

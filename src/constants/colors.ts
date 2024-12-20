@@ -1,4 +1,5 @@
 export const COLOR_PRIMARY = "#1967d2";
+export const COLOR_DARK = "#333333";  // Darker tone for text or UI elements
 export const COLOR_SECONDARY = "rgba(110,148,215,1)";
 export const COLOR_BLUE_BUTTON = "#5867dd";
 export const COLOR_RED_BUTTON = "#ef2809";

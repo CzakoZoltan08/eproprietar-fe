@@ -156,10 +156,12 @@ const ResidentialAnnouncementForm = () => {
           <Box
             flex={1}
             display="flex"
-            justifyContent="center"
-            alignItems="flex-start"
-            flexDirection="column"
-            gap={"16px"}
+            sx={{
+              justifyContent: "center",
+              alignItems: "flex-start",
+              flexDirection: "column",
+              gap: "16px",
+            }}
           >
             <RadioButtonsGroup
               options={propertyTypes}

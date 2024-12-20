@@ -1,17 +1,18 @@
-import React from "react";
+import Button, { ButtonProps } from "@mui/material/Button";
 import {
   COLOR_PRIMARY,
   COLOR_RED_BUTTON,
   COLOR_WHITE,
 } from "@/constants/colors";
-import { Box } from "@mui/material";
+
 import AddIcon from "@mui/icons-material/Add";
-import { styled } from "@mui/material/styles";
-import PhoneIcon from "@mui/icons-material/Phone";
-import SearchIcon from "@mui/icons-material/Search";
-import Button, { ButtonProps } from "@mui/material/Button";
+import { Box } from "@mui/material";
 import DoubleArrowIcon from "@mui/icons-material/DoubleArrow";
+import PhoneIcon from "@mui/icons-material/Phone";
+import React from "react";
+import SearchIcon from "@mui/icons-material/Search";
 import { SxProps } from "@mui/system";
+import { styled } from "@mui/material/styles";
 
 type Size = "large";
 type IconType = "search" | "add" | "phone";
@@ -35,7 +36,7 @@ const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(
     color: COLOR_WHITE,
     backgroundColor: COLOR_PRIMARY,
     borderRadius: "4px",
-    height: size === "large" ? "50px" : "32px",
+    height: "fit-content",
     paddingLeft: size === "large" ? "60px" : "40px",
   }),
 );

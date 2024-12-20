@@ -1,18 +1,14 @@
 "use client";
-import React, { useState } from "react";
-import styled from "styled-components";
-import HouseIcon from "@mui/icons-material/House";
-import LocationCityIcon from "@mui/icons-material/LocationCity";
-import { Box } from "@mui/material";
 
 import * as breakpoints from "@/constants/breakpoints";
+import * as palette from "@/constants/colors";
+
+import React, { useState } from "react";
 
 import { AuthLayout } from "@/common/layout/AuthLayout";
-import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
-import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
-import * as palette from "@/constants/colors";
-import { useParams } from "next/navigation";
+import { Box } from "@mui/material";
 import EditAnnouncementType from "@/app/edit-announcement/[id]/EditAnnouncementType";
+import styled from "styled-components";
 
 const Subtitle = styled.h1`
   font-weight: 500;
@@ -52,10 +48,12 @@ export default function EditAnnouncement() {
     <AuthLayout>
       <Box
         display="flex"
-        flexDirection={"column"}
-        justifyContent="center"
-        alignItems="center"
-        gap={"12px"}
+        sx={{
+          justifyContent: "center",
+          alignItems: "flex-start",
+          flexDirection: "center",
+          gap: "12px",
+        }}
       >
         <Subtitle>Editeaza anunțul tău</Subtitle>
         <EditAnnouncementType />

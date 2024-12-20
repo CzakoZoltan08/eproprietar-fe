@@ -1,12 +1,11 @@
 "use client";
-import { ChangeEvent, useState } from "react";
-import { observer } from "mobx-react";
 
 import { Box, Typography } from "@mui/material";
+import { ChangeEvent, useState } from "react";
 
 import { COLOR_TEXT } from "@/constants/colors";
-
 import { InputField } from "@/common/input/InputField";
+import { observer } from "mobx-react";
 import { useStore } from "@/hooks/useStore";
 
 const MyAccountComponent = () => {
@@ -47,7 +46,14 @@ const MyAccountComponent = () => {
           width: "300px",
         }}
       >
-        <Box display="flex" flexDirection="column" gap={2} marginBottom={6}>
+        <Box
+          display="flex"
+          sx={{
+            flexDirection: "column",  
+            gap: "2px",
+            marginBottom: "6px",
+          }}
+        >
           <InputField
             name="email"
             value={user?.email}

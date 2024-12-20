@@ -1,1 +1,1 @@
-export const apiServer = "https://eproprietar-be-00or.onrender.com";
+export const apiServer = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";

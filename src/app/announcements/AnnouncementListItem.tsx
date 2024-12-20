@@ -47,6 +47,12 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   );
   const [favsSet, setFavsSet] = useState<boolean>(false);
 
+  const [imageWidth, setImageWidth] = useState<number>(250);
+
+  useEffect(() => {
+    setImageWidth(250); // Ensure client and server values match
+  }, []);
+
   useEffect(() => {
     if (!user?.id) {
       getCurrentUser();
@@ -111,15 +117,14 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
       )}
 
       <ImageContainer>
-        <Image
-          src={
-            item.imageUrl ||
-            "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg"
-          }
-          alt={item.imageUrl ?? ''}
-          width={250}
-          height={200}
-        />
+      <Image
+        src={
+          item.imageUrl || "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg"
+        }
+        alt={item.imageUrl ?? "EProprietar"}
+        width={imageWidth}
+        height={200}
+      />
       </ImageContainer>
       <DescriptionContainer>
         <Title>{item.title}</Title>
