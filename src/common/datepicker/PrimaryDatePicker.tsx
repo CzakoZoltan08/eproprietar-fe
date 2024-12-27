@@ -1,10 +1,7 @@
-import React, { ChangeEvent } from "react";
-
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import HelperText from "@/common/error/HelperText";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import TextField from "@mui/material/TextField";
+import React from "react";
 import dayjs from "dayjs";
 
 interface PrimaryDatePickerProps {
@@ -20,14 +17,13 @@ const PrimaryDatePicker = ({
   label,
   value,
   handleChange,
-  error,
 }: PrimaryDatePickerProps) => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
         label={label}
-        value={value ? dayjs(value).toDate() : null}
-        onChange={(newValue) => handleChange(newValue)}
+        value={value ? dayjs(value) : null}
+        onChange={(newValue) => handleChange(newValue ? newValue.toDate() : null)}
         slotProps={{
           textField: {
             name: name,

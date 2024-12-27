@@ -44,7 +44,9 @@ const AnnouncementDetailPage = () => {
 
   useEffect(() => {
     (async () => {
-      await getAnnouncementById(Array.isArray(id) ? id[0] : id);
+      if (id) {
+        await getAnnouncementById(Array.isArray(id) ? id[0] : id);
+      }
     })();
   }, []);
 
