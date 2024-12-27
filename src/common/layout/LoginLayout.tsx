@@ -1,12 +1,14 @@
 "use client";
+
 import React, { useEffect } from "react";
+
 import { Box } from "@mui/material";
-import { useStore } from "@/hooks/useStore";
-import { useRouter } from "next/navigation";
-import { observer } from "mobx-react";
 import { COLOR_CONTRAST } from "@/constants/colors";
-import { useMediaQuery } from "@/hooks/useMediaquery";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import { observer } from "mobx-react";
+import { useMediaQuery } from "@/hooks/useMediaquery";
+import { useRouter } from "next/navigation";
+import { useStore } from "@/hooks/useStore";
 
 const LoginLayout = ({ children }: { children: React.ReactNode }) => {
   const {
@@ -15,13 +17,17 @@ const LoginLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
+  // Fetch access token when the component mounts
   useEffect(() => {
     getAccessToken();
   }, []);
 
-  if (accessToken) {
-    router.replace("/");
-  }
+  // Navigate to "/" if the user is already authenticated
+  useEffect(() => {
+    if (accessToken) {
+      router.replace("/");
+    }
+  }, [accessToken, router]);
 
   return (
     <Box

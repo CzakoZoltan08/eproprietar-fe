@@ -1,5 +1,6 @@
-import { ApiConfig } from "./ApiConfig";
 import { CreateUserModel, UserModel } from "@/models/userModels";
+
+import { ApiConfig } from "./ApiConfig";
 
 export class UserApi {
   apiConfig: ApiConfig;
@@ -8,8 +9,14 @@ export class UserApi {
     this.apiConfig = apiConfig;
   }
 
-  async createUser(data: CreateUserModel) {
-    return await this.apiConfig.sendRequest("POST", "/users", data);
+  async createUser(data: CreateUserModel): Promise<any> {
+    // Validate the input data
+    if (!data || !data.email) {
+      throw new Error("Invalid user data: email is required");
+    }
+  
+    // Send the request to the backend
+    return this.apiConfig.sendRequest("POST", "/users", data);
   }
 
   async getUserByEmail(email: string) {

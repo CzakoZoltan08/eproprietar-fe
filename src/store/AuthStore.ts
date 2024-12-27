@@ -1,3 +1,4 @@
+import { CreateUserModel, UserModel } from "@/models/userModels";
 import { ErrorMessages, FirebaseErrors } from "@/constants/FirebaseErrors";
 import { GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import { makeAutoObservable, runInAction } from "mobx";
@@ -11,7 +12,6 @@ import { AuthApi } from "@/api/AuthApi";
 import { AuthProvider } from "@/constants/authProviders";
 import { StorageKeys } from "@/constants/storageKeys";
 import { UserApi } from "@/api/UserApi";
-import { UserModel } from "@/models/userModels";
 import { UserStore } from "@/store/UserStore";
 import { auth } from "@/config/firebase";
 import autoBind from "auto-bind";
@@ -56,11 +56,11 @@ export class AuthStore {
     };
   }
 
-  async loginWithGoogle(provider: GoogleAuthProvider, doRegister = false) {
+  async loginWithGoogle(provider: GoogleAuthProvider, doRegister = true) {
     try {
       const result = await signInWithPopup(auth, provider);
       // @ts-ignore
-      const token = result?.user?.accessToken;
+      const token = await result.user?.getIdToken();
       const firstName = result?.user?.displayName
         ?.split(" ")
         .slice(0, -1)
@@ -93,13 +93,23 @@ export class AuthStore {
         );
 
         if (doRegister || !userByEmail) {
-          await this.userApi.createUser({
-            email: result?.user?.email || "",
+          const email = result?.user?.email;
+          const uid = result?.user?.uid;
+        
+          // Validate required fields before proceeding
+          if (!email || !uid) {
+            throw new Error("Invalid user data: email and firebaseId are required");
+          }
+        
+          const payload: CreateUserModel = {
+            email,
             firstName: firstName || "",
             lastName: lastName || "",
             authProvider: AuthProvider.GOOGLE,
-            firebaseId: result?.user?.uid,
-          });
+            firebaseId: uid
+          }
+
+          await this.userApi.createUser(payload);
         }
       }
     } catch (e) {
