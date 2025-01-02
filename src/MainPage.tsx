@@ -46,9 +46,9 @@ export const Main = () => {
     type: typeOptions[0].value,
     rooms: roomOptions[0].value,
     transactionType: transactionTypeOptions[0].value,
-    price: 0,
-    minSurface: 0,
-    maxSurface: 0,
+    price: 5000,
+    minSurface: 10,
+    maxSurface: 10,
   });
 
   type DropdownOption = { id: number; value: number };

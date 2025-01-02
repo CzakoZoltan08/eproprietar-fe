@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import AutocompleteDisabledOptions from "./Autocomplete";
 
+import AutocompleteDisabledOptions from "./Autocomplete";
 import { cities } from "../../constants/citiesRomania";
-import HelperText from "@/common/error/HelperText";
-import { Box } from "@mui/material";
 
 const AutocompleteCities = ({
   onChange,
@@ -21,23 +19,41 @@ const AutocompleteCities = ({
   value?: string;
 }) => {
   const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   useEffect(() => {
+    // Generate unique city names
     const citiesName = cities.map((city) => city.nume);
-    const cityOptions = Array.from(new Set(citiesName));
+    const uniqueCities = Array.from(new Set(citiesName));
+    setCityOptions(uniqueCities);
 
-    setCityOptions(cityOptions);
-  }, []);
+    // Initialize the default city
+    if (!value && uniqueCities.length > 0) {
+      const initialCity = uniqueCities[0];
+      setSelectedCity(initialCity);
+      onChange(null, initialCity); // Notify parent about the default value
+    }
+  }, []); // Run only on component mount
+
+  useEffect(() => {
+    // Sync with the parent-provided value
+    if (value) {
+      setSelectedCity(value);
+    }
+  }, [value]); // Listen for changes in the `value` prop
 
   return (
     <AutocompleteDisabledOptions
       options={cityOptions}
-      onChange={onChange}
+      onChange={(event, newValue) => {
+        setSelectedCity(newValue); // Update local state
+        onChange(event, newValue); // Notify parent component
+      }}
       label={label}
       customWidth={customWidth}
       backgroundColor={backgroundColor}
       error={error}
-      value={value || ""}
+      value={selectedCity || ""}
     />
   );
 };

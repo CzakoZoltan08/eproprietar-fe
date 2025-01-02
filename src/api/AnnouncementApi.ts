@@ -5,16 +5,16 @@ import {
 } from "@/models/announcementModels";
 
 import { ApiConfig } from "./ApiConfig";
+import{ Endpoints } from "@/constants/endpoints";
+import{ FilterOperators } from "@/constants/filter-operators.enum";
+import{ HttpMethods } from "@/constants/http-methods.enum";
+import{ QueryKeys } from "@/constants/query-keys";
 
 export class AnnouncementApi {
-  apiConfig: ApiConfig;
-
-  constructor(apiConfig: ApiConfig) {
-    this.apiConfig = apiConfig;
-  }
+  constructor(private apiConfig: ApiConfig) {}
 
   async createAnnouncement(data: CreateAnnouncementDto) {
-    return await this.apiConfig.sendRequest("POST", "/announcements", data);
+    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.ANNOUNCEMENTS, data);
   }
 
   async updateAnnouncement(
@@ -22,74 +22,110 @@ export class AnnouncementApi {
     data: Partial<CreateAnnouncementDto>,
   ): Promise<PropertyAnnouncementModel> {
     const response = await this.apiConfig.sendRequest(
-      "PATCH",
-      `/announcements/${id}`,
+      HttpMethods.PATCH,
+      `${Endpoints.ANNOUNCEMENTS}/${id}`,
       data,
     );
-    
-    if (response === null) {
+
+    if (!response) {
       throw new Error("Announcement not found or update failed");
     }
-  
+
     return response;
   }
 
   async getAnnouncementById(id: string) {
-    return await this.apiConfig.sendRequest("GET", `/announcements/${id}`);
+    return this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.ANNOUNCEMENTS}/${id}`);
   }
 
   async fetchSavedAnnouncements(userId: string) {
-    return await this.apiConfig.sendRequest(
-      "GET",
-      `/users/get-favourites/${userId}`,
+    return this.apiConfig.sendRequest(
+      HttpMethods.GET,
+      `${Endpoints.FAVORITES}/${userId}`,
     );
   }
 
   async fetchPaginatedAnnouncements(data: FetchAnnouncementsModel) {
-    let endpoint = "/announcements";
-    // if (data?.page) {
-    //   endpoint += `?page=${data?.page}`;
+    const endpoint = this.buildPaginatedEndpoint(data);
+    return this.apiConfig.sendRequest(HttpMethods.GET, endpoint);
+  }
 
-    //   if (data?.limit) {
-    //     endpoint += `&limit=${data?.limit}`;
-    //   }
-
-    //   if (data?.filter?.minSurface && data?.filter?.maxSurface) {
-    //     endpoint += `&filter.surface=$btw:${data?.filter?.minSurface},${data?.filter?.maxSurface}`;
-    //   } else if (data?.filter?.minSurface) {
-    //     endpoint += `&filter.surface=$gte:${data?.filter?.minSurface}`;
-    //   } else if (data?.filter?.maxSurface) {
-    //     endpoint += `&filter.surface=$lte:${data?.filter?.maxSurface}`;
-    //   }
-
-    //   if (data?.filter?.price) {
-    //     endpoint += `&filter.price=$lte:${data?.filter?.price}`;
-    //   }
-
-    //   if (data?.filter?.city) {
-    //     endpoint += `&filter.city=$in:${data?.filter?.city}`;
-    //   }
-
-    //   if (data?.filter?.rooms) {
-    //     endpoint += `&filter.rooms=$eq:${data?.filter?.rooms}`;
-    //   }
-
-    //   if (data?.filter?.type) {
-    //     endpoint += `&filter.announcementType=$in:${data?.filter?.type}`;
-    //   }
-
-    //   if (data?.filter?.transactionType) {
-    //     endpoint += `&filter.transactionType=$in:${data?.filter?.transactionType}`;
-    //   }
-
-    //   if (data?.filter?.userId) {
-    //     endpoint += `&filter.user=$eq:${data?.filter?.userId}`;
-    //   }
-
-    //   if (data?.search?.length) {
-    //     endpoint += `&search=${data?.search}`;
-    //   }
-    // }
-    return await this.apiConfig.sendRequest("GET", endpoint);
+  private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {
+    const filters = {
+      ...this.buildPaginationParams(data),
+      ...this.buildFilterParams(data?.filter),
+      ...this.buildSearchParam(data?.search),
+    };
+  
+    const params = Object.entries(filters)
+      .filter(([_, value]) => value !== undefined) // Exclude undefined values
+      .map(([key, value]) => `${key}=${value}`) // Map key-value pairs to query strings
+      .join("&");
+  
+    return `${Endpoints.ANNOUNCEMENTS}${params ? `?${params}` : ""}`;
+  }
+  
+  private buildPaginationParams(data?: FetchAnnouncementsModel): Record<string, string> {
+    return {
+      [QueryKeys.PAGE]: data?.page?.toString() || "",
+      [QueryKeys.LIMIT]: data?.limit?.toString() || "",
+    };
+  }
+  
+  private buildFilterParams(filter?: FetchAnnouncementsModel["filter"]): Record<string, string | undefined> {
+    if (!filter) return {};
+  
+    const {
+      minSurface,
+      maxSurface,
+      price,
+      city,
+      rooms,
+      type,
+      transactionType,
+      userId,
+    } = filter;
+  
+    return {
+      [QueryKeys.FILTER_SURFACE]: this.buildSurfaceFilter(
+        typeof minSurface === "number" ? minSurface : undefined,
+        typeof maxSurface === "number" ? maxSurface : undefined
+      ),
+      [QueryKeys.FILTER_PRICE]: price
+        ? `${FilterOperators.LESS_THAN_EQUAL}:${price}`
+        : undefined,
+      [QueryKeys.FILTER_CITY]: city ? `${FilterOperators.IN}:${city}` : undefined,
+      [QueryKeys.FILTER_ROOMS]: rooms
+        ? `${FilterOperators.EQUAL}:${rooms}`
+        : undefined,
+      [QueryKeys.FILTER_ANNOUNCEMENT_TYPE]: type
+        ? `${FilterOperators.IN}:${type}`
+        : undefined,
+      [QueryKeys.FILTER_TRANSACTION_TYPE]: transactionType
+        ? `${FilterOperators.IN}:${transactionType}`
+        : undefined,
+      [QueryKeys.FILTER_USER]: userId
+        ? `${FilterOperators.EQUAL}:${userId}`
+        : undefined,
+    };
+  }
+  
+  private buildSurfaceFilter(minSurface?: number, maxSurface?: number): string | undefined {
+    if (minSurface && maxSurface) {
+      return `${FilterOperators.BETWEEN}:${minSurface},${maxSurface}`;
+    }
+    if (minSurface) {
+      return `${FilterOperators.GREATER_THAN_EQUAL}:${minSurface}`;
+    }
+    if (maxSurface) {
+      return `${FilterOperators.LESS_THAN_EQUAL}:${maxSurface}`;
+    }
+    return undefined;
+  }
+  
+  private buildSearchParam(search?: string): Record<string, string | undefined> {
+    return {
+      [QueryKeys.SEARCH]: search?.length ? search : undefined,
+    };
   }
 }

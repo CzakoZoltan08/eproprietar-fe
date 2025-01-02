@@ -1,13 +1,11 @@
-import axios, { AxiosError, AxiosRequestConfig, Method } from "axios";
+import axios, { Method } from "axios";
 
+import { ContentTypes } from "@/constants/content-types.enum";
+import { Headers } from "@/constants/headers.enum";
 import { StorageKeys } from "@/constants/storageKeys";
 
 export class ApiConfig {
-  api: string;
-
-  constructor(api: string) {
-    this.api = api;
-  }
+  constructor(private readonly api: string) {}
 
   async sendRequest<T = any>(
     method: Method,
@@ -19,32 +17,28 @@ export class ApiConfig {
 
     try {
       const accessToken = localStorage.getItem(StorageKeys.token);
-      const url = `${this.api}${endpoint}`;
-
-      const config: AxiosRequestConfig = {
+      const response = await axios<T>({
         method,
-        url,
+        url: `${this.api}${endpoint}`,
         data,
         params,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
+          [Headers.AUTHORIZATION]: `Bearer ${accessToken}`,
+          [Headers.CONTENT_TYPE]: ContentTypes.JSON,
         },
-      };
+      });
 
-      const response = await axios<T>(config);
       return response.data;
     } catch (error) {
-      this.handleError(error);
+      this.logError(error);
       return null;
     }
   }
 
-  private handleError(error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error("API Error:", error.response?.data || error.message);
-    } else {
-      console.error("Unexpected Error:", error);
-    }
+  private logError(error: unknown) {
+    const message = axios.isAxiosError(error)
+      ? error.response?.data || error.message
+      : error;
+    console.error("API Error:", message);
   }
 }
