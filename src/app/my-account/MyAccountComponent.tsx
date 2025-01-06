@@ -6,62 +6,51 @@ import { ChangeEvent, useState } from "react";
 import { COLOR_TEXT } from "@/constants/colors";
 import { InputField } from "@/common/input/InputField";
 import { observer } from "mobx-react";
+import styles from "./MyAccountComponent.module.css";
 import { useStore } from "@/hooks/useStore";
+
+const LABELS = {
+  myAccount: "Contul meu",
+  phone: "Telefon",
+};
 
 const MyAccountComponent = () => {
   const {
     userStore: { user },
   } = useStore();
+
   const [formData, setFormData] = useState({
-    phone: user?.phoneNumber,
+    phone: user?.phoneNumber || "",
   });
 
-  const [formErrors, setFormErrors] = useState({
+  const [formErrors] = useState({
     phone: "",
   });
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
-    setFormData({
-      ...formData,
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
   };
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        sx={{ fontWeight: 600, marginBottom: "32px" }}
-        color={COLOR_TEXT}
-      >
-        Contul meu
+      <Typography variant="h4" className={styles.header} color={COLOR_TEXT}>
+        {LABELS.myAccount}
       </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          width: "300px",
-        }}
-      >
-        <Box
-          display="flex"
-          sx={{
-            flexDirection: "column",  
-            gap: "2px",
-            marginBottom: "6px",
-          }}
-        >
+      <Box className={styles.container}>
+        <Box className={styles.section}>
           <InputField
             name="email"
-            value={user?.email}
+            value={user?.email || ""}
             onChange={onChange}
-            disabled={true}
+            disabled
           />
           <InputField
-            label="Telefon"
+            label={LABELS.phone}
             name="phone"
             value={formData.phone}
             onChange={onChange}

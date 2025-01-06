@@ -30,13 +30,15 @@ const AuthButton = () => {
     authStore: { logout },
   } = useStore();
   const router = useRouter();
-  let isAuth = null;
-  if (typeof window !== "undefined") {
-    isAuth = localStorage.getItem(StorageKeys.token);
-  }
-
+  const [isAuth, setIsAuth] = React.useState<boolean | null>(null);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  React.useEffect(() => {
+    // Runs only on the client
+    const token = localStorage.getItem(StorageKeys.token);
+    setIsAuth(!!token);
+  }, []);
 
   const onLogout = async () => {
     await logout();
@@ -62,6 +64,9 @@ const AuthButton = () => {
   const openPage = (url: string) => {
     router.push(url);
   };
+
+  // Avoid rendering until `isAuth` is determined
+  if (isAuth === null) return null;
 
   return (
     <div>

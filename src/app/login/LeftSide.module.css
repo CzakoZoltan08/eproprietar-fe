@@ -1,0 +1,39 @@
+.container {
+    background-color: var(--color-white);
+  }
+  
+  .container-desktop {
+    background-color: unset;
+  }
+  
+  .title {
+    font-weight: 600;
+    margin-bottom: 32px;
+  }
+  
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .input-field-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+  
+  .link {
+    color: var(--color-text);
+    line-height: 20px;
+    cursor: pointer;
+  }
+  
+  .google-button {
+    background-color: var(--color-red-button);
+  }
+  
+  .google-button:hover {
+    background-color: var(--color-red-button-hover);
+  }  

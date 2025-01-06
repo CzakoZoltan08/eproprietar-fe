@@ -20,29 +20,8 @@ const Subtitle = styled.h1`
   }
 `;
 
-const SubtitleAdvice = styled.h2`
-  font-weight: 300;
-  font-size: 20px;
-  color: ${palette.COLOR_TEXT};
-
-  @media only screen and (max-width: ${breakpoints.MIN_PHONE}) {
-    font-size: 12px;
-  }
-`;
-
-const iconStyle = {
-  fontSize: "48px",
-  color: palette.COLOR_CONTRAST,
-  cursor: "pointer",
-};
-
-const selectedIconStyle = {
-  fontSize: "64px",
-  color: palette.COLOR_PRIMARY,
-};
-
 export default function EditAnnouncement() {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [] = useState(0);
 
   return (
     <AuthLayout>

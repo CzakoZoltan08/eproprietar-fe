@@ -25,6 +25,7 @@ import logo from "@/assets/logo.svg";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
+import validationSchema from "./registrationValidationSchema";
 
 const INITIAL_DATA = {
   email: "",
@@ -34,68 +35,23 @@ const INITIAL_DATA = {
   lastName: "",
 };
 
-const validationSchema = Joi.object({
-  email: Joi.string()
-    .email({ minDomainSegments: 2, tlds: false })
-    .messages({
-      "string.email": "Email must be a valid email address!",
-      "string.empty": "The email address is required!",
-    })
-    .label("Email"),
-  password: Joi.string()
-    .min(8)
-    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,64}$/)
-    .messages({
-      "string.pattern.base":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.min":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.empty": "The password is required!",
-    })
-    .label("Password"),
-  passwordConfirm: Joi.string()
-    .min(8)
-    .valid(Joi.ref("password"))
-    .messages({
-      "any.only": "The passwords do not match. Please try again",
-      "string.empty": "The password is required!",
-    })
-    .label("Confirm password"),
-  firstName: Joi.string()
-    .messages({
-      "string.empty": "First Name Required",
-    })
-    .required()
-    .label("First Name"),
-  lastName: Joi.string()
-    .messages({
-      "string.empty": "Last Name Required",
-    })
-    .required()
-    .label("Last Name"),
-});
-
 const LeftSide = () => {
   const {
     appState: { authApi },
     authStore: { loginWithGoogle },
   } = useStore();
   const [formData, setFormData] = useState(INITIAL_DATA);
-  const [formErrors, setFormErrors] = useState<{ [key: string]: any }>(
-    INITIAL_DATA,
-  );
+  const [formErrors, setFormErrors] = useState(INITIAL_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [isRegisterWithEmail, setIsRegisterWithEmail] = useState(false);
 
   const router = useRouter();
 
+  const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
+
   useEffect(() => {
-    if (formData.email.includes("@")) {
-      setIsRegisterWithEmail(true);
-    } else {
-      if (isRegisterWithEmail) setIsRegisterWithEmail(false);
-    }
+    setIsRegisterWithEmail(formData.email.includes("@"));
   }, [formData.email]);
 
   const handleInputChange = (
@@ -109,8 +65,8 @@ const LeftSide = () => {
 
     setRequestError("");
     setFormData(updatedFormData);
-    const error = generalValidation(validationSchema, updatedFormData, name);
 
+    const error = generalValidation(validationSchema, updatedFormData, name);
     setFormErrors({
       ...formErrors,
       [name]: error,
@@ -122,75 +78,50 @@ const LeftSide = () => {
     router.replace("/");
   };
 
-  const facebookLogin = async (provider: FacebookAuthProvider) => {};
-
   const onSubmit = async () => {
     setIsSubmitting(true);
     setRequestError("");
 
-    const errors: { [key: string]: any } | string | null | undefined =
-      generalValidation(validationSchema, formData);
+    const errors = generalValidation(validationSchema, formData);
     if (errors && typeof errors === "object") {
-      setFormErrors(errors);
+      setFormErrors({
+        email: errors.email || "",
+        password: errors.password || "",
+        passwordConfirm: errors.passwordConfirm || "",
+        firstName: errors.firstName || "",
+        lastName: errors.lastName || "",
+      });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await authApi.register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-      });
-
+      await authApi.register(formData);
       setIsSubmitting(false);
       router.replace("/login");
     } catch (e: any) {
       setIsSubmitting(false);
-      if (e?.response && e?.response.data) {
-        setRequestError(e.response.data.message || "Request Error");
-      } else {
-        setRequestError("Request Error");
-      }
+      const errorMessage = e?.response?.data?.message || "Request Error";
+      setRequestError(errorMessage);
     }
   };
 
-  const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
-
   return (
-    <Container
-      sx={{
-        background: isMobile ? COLOR_WHITE : "unset",
-      }}
-    >
+    <Container sx={{ background: isMobile ? COLOR_WHITE : "unset" }}>
       {isMobile && (
-        <Image
-          src={logo}
-          alt="eproprietar"
-          width={152}
-          style={{ marginTop: "32px" }}
-        />
+        <Image src={logo} alt="eproprietar" width={152} style={{ marginTop: "32px" }} />
       )}
-      <h1>Register</h1>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
+      <Typography variant="h4">Register</Typography>
+      <Box display="flex" flexDirection="column" gap={2}>
         <CommonButton
           onClick={() => googleLogin(googleAuth)}
           text={isMobile ? "Google" : "Sign in with Google"}
           size="large"
-          fullWidth={true}
+          fullWidth
           startIcon={<GoogleIcon />}
           sx={{
             backgroundColor: COLOR_RED_BUTTON,
-            "&:hover": {
-              backgroundColor: COLOR_RED_BUTTON_HOVER,
-            },
+            "&:hover": { backgroundColor: COLOR_RED_BUTTON_HOVER },
           }}
         />
         <Divider>
@@ -206,14 +137,14 @@ const LeftSide = () => {
         >
           <TextField
             id="register-email-field"
-            label={"Email"}
-            name={"email"}
-            type={"email"}
+            label="Email"
+            name="email"
+            type="email"
             value={formData.email}
             onChange={handleInputChange}
             error={!!formErrors.email}
             helperText={formErrors.email}
-            placeholder={"Enter email"}
+            placeholder="Enter email"
           />
           {isRegisterWithEmail && (
             <>
@@ -235,27 +166,25 @@ const LeftSide = () => {
               />
               <TextField
                 id="register-firstName-field"
-                label={"First Name"}
-                name={"firstName"}
-                type={"text"}
+                label="First Name"
+                name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
                 error={!!formErrors.firstName}
                 helperText={formErrors.firstName}
-                placeholder={"Enter first name"}
+                placeholder="Enter first name"
               />
               <TextField
                 id="register-lastName-field"
-                label={"Last Name"}
-                name={"lastName"}
-                type={"text"}
+                label="Last Name"
+                name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
                 error={!!formErrors.lastName}
                 helperText={formErrors.lastName}
-                placeholder={"Enter last name"}
+                placeholder="Enter last name"
               />
-              {requestError ? <ErrorText>{requestError}</ErrorText> : null}
+              {requestError && <ErrorText>{requestError}</ErrorText>}
             </>
           )}
         </Box>

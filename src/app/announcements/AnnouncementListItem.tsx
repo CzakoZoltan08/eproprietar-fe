@@ -15,26 +15,57 @@ import {
   COLOR_RED_BUTTON,
   COLOR_TEXT_LIGHT,
 } from "@/constants/colors";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
+import { Currency } from "@/constants/currencies.enum";
 import EditIcon from "@mui/icons-material/Edit";
+import { Endpoints } from "@/constants/endpoints";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import Flex from "@/common/flex/Flex";
 import Image from "next/image";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
+import { Unit } from "@/constants/units.enum";
+import calculatePricePerSquareMeter from "@/utils/calculatePricePerSquareMeter";
+import formatRooms from "@/utils/formatRooms";
 import { observer } from "mobx-react";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
+import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
 
-const favIconStyle = {
-  cursor: "pointer",
-  position: "absolute",
-  top: "12px",
-  right: "12px",
-};
+// Constants
+const DEFAULT_IMAGE_URL =
+  "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg";
+const IMAGE_WIDTH = 250;
+const IMAGE_HEIGHT = 200;
+const BUTTON_TEXT = "Vezi anunțul";
+const FAV_ICON_POSITION = { top: "12px", right: "12px" };
+
+// Styled Components
+const StyledFavoriteIcon = styled(FavoriteIcon)`
+  cursor: pointer;
+  position: absolute;
+  top: ${FAV_ICON_POSITION.top};
+  right: ${FAV_ICON_POSITION.right};
+  color: ${COLOR_RED_BUTTON};
+`;
+
+const StyledFavoriteBorderIcon = styled(FavoriteBorderIcon)`
+  cursor: pointer;
+  position: absolute;
+  top: ${FAV_ICON_POSITION.top};
+  right: ${FAV_ICON_POSITION.right};
+  color: ${COLOR_TEXT_LIGHT};
+`;
+
+const StyledEditIcon = styled(EditIcon)`
+  cursor: pointer;
+  position: absolute;
+  top: ${FAV_ICON_POSITION.top};
+  right: ${FAV_ICON_POSITION.right};
+  color: ${COLOR_TEXT_LIGHT};
+`;
 
 const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => {
   const {
@@ -42,100 +73,84 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   } = useStore();
   const pathname = usePathname();
   const router = useRouter();
+
   const [isFavorized, setIsFavorized] = useState<boolean>(
-    !!user?.favourites?.includes(item.id),
+    !!user?.favourites?.includes(item.id)
   );
   const [favsSet, setFavsSet] = useState<boolean>(false);
-
-  const [imageWidth, setImageWidth] = useState<number>(250);
-
-  useEffect(() => {
-    setImageWidth(250); // Ensure client and server values match
-  }, []);
 
   useEffect(() => {
     if (!user?.id) {
       getCurrentUser();
     }
-  }, []);
+  }, [user, getCurrentUser]);
 
   useEffect(() => {
     if (user && user.id && !favsSet) {
       setIsFavorized(!!user?.favourites?.includes(item.id));
       setFavsSet(true);
     }
-  }, [user]);
+  }, [user, favsSet, item.id]);
 
-  const goToItem = (id: string) => {
-    router.push(`/announcements/${id}`);
-  };
+  const goToItem = useCallback(
+    (id: string) => {
+      router.push(`${Endpoints.ANNOUNCEMENTS}/${id}`);
+    },
+    [router]
+  );
 
   const handleFavourite = async () => {
     if (!user?.id) {
       console.log("User not found");
-    } else {
-      debugger;
-      let newFavsArray = user?.favourites || [];
-      if (isFavorized) {
-        newFavsArray = newFavsArray.filter((fav) => fav !== item.id);
-      } else {
-        newFavsArray.push(item.id);
-      }
-      setIsFavorized(!isFavorized);
-      await updateUser(user.id, { favourites: newFavsArray });
+      return;
     }
+
+    let newFavsArray = user?.favourites || [];
+    if (isFavorized) {
+      newFavsArray = newFavsArray.filter((fav) => fav !== item.id);
+    } else {
+      newFavsArray.push(item.id);
+    }
+
+    setIsFavorized(!isFavorized);
+    await updateUser(user.id, { favourites: newFavsArray });
   };
 
-  const goToEdit = () => {
-    router.push(`/edit-announcement/${item.id}`);
-  };
+  const goToEdit = useCallback(() => {
+    router.push(`${Endpoints.EDIT_ANNOUNCEMENTS}/${item.id}`);
+  }, [router, item.id]);
 
   return (
-    <AnnouncementCard display={"flex"}>
-      {user?.id !== item!.user!.id ? (
-        <>
-          {isFavorized ? (
-            <FavoriteIcon
-              sx={{ ...favIconStyle, color: COLOR_RED_BUTTON }}
-              onClick={handleFavourite}
-            />
-          ) : (
-            <FavoriteBorderIcon
-              sx={{
-                ...favIconStyle,
-                color: COLOR_TEXT_LIGHT,
-              }}
-              onClick={handleFavourite}
-            />
-          )}
-        </>
+    <AnnouncementCard display="flex">
+      {user?.id !== item.user?.id ? (
+        isFavorized ? (
+          <StyledFavoriteIcon onClick={handleFavourite} />
+        ) : (
+          <StyledFavoriteBorderIcon onClick={handleFavourite} />
+        )
       ) : (
-        <EditIcon
-          sx={{ ...favIconStyle, color: COLOR_TEXT_LIGHT }}
-          onClick={goToEdit}
-        />
+        <StyledEditIcon onClick={goToEdit} />
       )}
 
       <ImageContainer>
-      <Image
-        src={
-          item.imageUrl || "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg"
-        }
-        alt={item.imageUrl ?? "EProprietar"}
-        width={imageWidth}
-        height={200}
-      />
+        <Image
+          src={item.imageUrl || DEFAULT_IMAGE_URL}
+          alt={item.imageUrl || "EProprietar"}
+          width={IMAGE_WIDTH}
+          height={IMAGE_HEIGHT}
+        />
       </ImageContainer>
+
       <DescriptionContainer>
         <Title>{item.title}</Title>
         <Flex>
           <Subtitle>
-            {item.rooms ? (
+            {item.rooms && (
               <>
                 {item.rooms}
-                <span>{item.rooms > 1 ? " camere |" : " camera |"}&nbsp;</span>
+                <span>{formatRooms(item.rooms)}&nbsp;</span>
               </>
-            ) : null}
+            )}
             {item.surface}
             <span>mp</span>
           </Subtitle>
@@ -143,17 +158,12 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
           <Price>
             {item.price} EUR
             <br />
-            <PriceMP>
-              {item.price && item.surface
-                ? Math.round(item.price / item.surface)
-                : 0}{" "}
-              EUR/mp
-            </PriceMP>
+            <PriceMP>{calculatePricePerSquareMeter(item.price, item.surface)} {Currency.EUR}/{Unit.SQUARE_METER}</PriceMP>
           </Price>
         </Flex>
         <Description>{item.description}</Description>
         <PrimaryButton
-          text={"Vezi anunțul"}
+          text={BUTTON_TEXT}
           onClick={() => goToItem(item.id)}
           sx={{ marginTop: "8px" }}
         />

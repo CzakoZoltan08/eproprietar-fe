@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react";
 
 import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
 import { CircularProgress } from "@mui/material";
+import { ProviderType } from "@/constants/provider-types.enum";
 import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
 import { observer } from "mobx-react";
+import styles from "./EditAnnouncementType.module.css"; // Assuming a CSS module
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
@@ -34,15 +36,10 @@ const EditAnnouncementType = () => {
   return (
     <>
       {loading ? (
-        <CircularProgress
-          sx={{
-            margin: "0 auto",
-          }}
-          size={42}
-        />
+        <CircularProgress className={styles.circularProgress} size={42} />
       ) : (
         <>
-          {currentAnnouncement?.providerType === "owner" ? (
+          {currentAnnouncement?.providerType === ProviderType.OWNER ? (
             <AnnouncementForm />
           ) : (
             <ResidentialAnnouncementForm />

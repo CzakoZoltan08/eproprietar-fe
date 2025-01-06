@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import AnnouncementList from "@/app/announcements/AnnouncementList";
 import { CircularProgress } from "@mui/material";
+import { Endpoints } from "@/constants/endpoints";
 import { observer } from "mobx-react";
 import { useStore } from "@/hooks/useStore";
 
@@ -42,7 +43,7 @@ const SavedAnnouncementsWrapper = () => {
       await fetchSavedAnnouncements(user.id!.toString());
 
       const updatedParams = updateQueryParams("title", "Anunturi salvate");
-      router.push(`/saved-announcements?${updatedParams}`);
+      router.push(`${Endpoints.SAVED_ANNOUNCEMENTS}?${updatedParams}`);
 
       setLoading(false);
     })();

@@ -1,10 +1,9 @@
 "use client";
 
+import { Box, CircularProgress } from "@mui/material";
 import React, { useEffect } from "react";
 
-import { Box } from "@mui/material";
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
-import CircularProgress from "@mui/material/CircularProgress";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
 import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
 import ImagesCardComponent from "@/app/announcements/[id]/ImagesCard";
@@ -17,9 +16,8 @@ import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
-const DetailsContainer = styled(({ $flexdirection, children, ...rest }: { $flexdirection: string, children: React.ReactNode }) => (
-  <Box {...rest}>{children}</Box>
-))`
+// Styled Components
+const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -34,7 +32,14 @@ const DetailsContainer = styled(({ $flexdirection, children, ...rest }: { $flexd
 const ContactContainer = styled.div`
   flex: 1;
 `;
-const AnnouncementDetailPage = () => {
+
+const ColumnBox = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const AnnouncementDetailPage: React.FC = () => {
   const {
     announcementStore: { getAnnouncementById, currentAnnouncement },
   } = useStore();
@@ -42,48 +47,47 @@ const AnnouncementDetailPage = () => {
   const { id } = params;
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
+  // Fetch Announcement Data
   useEffect(() => {
-    (async () => {
-      if (id) {
-        await getAnnouncementById(Array.isArray(id) ? id[0] : id);
-      }
-    })();
-  }, []);
+    if (id) {
+      getAnnouncementById(Array.isArray(id) ? id[0] : id);
+    }
+  }, [id, getAnnouncementById]);
+
+  // Render Loading Spinner
+  if (!currentAnnouncement?.id) {
+    return (
+      <Layout paddingContainer>
+        <CircularProgress />
+      </Layout>
+    );
+  }
+
+  // Common Layout
+  const renderDetails = () => (
+    <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
+      <div>
+        <ImagesCardComponent />
+        {currentAnnouncement?.description && <DescriptionCard />}
+        <CharacteristicsCard />
+      </div>
+      <ContactContainer>
+        <ContactCardComponent />
+      </ContactContainer>
+    </DetailsContainer>
+  );
 
   return (
     <Layout paddingContainer>
-      {!currentAnnouncement?.id ? (
-        <CircularProgress />
+      {isMobile ? (
+        <ColumnBox>
+          <TitleCard />
+          {renderDetails()}
+        </ColumnBox>
       ) : (
         <>
-          {isMobile ? (
-            <Box display={"flex"} sx={{ flexDirection: "column" }}>
-              {currentAnnouncement && <TitleCard />}
-
-              <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
-                <ImagesCardComponent />
-                {currentAnnouncement?.description && <DescriptionCard />}
-                <CharacteristicsCard />
-              </DetailsContainer>
-              <ContactContainer>
-                <ContactCardComponent />
-              </ContactContainer>
-            </Box>
-          ) : (
-            <>
-              {currentAnnouncement && <TitleCard />}
-              <DetailsContainer $flexdirection="row">
-                <div>
-                  <ImagesCardComponent />
-                  {currentAnnouncement?.description && <DescriptionCard />}
-                  <CharacteristicsCard />
-                </div>
-                <ContactContainer>
-                  <ContactCardComponent />
-                </ContactContainer>
-              </DetailsContainer>
-            </>
-          )}
+          <TitleCard />
+          {renderDetails()}
         </>
       )}
     </Layout>

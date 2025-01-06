@@ -1,12 +1,7 @@
 "use client";
 
 import { Box, Divider, Typography } from "@mui/material";
-import {
-  COLOR_RED_BUTTON,
-  COLOR_RED_BUTTON_HOVER,
-  COLOR_TEXT,
-  COLOR_WHITE,
-} from "@/constants/colors";
+import { COLOR_RED_BUTTON, COLOR_RED_BUTTON_HOVER } from "@/constants/colors";
 import { ChangeEvent, useState } from "react";
 import {
   GoogleAuthProvider,
@@ -22,7 +17,6 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import GoogleIcon from "@mui/icons-material/Google";
 import Image from "next/image";
 import { InputField } from "@/common/input/InputField";
-import Joi from "joi";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import { StorageKeys } from "@/constants/storageKeys";
@@ -30,30 +24,11 @@ import { generalValidation } from "@/utils/generalValidation";
 import { googleAuth } from "@/config/firebase";
 import logo from "@/assets/logo.svg";
 import { observer } from "mobx-react";
+import styles from "./LeftSide.module.css";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
-
-const validationSchema = Joi.object({
-  email: Joi.string()
-    .email({ minDomainSegments: 2, tlds: false })
-    .messages({
-      "string.email": "Email must be a valid email address!",
-      "string.empty": "The email address is required!",
-    })
-    .label("Email"),
-  password: Joi.string()
-    .min(8)
-    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,64}$/)
-    .messages({
-      "string.pattern.base":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.min":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.empty": "The password is required!",
-    })
-    .label("Password"),
-});
+import validationSchema from "./authValidationSchema";
 
 const LeftSide = () => {
   const {
@@ -73,15 +48,11 @@ const LeftSide = () => {
     password: "",
   });
   const [requestError, setRequestError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLogin = async (provider: GoogleAuthProvider) => {
@@ -89,42 +60,33 @@ const LeftSide = () => {
     router.replace("/");
   };
 
-  const onSubmit = () => {
-    setFormErrors({
-      email: "",
-      password: "",
-    });
+  const onSubmit = async () => {
+    setFormErrors({ email: "", password: "" });
 
     const errors = generalValidation(validationSchema, formData);
 
     if (errors && typeof errors === "object") {
-      setFormErrors({
-        ...formErrors,
-        ...errors,
-      });
+      setFormErrors((prev) => ({ ...prev, ...errors }));
       return;
     }
 
     try {
       setIsLoading(true);
-      signInEmailAndPassword(formData.email, formData.password);
+      await signInEmailAndPassword(formData.email, formData.password);
 
       const auth = getAuth();
-
       onAuthStateChanged(auth, async (user: any) => {
         if (user) {
           const token = await getIdToken(user);
-          if (token) {
-            if (typeof window !== "undefined") {
-              localStorage.setItem(StorageKeys.token, token);
-            }
+          if (token && typeof window !== "undefined") {
+            localStorage.setItem(StorageKeys.token, token);
           }
           setCurrentUser(user);
           setIsLoading(false);
           router.replace("/");
         }
       });
-    } catch (e) {
+    } catch {
       setIsLoading(false);
       setRequestError("Email or password is incorrect!");
     }
@@ -134,38 +96,18 @@ const LeftSide = () => {
 
   return (
     <Container
-      sx={{
-        background: isMobile ? COLOR_WHITE : "unset",
-      }}
+      className={isMobile ? styles.container : styles["container-desktop"]}
     >
       {isMobile && (
-        <Image
-          src={logo}
-          alt="eproprietar"
-          width={152}
-          style={{ marginTop: "32px" }}
-        />
+        <Image src={logo} alt="eproprietar" width={152} style={{ marginTop: "32px" }} />
       )}
-
-      <Typography variant="h4" sx={{ fontWeight: 600, marginBottom: "32px" }}>
+  
+      <Typography variant="h4" className={styles.title}>
         Log in
       </Typography>
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        <Box 
-          display="flex" 
-          sx={{
-            flexDirection: "column",
-            gap: "2px",
-            marginBottom: "6px"
-          }}
-        >
+  
+      <Box className={styles["form-container"]}>
+        <Box className={styles["input-field-container"]}>
           <InputField
             label="Email"
             name="email"
@@ -181,61 +123,40 @@ const LeftSide = () => {
             helperText={formErrors.password}
             type="password"
           />
-          {requestError || errorMessage ? (
+          {(requestError || errorMessage) && (
             <ErrorText>{requestError || errorMessage}</ErrorText>
-          ) : null}
+          )}
         </Box>
-
-        <Box
-          display={"flex"}
-          sx={{
-            justifyContent: "space-between",
-            width: "100%",
-          }}
-        >
+  
+        <Box display="flex" justifyContent="space-between" width="100%">
           <Typography
             variant="subtitle1"
-            sx={{
-              color: COLOR_TEXT,
-              lineHeight: "20px",
-              cursor: "pointer",
-            }}
+            className={styles.link}
             onClick={() => router.push("/forgot-password")}
           >
             Forgot Password
-          </Typography>{" "}
+          </Typography>
           <Typography
             variant="subtitle1"
-            sx={{
-              color: COLOR_TEXT,
-              lineHeight: "20px",
-              cursor: "pointer",
-            }}
+            className={styles.link}
             onClick={() => router.push("/register")}
           >
             Register
           </Typography>
         </Box>
-
+  
         <Box>
           <PrimaryButton onClick={onSubmit} text="Log in" size="large" />
         </Box>
-
+  
         <Divider>or</Divider>
-
-        <Box
-          display="flex"
-          sx={{
-            justifyContent: "space-between",
-            flexDirection: "row",
-            gap: "2px",
-          }}
-        >
+  
+        <Box display="flex" justifyContent="space-between">
           <CommonButton
             onClick={() => handleLogin(googleAuth)}
             text={isMobile ? "Google" : "Sign in with Google"}
             size="large"
-            fullWidth={true}
+            fullWidth
             startIcon={<GoogleIcon />}
             sx={{
               backgroundColor: COLOR_RED_BUTTON,
@@ -248,8 +169,8 @@ const LeftSide = () => {
             onClick={() => handleLogin(googleAuth)}
             text={isMobile ? "Facebook" : "Sign in with Facebook"}
             size="large"
+            fullWidth
             startIcon={<FacebookIcon />}
-            fullWidth={true}
             sx={{ whiteSpace: "nowrap" }}
           />
         </Box>

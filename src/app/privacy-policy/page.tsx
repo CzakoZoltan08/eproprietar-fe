@@ -1,13 +1,13 @@
 "use client";
 
-import { Box, Grid } from "@mui/material";
-import React from "react";
-import styled from "styled-components";
-
-import { COLOR_TEXT_LIGHT } from "@/constants/colors";
 import * as palette from "@/constants/colors";
 
+import { Box, Grid } from "@mui/material";
+
+import { COLOR_TEXT_LIGHT } from "@/constants/colors";
 import { Layout } from "@/common/layout/Layout";
+import React from "react";
+import styled from "styled-components";
 
 const Container = styled.div`
   display: flex;
@@ -417,9 +417,10 @@ export default function Privacy() {
               <p>
                 Compania este proprietarul sau licențiatul drepturilor de
                 proprietate intelectuală a structurii generale a site-ului Web,
-                precum și a conținutului desemnat expres ca sursă eproprietar.ro
-                .
-                <p>
+                precum și a conținutului desemnat expres ca sursă eproprietar.ro.
+              </p>
+
+              <p>
                   Pe de altă parte, Compania nu este nici proprietar și nici
                   responsabil, indiferent de capacitate și chiar dacă este
                   concesionară a drepturilor de proprietate intelectuală, a
@@ -429,16 +430,15 @@ export default function Privacy() {
                   exclusivă a proprietarilor acestora (personae fizice sau
                   dezvoltatori care sunt autori de oferte publicate sau diferiți
                   furnizori de date).
-                </p>
-                <p>
-                  Orice reprezentare, reproducere, modificare, denaturare și /
-                  sau exploatare, integral sau parțial, a site-ului Web și / sau
-                  a conținutului acestuia (indiferent de autor) și / sau a
-                  Serviciilor, prin orice mijloace și pe orice suport că este,
-                  fără autorizarea expresă și preliminară a Companiei sau a
-                  autorului conținutului, potrivit cazurilor, este interzis și
-                  constituie acte de încălcare a drepturilor de autor.
-                </p>
+              </p>
+              <p>
+                Orice reprezentare, reproducere, modificare, denaturare și /
+                sau exploatare, integral sau parțial, a site-ului Web și / sau
+                a conținutului acestuia (indiferent de autor) și / sau a
+                Serviciilor, prin orice mijloace și pe orice suport că este,
+                fără autorizarea expresă și preliminară a Companiei sau a
+                autorului conținutului, potrivit cazurilor, este interzis și
+                constituie acte de încălcare a drepturilor de autor.
               </p>
 
               <h2>FORȚA MAJORA</h2>

@@ -1,10 +1,10 @@
-import PhoneInput from "react-phone-input-2";
 import React, { useState } from "react";
-import styled from "styled-components";
-import InputLabel from "@mui/material/InputLabel";
 
-import { ROMANIAN_PHONE_REGEX } from "../../constants/regex/romanianPhoneRegex";
 import HelperText from "@/common/error/HelperText";
+import InputLabel from "@mui/material/InputLabel";
+import PhoneInput from "react-phone-input-2";
+import { ROMANIAN_PHONE_REGEX } from "../../constants/regex/romanianPhoneRegex";
+import styled from "styled-components";
 
 type PhoneInputFieldProps = {
   value: string;
@@ -18,7 +18,10 @@ type PhoneInputFieldProps = {
   isSmall?: boolean;
 };
 
-const PhoneInputFieldWrapper = styled.div<{
+const PhoneInputFieldWrapper = styled.div.withConfig({
+  shouldForwardProp: (prop) =>
+    !["isSmall", "isInputFocused", "hasError"].includes(prop),
+})<{
   isSmall: boolean;
   isInputFocused: boolean;
   hasError: boolean;
@@ -27,6 +30,7 @@ const PhoneInputFieldWrapper = styled.div<{
   display: flex;
   flex-direction: column;
   gap: 4px;
+
   .form-control {
     width: 100%;
     height: ${(props) => (props.isSmall ? "35px" : "48px")};
@@ -101,17 +105,11 @@ const PhoneInputField = ({
           },
           name,
         }}
-        inputStyle={
-          {
-            fontSize: "16px",
-            boxShadow: "none",
-            height: "40px",
-            WebkitBackgroundClip: "text",
-            "&:-webkit-autofill": {
-              WebkitBackgroundClip: "text",
-            },
-          } as React.CSSProperties
-        }
+        inputStyle={{
+          fontSize: "16px",
+          boxShadow: "none",
+          height: "40px",
+        }}
       />
       {error && <HelperText>{error}</HelperText>}
     </PhoneInputFieldWrapper>

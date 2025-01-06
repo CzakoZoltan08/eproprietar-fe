@@ -1,13 +1,17 @@
-import React from "react";
-import styled from "styled-components";
-import { AutocompleteRenderInputParams } from "@mui/material/Autocomplete/Autocomplete";
+import * as palette from "../../constants/colors";
+
 import { Autocomplete, TextField } from "@mui/material";
 
-import * as palette from "../../constants/colors";
+import { AutocompleteRenderInputParams } from "@mui/material/Autocomplete/Autocomplete";
 import HelperText from "@/common/error/HelperText";
+import React from "react";
+import styled from "styled-components";
 
-const StyledAutocomplete = styled(Autocomplete)<{
-  customWidth?: string | undefined;
+// Styled wrapper for the Autocomplete
+const StyledAutocomplete = styled(Autocomplete).withConfig({
+  shouldForwardProp: (prop) => prop !== "customWidth" && prop !== "backgroundColor",
+})<{
+  customWidth?: string;
   backgroundColor?: string;
 }>`
   width: ${(props) => props.customWidth || "fit-content"} !important;
@@ -52,17 +56,15 @@ const AutocompleteDisabledOptions = ({
     <StyledAutocomplete
       id="autocomplete"
       options={options}
-      customWidth={customWidth}
-      style={{ width: "300px" }}
-      backgroundColor={backgroundColor}
+      customWidth={customWidth} // This is now safely handled by styled-components
+      backgroundColor={backgroundColor} // This too
       value={value}
       renderInput={(params: AutocompleteRenderInputParams) => (
         <TextField
           {...params}
           label={label}
           variant="filled"
-          // @ts-ignore
-          InputProps={{ ...params.InputProps, disableunderline: "true" }}
+          InputProps={{ ...params.InputProps, disableUnderline: true }}
         />
       )}
       onChange={onChange}

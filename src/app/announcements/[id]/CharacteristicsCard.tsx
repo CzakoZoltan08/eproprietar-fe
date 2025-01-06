@@ -1,63 +1,26 @@
-import {
-  Divider,
-  Title,
-  TitleCard,
-} from "@/style/announcementDetailStyledComponents";
+import { Title, TitleCard } from "@/style/announcementDetailStyledComponents";
 
-import Flex from "@/common/flex/Flex";
+import InfoRow from "@/common/InfoRow/InfoRow";
 import React from "react";
+import formatRooms from "@/utils/formatRooms";
 import { observer } from "mobx-react";
 import { useStore } from "@/hooks/useStore";
 
-const InfoRow = ({
-  title,
-  value,
-}: {
-  title: string;
-  value?: string | number | null;
-}) => {
-  if (value === undefined || value === null || value === "") return null;
-
-  return (
-    <>
-      <Flex>
-        <div>{title}:</div>
-        <div>{value}</div>
-      </Flex>
-      <Divider background={"#efefef"} margin={"8px 0"} />
-    </>
-  );
-};
-
-
-const CharacteristicsCard = () => {
+const CharacteristicsCard: React.FC = () => {
   const {
     announcementStore: { currentAnnouncement },
   } = useStore();
 
   return (
     <TitleCard>
-      <Title marginBottom={"16px"}>Caracteristici</Title>
-
+      <Title $marginBottom="16px">Caracteristici</Title>
+      <InfoRow title="Număr camere" value={formatRooms(currentAnnouncement?.rooms)} />
       <InfoRow
-        title={"Număr camere"}
-        value={
-          currentAnnouncement?.rooms
-            ? `${currentAnnouncement?.rooms} ${
-                Number(currentAnnouncement?.rooms) > 1 ? "camere" : "camera"
-              }`
-            : null
-        }
+        title="Suprafață utilă"
+        value={currentAnnouncement?.surface ? `${currentAnnouncement.surface} mp` : null}
       />
-      <InfoRow
-        title={"Suprafață utilă"}
-        value={`${currentAnnouncement?.surface} mp`}
-      />
-      <InfoRow
-        title={"Compartimentare"}
-        value={currentAnnouncement?.partitioning}
-      />
-      <InfoRow title={"Etaj"} value={currentAnnouncement?.floor} />
+      <InfoRow title="Compartimentare" value={currentAnnouncement?.partitioning} />
+      <InfoRow title="Etaj" value={currentAnnouncement?.floor} />
     </TitleCard>
   );
 };

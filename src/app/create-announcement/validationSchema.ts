@@ -1,6 +1,12 @@
 import Joi from "joi";
 
-export const announcementValidationSchema = Joi.object().keys({
+const sharedMessages = {
+  emptyField: "Campul este obligatoriu",
+  emptyCity: "Orasul trebuie selectat",
+  emptyCover: "error:emptyCover",
+};
+
+const sharedFields = {
   announcementType: Joi.string().messages({
     "string.empty": "Tipul anuntului este obligatoriu",
   }),
@@ -8,16 +14,23 @@ export const announcementValidationSchema = Joi.object().keys({
     "string.empty": "Descrerea anuntului este obligatorie",
   }),
   providerType: Joi.string().messages({
-    "string.empty": "providerType",
+    "string.empty": sharedMessages.emptyField,
   }),
   propertyType: Joi.string().messages({
     "string.empty": "Tipul proptietatii este obligatoriu",
   }),
-  transactionType: Joi.string().messages({
-    "string.empty": "Tipul tranzactiei este obligatoriu",
-  }),
   title: Joi.string().messages({
     "string.empty": "Titlul anuntului este obligatoriu",
+  }),
+  city: Joi.string().messages({
+    "string.empty": sharedMessages.emptyCity,
+  }),
+  street: Joi.string().optional(),
+};
+
+const additionalAnnouncementFields = {
+  transactionType: Joi.string().messages({
+    "string.empty": "Tipul tranzactiei este obligatoriu",
   }),
   price: Joi.string().messages({
     "string.empty": "Pretul este obligatoriu",
@@ -25,59 +38,44 @@ export const announcementValidationSchema = Joi.object().keys({
   surface: Joi.string().messages({
     "string.empty": "Suprafata este obligatorie",
   }),
-  city: Joi.string().messages({
-    "string.empty": "Orasul trebuie selectat",
-  }),
-  street: Joi.string().optional(),
   numberOfRooms: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   partitioning: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   comfortLevel: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   floor: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   parking: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   numberOfKitchens: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
   balcony: Joi.string().messages({
-    "string.empty": "error:emptyCover",
+    "string.empty": sharedMessages.emptyCover,
   }),
-});
+};
 
-export const residentialAnnouncementValidationSchema = Joi.object().keys({
-  announcementType: Joi.string().messages({
-    "string.empty": "Tipul anuntului este obligatoriu",
-  }),
-  description: Joi.string().messages({
-    "string.empty": "Descrerea anuntului este obligatorie",
-  }),
-  providerType: Joi.string().messages({
-    "string.empty": "providerType",
-  }),
-  propertyType: Joi.string().messages({
-    "string.empty": "Tipul proptietatii este obligatoriu",
-  }),
-  title: Joi.string().messages({
-    "string.empty": "Titlul anuntului este obligatoriu",
-  }),
-  city: Joi.string().messages({
-    "string.empty": "Orasul trebuie selectat",
-  }),
-  street: Joi.string().messages({
-    "string.empty": "error:emptyCover",
-  }),
+const additionalResidentialFields = {
   stage: Joi.string().messages({
     "string.empty": "Stadiul trebuie selectat",
   }),
   endDate: Joi.string().messages({
     "string.empty": "Data finalizarii este obligatorie",
   }),
+};
+
+export const announcementValidationSchema = Joi.object().keys({
+  ...sharedFields,
+  ...additionalAnnouncementFields,
+});
+
+export const residentialAnnouncementValidationSchema = Joi.object().keys({
+  ...sharedFields,
+  ...additionalResidentialFields,
 });

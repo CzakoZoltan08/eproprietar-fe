@@ -23,15 +23,15 @@ export const TitleCard = styled(Card).withConfig({
 `;
 
 interface TitleProps {
-  marginBottom?: string;
+  $marginBottom?: string;
 }
 
-export const Title = styled.div.attrs<TitleProps>((props) => ({
-  style: { marginBottom: props.marginBottom || "0" },
-}))<TitleProps>`
+export const Title = styled.div<TitleProps>`
   line-height: 20px;
   font-size: 20px;
+  margin-bottom: ${(props) => props.$marginBottom || "0"};
 `;
+
 
 interface DividerProps {
   background?: string;

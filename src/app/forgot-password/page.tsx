@@ -1,9 +1,9 @@
 "use client";
-import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 
-import { RightSide } from "@/common/auth/RightSide";
-import LoginLayout from "@/common/layout/LoginLayout";
 import LeftSide from "@/app/forgot-password/LeftSide";
+import LoginLayout from "@/common/layout/LoginLayout";
+import { RightSide } from "@/common/auth/RightSide";
+import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 
 export default function Page() {

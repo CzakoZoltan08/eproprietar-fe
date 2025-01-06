@@ -1,6 +1,8 @@
 import { CreateUserModel, UserModel } from "@/models/userModels";
 
 import { ApiConfig } from "./ApiConfig";
+import { Endpoints } from "@/constants/endpoints";
+import { HttpMethods } from "@/constants/http-methods.enum";
 
 export class UserApi {
   apiConfig: ApiConfig;
@@ -16,14 +18,14 @@ export class UserApi {
     }
   
     // Send the request to the backend
-    return this.apiConfig.sendRequest("POST", "/users", data);
+    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.USERS, data);
   }
 
   async getUserByEmail(email: string) {
-    return await this.apiConfig.sendRequest("GET", `/users/by-email/${email}`);
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.USERS_BY_EMAIL}/${email}`);
   }
 
   async updateUser(id: string, data: Partial<UserModel>) {
-    return await this.apiConfig.sendRequest("PATCH", `/users/${id}`, data);
+    return await this.apiConfig.sendRequest(HttpMethods.PATCH, `${Endpoints.USERS}/${id}`, data);
   }
 }

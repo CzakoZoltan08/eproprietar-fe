@@ -7,43 +7,46 @@ import {
   TitleCard,
 } from "@/style/announcementDetailStyledComponents";
 
+import { Currency } from "@/constants/currencies.enum";
 import { Flex } from "@/common/flex/Flex";
 import React from "react";
+import { Unit } from "@/constants/units.enum";
+import calculatePricePerSquareMeter from "@/utils/calculatePricePerSquareMeter";
+import formatRooms from "@/utils/formatRooms";
 import { observer } from "mobx-react";
+import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
 
-const TitleCardComponent = () => {
+// Styled Components
+const StyledFlex = styled(Flex)`
+  justify-content: space-between;
+`;
+
+const TitleCardComponent: React.FC = () => {
   const {
     announcementStore: { currentAnnouncement },
   } = useStore();
 
+  if (!currentAnnouncement) return null;
+
+  const { title, price, surface, rooms } = currentAnnouncement;
+
   return (
     <TitleCard>
-      <Title>{currentAnnouncement?.title}</Title>
+      <Title>{title}</Title>
       <Divider />
-      <Flex $justifyContent={"space-between"}>
+      <StyledFlex>
         <Price>
-          {currentAnnouncement?.price} EUR
+          {price} {Currency.EUR}
           <PriceMP>
-            (
-            {currentAnnouncement?.price && currentAnnouncement?.surface
-              ? Math.round(
-                  currentAnnouncement?.price / currentAnnouncement?.surface,
-                )
-              : 0}{" "}
-            EUR/mp)
+            ({calculatePricePerSquareMeter(price, surface)} {Currency.EUR}/{Unit.SQUARE_METER})
           </PriceMP>
         </Price>
         <Subtitle>
-          {currentAnnouncement?.rooms}
-          <span>
-            {Number(currentAnnouncement?.rooms) > 1 ? " camere |" : " camera |"}
-            &nbsp;
-          </span>
-          {currentAnnouncement?.surface}
-          <span>mp</span>
+          {formatRooms(rooms)} | {surface}
+          <span> {Unit.SQUARE_METER}</span>
         </Subtitle>
-      </Flex>
+      </StyledFlex>
     </TitleCard>
   );
 };

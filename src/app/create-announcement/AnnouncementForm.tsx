@@ -243,13 +243,9 @@ const AnnouncementForm = () => {
         }
 
         router.push("/");
-      } else {
-        console.log("user!!!!!!!!!!!!!!!!", user);
       }
     } catch (error) {
-      console.log("error---", error);
       setFormError("Eroare la validări");
-      // toast.error("Eroare la validări");
     } finally {
       setLoading(false);
     }
