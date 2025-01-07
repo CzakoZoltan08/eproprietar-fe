@@ -10,6 +10,7 @@ import {
 
 import { AuthApi } from "@/api/AuthApi";
 import { AuthProvider } from "@/constants/authProviders";
+import { FacebookAuthProvider } from "firebase/auth";
 import { StorageKeys } from "@/constants/storageKeys";
 import { UserApi } from "@/api/UserApi";
 import { UserStore } from "@/store/UserStore";
@@ -114,6 +115,71 @@ export class AuthStore {
       }
     } catch (e) {
       console.log("Error: ", e);
+    }
+  }
+
+  async loginWithFacebook() {
+    const provider = new FacebookAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      // @ts-ignore
+      const token = await result.user?.getIdToken();
+      const firstName = result?.user?.displayName
+        ?.split(" ")
+        .slice(0, -1)
+        .join(" ");
+      const lastName = result?.user?.displayName
+        ?.split(" ")
+        .slice(-1)
+        .join(" ");
+
+      if (token && result.user?.email) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(StorageKeys.token, token);
+        }
+        runInAction(() => {
+          this.accessToken = token;
+        });
+
+        const user = {
+          email: result.user.email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          authProvider: AuthProvider.FACEBOOK,
+          firebaseId: result?.user?.uid,
+        };
+
+        this.userStore.setCurrentUser(user);
+
+        const userByEmail = await this.userApi.getUserByEmail(
+          result.user?.email,
+        );
+
+        if (!userByEmail) {
+          const email = result?.user?.email;
+          const uid = result?.user?.uid;
+
+          // Validate required fields before proceeding
+          if (!email || !uid) {
+            throw new Error("Invalid user data: email and firebaseId are required");
+          }
+
+          const payload: CreateUserModel = {
+            email,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            authProvider: AuthProvider.FACEBOOK,
+            firebaseId: uid,
+          };
+
+          await this.userApi.createUser(payload);
+        }
+      }
+    } catch (e) {
+      console.log("Error: ", e);
+      runInAction(() => {
+        this.errorMessage = "Failed to log in with Facebook.";
+      });
     }
   }
 

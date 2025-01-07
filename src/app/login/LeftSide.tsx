@@ -32,7 +32,7 @@ import validationSchema from "./authValidationSchema";
 
 const LeftSide = () => {
   const {
-    authStore: { loginWithGoogle, signInEmailAndPassword, errorMessage },
+    authStore: { loginWithGoogle, loginWithFacebook, signInEmailAndPassword, errorMessage },
     userStore: { setCurrentUser },
   } = useStore();
 
@@ -166,7 +166,7 @@ const LeftSide = () => {
             }}
           />
           <CommonButton
-            onClick={() => handleLogin(googleAuth)}
+            onClick={() => loginWithFacebook()}
             text={isMobile ? "Facebook" : "Sign in with Facebook"}
             size="large"
             fullWidth
