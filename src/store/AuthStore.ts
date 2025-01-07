@@ -1,6 +1,7 @@
+import { Auth, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import { CreateUserModel, UserModel } from "@/models/userModels";
 import { ErrorMessages, FirebaseErrors } from "@/constants/FirebaseErrors";
-import { GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { makeAutoObservable, runInAction } from "mobx";
 import {
   signInWithEmailAndPassword,
@@ -280,5 +281,69 @@ export class AuthStore {
         });
         console.log("resetPassword error", error);
       });
+  }
+
+  recaptchaVerifier: RecaptchaVerifier | null = null;
+
+  async setupRecaptcha(auth: Auth, containerId: string) {
+    if (!this.recaptchaVerifier) {
+      this.recaptchaVerifier = new RecaptchaVerifier(
+        auth, // Pass the Auth instance here
+        containerId, // Container ID or HTMLElement
+        {
+          size: "invisible", // Options for RecaptchaVerifier
+          callback: (response: any) => {
+            console.log("Recaptcha verified:", response);
+          },
+          "expired-callback": () => {
+            console.error("Recaptcha expired. Please try again.");
+          },
+        }
+      );
+    }
+  }
+
+  async sendPhoneOtp(auth: Auth, phoneNumber: string) {
+    try {
+      if (!this.recaptchaVerifier) {
+        throw new Error("RecaptchaVerifier is not set up.");
+      }
+
+      console.log("Sending OTP to", phoneNumber);
+
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        this.recaptchaVerifier
+      );
+      return confirmationResult;
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      throw error;
+    }
+  }
+
+  async verifyPhoneOtp(confirmationResult: any, verificationCode: string) {
+    try {
+      const userCredential = await confirmationResult.confirm(verificationCode);
+      const token = await userCredential.user.getIdToken();
+
+      if (token && typeof window !== "undefined") {
+        localStorage.setItem(StorageKeys.token, token);
+      }
+
+      const user = {
+        email: userCredential.user.email || null,
+        firstName: userCredential.user.displayName?.split(" ")[0] || null,
+        lastName: userCredential.user.displayName?.split(" ")[1] || null,
+        authProvider: AuthProvider.PHONE,
+        firebaseId: userCredential.user.uid,
+      };
+
+      this.userStore.setCurrentUser(user);
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      throw error;
+    }
   }
 }

@@ -20,6 +20,7 @@ import { InputField } from "@/common/input/InputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import { StorageKeys } from "@/constants/storageKeys";
+import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
 import { googleAuth } from "@/config/firebase";
 import logo from "@/assets/logo.svg";
@@ -32,9 +33,15 @@ import validationSchema from "./authValidationSchema";
 
 const LeftSide = () => {
   const {
-    authStore: { loginWithGoogle, loginWithFacebook, signInEmailAndPassword, errorMessage },
+    authStore: { loginWithGoogle, loginWithFacebook, signInEmailAndPassword, errorMessage, setupRecaptcha, sendPhoneOtp, verifyPhoneOtp },
     userStore: { setCurrentUser },
   } = useStore();
+
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otp, setOtp] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
 
   const router = useRouter();
 
@@ -58,6 +65,41 @@ const LeftSide = () => {
   const handleLogin = async (provider: GoogleAuthProvider) => {
     await loginWithGoogle(provider);
     router.replace("/");
+  };
+
+  const sanitizePhoneNumber = (phone: string): string => {
+    return phone.replace(/\s+/g, "").replace(/[^+\d]/g, "");
+  };
+  
+  const handleSendOtp = async () => {
+    try {
+      setRequestError("");
+  
+      // Sanitize phone number input
+      const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
+  
+      if (!sanitizedPhoneNumber.startsWith("+")) {
+        throw new Error("Phone number must include the country code (e.g., +40).");
+      }
+  
+      await setupRecaptcha(auth, "recaptcha-container");
+      const result = await sendPhoneOtp(auth, sanitizedPhoneNumber);
+      setConfirmationResult(result);
+      setIsOtpSent(true);
+    } catch (error: any) {
+      console.error("Error sending OTP:", error);
+      setRequestError(error.message || "Failed to send OTP. Please try again.");
+    }
+  };
+  
+  const handleVerifyOtp = async () => {
+    try {
+      if (!confirmationResult) throw new Error("No OTP confirmation result found.");
+      await verifyPhoneOtp(confirmationResult, otp);
+      router.replace("/");
+    } catch (error) {
+      setRequestError("Failed to verify OTP. Please try again.");
+    }
   };
 
   const onSubmit = async () => {
@@ -174,6 +216,36 @@ const LeftSide = () => {
             sx={{ whiteSpace: "nowrap" }}
           />
         </Box>
+
+        <Divider>or</Divider>
+        <Box display="flex" flexDirection="column" gap={2}>
+          {!isOtpSent ? (
+            <>
+              <InputField
+                label="Phone Number"
+                name="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+1XXXXXXXXXX"
+              />
+              <PrimaryButton onClick={handleSendOtp} text="Send OTP" />
+            </>
+          ) : (
+            <>
+              <InputField
+                label="Enter OTP"
+                name="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="6-digit code"
+              />
+              <PrimaryButton onClick={handleVerifyOtp} text="Verify OTP" />
+            </>
+          )}
+        </Box>
+
+        <div id="recaptcha-container"></div>  
+
       </Box>
     </Container>
   );
