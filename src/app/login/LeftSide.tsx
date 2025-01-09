@@ -20,6 +20,7 @@ import { InputField } from "@/common/input/InputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import { StorageKeys } from "@/constants/storageKeys";
+import YahooIcon from "@mui/icons-material/Mail";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
 import { googleAuth } from "@/config/firebase";
@@ -33,7 +34,7 @@ import validationSchema from "./authValidationSchema";
 
 const LeftSide = () => {
   const {
-    authStore: { loginWithGoogle, loginWithFacebook, signInEmailAndPassword, errorMessage, setupRecaptcha, sendPhoneOtp, verifyPhoneOtp },
+    authStore: { loginWithGoogle, loginWithFacebook, loginWithYahoo, signInEmailAndPassword, errorMessage, setupRecaptcha, sendPhoneOtp, verifyPhoneOtp },
     userStore: { setCurrentUser },
   } = useStore();
 
@@ -193,7 +194,8 @@ const LeftSide = () => {
   
         <Divider>or</Divider>
   
-        <Box display="flex" justifyContent="space-between">
+        <Box display="flex" flexDirection="column" gap={2}>
+          {/* Google Button */}
           <CommonButton
             onClick={() => handleLogin(googleAuth)}
             text={isMobile ? "Google" : "Sign in with Google"}
@@ -207,17 +209,42 @@ const LeftSide = () => {
               },
             }}
           />
+
+          {/* Facebook Button */}
           <CommonButton
             onClick={() => loginWithFacebook()}
             text={isMobile ? "Facebook" : "Sign in with Facebook"}
             size="large"
             fullWidth
             startIcon={<FacebookIcon />}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              whiteSpace: "nowrap",
+              backgroundColor: "#3b5998", // Facebook's blue
+              "&:hover": {
+                backgroundColor: "#2d4373", // Darker shade of Facebook's blue
+              },
+            }}
+          />
+
+          {/* Yahoo Button */}
+          <CommonButton
+            onClick={() => loginWithYahoo()}
+            text={isMobile ? "Yahoo" : "Sign in with Yahoo"}
+            size="large"
+            fullWidth
+            startIcon={<YahooIcon />}
+            sx={{
+              whiteSpace: "nowrap",
+              backgroundColor: "#6001D2", // Yahoo's purple
+              "&:hover": {
+                backgroundColor: "#4b0091", // Darker shade of Yahoo's purple
+              },
+            }}
           />
         </Box>
 
         <Divider>or</Divider>
+
         <Box display="flex" flexDirection="column" gap={2}>
           {!isOtpSent ? (
             <>
@@ -228,7 +255,9 @@ const LeftSide = () => {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="+1XXXXXXXXXX"
               />
-              <PrimaryButton onClick={handleSendOtp} text="Send OTP" />
+              <Box>
+                <PrimaryButton onClick={handleSendOtp} text="Trimite cod SMS pentru verificare" size="large" />
+              </Box>
             </>
           ) : (
             <>
@@ -239,7 +268,9 @@ const LeftSide = () => {
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="6-digit code"
               />
-              <PrimaryButton onClick={handleVerifyOtp} text="Verify OTP" />
+              <Box>
+                <PrimaryButton onClick={handleVerifyOtp} text="Confirmă codul de verificare" size="large" />
+              </Box>
             </>
           )}
         </Box>

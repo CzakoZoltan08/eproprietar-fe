@@ -1,4 +1,4 @@
-import { Auth, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
+import { Auth, GoogleAuthProvider, OAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import { CreateUserModel, UserModel } from "@/models/userModels";
 import { ErrorMessages, FirebaseErrors } from "@/constants/FirebaseErrors";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
@@ -180,6 +180,58 @@ export class AuthStore {
       console.log("Error: ", e);
       runInAction(() => {
         this.errorMessage = "Failed to log in with Facebook.";
+      });
+    }
+  }
+
+  async loginWithYahoo() {
+    const yahooProvider = new OAuthProvider("yahoo.com");
+
+    try {
+      // Sign in with Yahoo
+      const result = await signInWithPopup(auth, yahooProvider);
+
+      // Get the OAuth token and user details
+      const token = await result.user?.getIdToken();
+      const firstName = result.user?.displayName?.split(" ").slice(0, -1).join(" ");
+      const lastName = result.user?.displayName?.split(" ").slice(-1).join(" ");
+
+      if (token && result.user?.email) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(StorageKeys.token, token);
+        }
+        runInAction(() => {
+          this.accessToken = token;
+        });
+
+        const user = {
+          email: result.user.email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          authProvider: AuthProvider.YAHOO,
+          firebaseId: result.user.uid,
+        };
+
+        this.userStore.setCurrentUser(user);
+
+        const userByEmail = await this.userApi.getUserByEmail(result.user.email);
+
+        if (!userByEmail) {
+          const payload: CreateUserModel = {
+            email: result.user.email,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            authProvider: AuthProvider.YAHOO,
+            firebaseId: result.user.uid,
+          };
+
+          await this.userApi.createUser(payload);
+        }
+      }
+    } catch (error) {
+      console.error("Error logging in with Yahoo:", error);
+      runInAction(() => {
+        this.errorMessage = "Failed to log in with Yahoo.";
       });
     }
   }
