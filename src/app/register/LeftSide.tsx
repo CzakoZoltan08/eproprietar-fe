@@ -1,26 +1,19 @@
 "use client";
 
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, FormHelperText, Tooltip, Typography } from "@mui/material";
+import { ChangeEvent, useEffect, useState } from "react";
+
 import {
-  COLOR_RED_BUTTON,
-  COLOR_RED_BUTTON_HOVER,
   COLOR_WHITE,
 } from "@/constants/colors";
-import { ChangeEvent, useEffect, useState } from "react";
-import { FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
-
-import { CommonButton } from "../../common/button/CommonButton";
 import { Container } from "@/style/authStyledComponents";
 import { ErrorText } from "../../style/formStyledComponents";
-import GoogleIcon from "@mui/icons-material/Google";
 import Image from "next/image";
 import { InputField } from "@/common/input/InputField";
-import Joi from "joi";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import TextField from "@mui/material/TextField";
 import { generalValidation } from "@/utils/generalValidation";
-import { googleAuth } from "@/config/firebase";
 import logo from "@/assets/logo.svg";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
@@ -37,12 +30,11 @@ const INITIAL_DATA = {
 
 const LeftSide = () => {
   const {
-    appState: { authApi },
-    authStore: { loginWithGoogle },
+    authStore: { registerWithEmailAndPassword },
   } = useStore();
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [formErrors, setFormErrors] = useState(INITIAL_DATA);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, setIsSubmitting] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [isRegisterWithEmail, setIsRegisterWithEmail] = useState(false);
 
@@ -73,15 +65,11 @@ const LeftSide = () => {
     });
   };
 
-  const googleLogin = async (provider: GoogleAuthProvider) => {
-    await loginWithGoogle(provider, true);
-    router.replace("/");
-  };
-
   const onSubmit = async () => {
-    setIsSubmitting(true);
-    setRequestError("");
-
+    setIsSubmitting(true); // Show loading state
+    setRequestError(""); // Clear previous errors
+  
+    // Validate form data
     const errors = generalValidation(validationSchema, formData);
     if (errors && typeof errors === "object") {
       setFormErrors({
@@ -91,20 +79,49 @@ const LeftSide = () => {
         firstName: errors.firstName || "",
         lastName: errors.lastName || "",
       });
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Stop loading state
       return;
     }
-
+  
     try {
-      await authApi.register(formData);
-      setIsSubmitting(false);
+      // Call the registration logic
+      await registerWithEmailAndPassword(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
+  
+      setIsSubmitting(false); // Stop loading state
+  
+      // Redirect user to login page after successful registration
       router.replace("/login");
-    } catch (e: any) {
-      setIsSubmitting(false);
-      const errorMessage = e?.response?.data?.message || "Request Error";
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      setIsSubmitting(false); // Stop loading state
+  
+      // Set error message based on response or fallback to a default message
+      const errorMessage = error?.message || "An error occurred during registration.";
       setRequestError(errorMessage);
     }
   };
+
+  const CustomHelperText = ({ text }: { text: string }) => (
+    <Tooltip title={text} arrow>
+      <FormHelperText
+        component="span"
+        sx={{
+          display: "inline-block", // Enables ellipsis
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          width: "300px",
+        }}
+      >
+        {text}
+      </FormHelperText>
+    </Tooltip>
+  );
 
   return (
     <Container sx={{ background: isMobile ? COLOR_WHITE : "unset" }}>
@@ -113,20 +130,6 @@ const LeftSide = () => {
       )}
       <Typography variant="h4">Register</Typography>
       <Box display="flex" flexDirection="column" gap={2}>
-        <CommonButton
-          onClick={() => googleLogin(googleAuth)}
-          text={isMobile ? "Google" : "Sign in with Google"}
-          size="large"
-          fullWidth
-          startIcon={<GoogleIcon />}
-          sx={{
-            backgroundColor: COLOR_RED_BUTTON,
-            "&:hover": { backgroundColor: COLOR_RED_BUTTON_HOVER },
-          }}
-        />
-        <Divider>
-          <Typography sx={{ color: "rgba(0, 0, 0, 0.12)" }}>or</Typography>
-        </Divider>
         <Box
           display="flex"
           sx={{
@@ -143,7 +146,7 @@ const LeftSide = () => {
             value={formData.email}
             onChange={handleInputChange}
             error={!!formErrors.email}
-            helperText={formErrors.email}
+            helperText={<CustomHelperText text={formErrors.email || " "} />}
             placeholder="Enter email"
           />
           {isRegisterWithEmail && (
@@ -153,7 +156,7 @@ const LeftSide = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                helperText={formErrors.password}
+                helperText={<CustomHelperText text={formErrors.password || " "} />}
                 type="password"
               />
               <InputField
@@ -161,7 +164,7 @@ const LeftSide = () => {
                 name="passwordConfirm"
                 value={formData.passwordConfirm}
                 onChange={handleInputChange}
-                helperText={formErrors.passwordConfirm}
+                helperText={<CustomHelperText text={formErrors.passwordConfirm || " "} />}
                 type="password"
               />
               <TextField
@@ -171,7 +174,7 @@ const LeftSide = () => {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 error={!!formErrors.firstName}
-                helperText={formErrors.firstName}
+                helperText={<CustomHelperText text={formErrors.firstName || " "} />}
                 placeholder="Enter first name"
               />
               <TextField
@@ -181,7 +184,7 @@ const LeftSide = () => {
                 value={formData.lastName}
                 onChange={handleInputChange}
                 error={!!formErrors.lastName}
-                helperText={formErrors.lastName}
+                helperText={<CustomHelperText text={formErrors.lastName || " "} />}
                 placeholder="Enter last name"
               />
               {requestError && <ErrorText>{requestError}</ErrorText>}

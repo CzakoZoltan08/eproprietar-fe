@@ -1,4 +1,4 @@
-import { Auth, GoogleAuthProvider, OAuthProvider, sendPasswordResetEmail } from "firebase/auth";
+import { Auth, GoogleAuthProvider, OAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from "firebase/auth";
 import { CreateUserModel, UserModel } from "@/models/userModels";
 import { ErrorMessages, FirebaseErrors } from "@/constants/FirebaseErrors";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
@@ -56,6 +56,65 @@ export class AuthStore {
       invalidEmailAddress: false,
       wrongPassword: false,
     };
+  }
+
+  async registerWithEmailAndPassword(email: string, password: string, firstName: string, lastName: string) {
+    this.errorMessage = ""; // Clear previous errors
+    this.resetErrors(); // Reset specific error flags
+  
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
+      // Optionally, update the user's display name
+      await updateProfile(user, {
+        displayName: `${firstName} ${lastName}`,
+      });
+  
+      const token = await user.getIdToken();
+  
+      if (token && typeof window !== "undefined") {
+        localStorage.setItem(StorageKeys.token, token); // Save token locally
+      }
+  
+      // Set authenticated user data
+      const userModel: CreateUserModel = {
+        email: user.email || "",
+        firstName,
+        lastName,
+        firebaseId: user.uid,
+        authProvider: AuthProvider.EMAIL, // Set the auth provider
+      };
+  
+      // Save the user to the backend if needed
+      await this.userApi.createUser(userModel);
+  
+      runInAction(() => {
+        this.userStore.setCurrentUser(userModel);
+        this.accessToken = token;
+      });
+  
+      console.log("User successfully registered!");
+    } catch (error: any) {
+      console.error("Registration failed:", error);
+  
+      runInAction(() => {
+        this.loading = false;
+  
+        // Map Firebase errors to user-friendly messages
+        if (error.code === FirebaseErrors.EmailAlreadyInUse) {
+          this.errors.emailAlreadyInUse = true;
+          this.errorMessage = ErrorMessages.EmailAlreadyInUse;
+        } else if (error.code === FirebaseErrors.InvalidEmail) {
+          this.errors.invalidEmailAddress = true;
+          this.errorMessage = ErrorMessages.InvalidEmailAddress;
+        } else {
+          this.errorMessage = "An unexpected error occurred during registration.";
+        }
+      });
+  
+      throw new Error(this.errorMessage); // Throw error for the component to catch
+    }
   }
 
   async loginWithGoogle(provider: GoogleAuthProvider, doRegister = true) {
@@ -237,55 +296,55 @@ export class AuthStore {
   }
 
   async signInEmailAndPassword(email: string, password: string) {
-    this.errorMessage = "";
-
-    const userByEmail = await this.userApi.getUserByEmail(email);
-    console.log("userByEmail", userByEmail);
-
-    if (!userByEmail) {
+    this.errorMessage = ""; // Reset error message
+    this.resetErrors(); // Reset specific error flags
+  
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const token = await user.getIdToken();
+  
+      if (token && typeof window !== "undefined") {
+        localStorage.setItem(StorageKeys.token, token); // Save token locally
+      }
+  
+      // Set authenticated user data
+      const userModel: UserModel = {
+        firstName: user.displayName?.split(" ")[0] || "",
+        lastName: user.displayName?.split(" ")[1] || "",
+        firebaseId: user.uid,
+        email: user.email || "",
+      };
+  
       runInAction(() => {
-        this.errors.wrongPassword = true;
-        this.errorMessage = ErrorMessages.UserNotFound;
+        this.userStore.setCurrentUser(userModel);
+        this.accessToken = token;
       });
-      return;
-    }
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        console.log("auth.currentUser", auth.currentUser);
-        if (auth.currentUser) {
-          const userModel: UserModel = {
-            firstName: auth.currentUser.displayName?.split(' ')[0] || '',
-            lastName: auth.currentUser.displayName?.split(' ')[1] || '',
-            firebaseId: auth.currentUser.uid,
-            email: auth.currentUser.email || '',
-          };
-          this.userStore.setCurrentUser(userModel);
+  
+      console.log("User successfully logged in!");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+  
+      runInAction(() => {
+        this.loading = false;
+  
+        // Map Firebase errors to user-friendly messages
+        if (error.code === FirebaseErrors.InvalidEmail) {
+          this.errors.invalidEmailAddress = true;
+          this.errorMessage = ErrorMessages.InvalidEmailAddress;
+        } else if (error.code === FirebaseErrors.WrongPassword) {
+          this.errors.wrongPassword = true;
+          this.errorMessage = ErrorMessages.WrongPassword;
+        } else if (error.code === FirebaseErrors.UserNotFound) {
+          this.errors.wrongPassword = true;
+          this.errorMessage = ErrorMessages.UserNotFound;
         } else {
-            console.warn("No current user available");
+          this.errorMessage = "An unexpected error occurred.";
         }
-        this.resetErrors();
-      })
-      .catch((error: { code: string }) => {
-        runInAction(() => {
-          this.loading = false;
-
-          if (error.code === FirebaseErrors.InvalidEmail) {
-            this.errors.invalidEmailAddress = true;
-            this.errorMessage = ErrorMessages.InvalidEmailAddress;
-          }
-
-          if (error.code === FirebaseErrors.WrongPassword) {
-            this.errors.wrongPassword = true;
-            this.errorMessage = ErrorMessages.WrongPassword;
-          }
-
-          if (error.code === FirebaseErrors.UserNotFound) {
-            this.errors.wrongPassword = true;
-            this.errorMessage = ErrorMessages.UserNotFound;
-          }
-        });
       });
+  
+      throw new Error(this.errorMessage); // Throw error for the component to catch
+    }
   }
 
   async logout() {

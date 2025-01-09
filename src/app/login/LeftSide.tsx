@@ -105,33 +105,44 @@ const LeftSide = () => {
 
   const onSubmit = async () => {
     setFormErrors({ email: "", password: "" });
-
+  
+    // Validate form data
     const errors = generalValidation(validationSchema, formData);
-
     if (errors && typeof errors === "object") {
       setFormErrors((prev) => ({ ...prev, ...errors }));
       return;
     }
-
+  
     try {
       setIsLoading(true);
+      setRequestError("");
+  
       await signInEmailAndPassword(formData.email, formData.password);
-
+  
+      // Use Firebase onAuthStateChanged to confirm login success before redirect
       const auth = getAuth();
-      onAuthStateChanged(auth, async (user: any) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
           const token = await getIdToken(user);
           if (token && typeof window !== "undefined") {
             localStorage.setItem(StorageKeys.token, token);
           }
-          setCurrentUser(user);
-          setIsLoading(false);
-          router.replace("/");
+          const userModel = {
+            firstName: user.displayName?.split(" ")[0] || "",
+            lastName: user.displayName?.split(" ")[1] || "",
+            firebaseId: user.uid,
+            email: user.email || "",
+          };
+          setCurrentUser(userModel); // Update the global user state
+          setIsLoading(false); // Hide loading indicator
+          unsubscribe(); // Unsubscribe from the auth state listener
+          router.replace("/"); // Redirect to the homepage
         }
       });
-    } catch {
-      setIsLoading(false);
-      setRequestError("Email or password is incorrect!");
+    } catch (error) {
+      console.error("Login failed:", error);
+      setIsLoading(false); // Hide loading indicator
+      setRequestError("Email or password is incorrect!"); // Show error to the user
     }
   };
 
@@ -166,6 +177,7 @@ const LeftSide = () => {
             helperText={formErrors.password}
             type="password"
           />
+          <PrimaryButton onClick={onSubmit} text="Log in" size="large" />
           {(requestError || errorMessage) && (
             <ErrorText>{requestError || errorMessage}</ErrorText>
           )}
