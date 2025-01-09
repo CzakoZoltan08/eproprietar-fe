@@ -1,6 +1,7 @@
-import { sendPasswordResetEmail } from "firebase/auth";
+import { OAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import { makeAutoObservable, runInAction } from "mobx";
 import {
+  signInWithPopup,
   signOut,
 } from "firebase/auth";
 
@@ -11,7 +12,7 @@ import { UserStore } from "@/store/UserStore";
 import { auth } from "@/config/firebase";
 import autoBind from "auto-bind";
 
-export class AuthStore {
+export class SessionStore {
   authApi: AuthApi;
   userApi: UserApi;
   userStore: UserStore;

@@ -4,7 +4,6 @@ import { Box, Divider, Typography } from "@mui/material";
 import { COLOR_RED_BUTTON, COLOR_RED_BUTTON_HOVER } from "@/constants/colors";
 import { ChangeEvent, useState } from "react";
 import {
-  GoogleAuthProvider,
   getAuth,
   getIdToken,
   onAuthStateChanged,
@@ -23,7 +22,6 @@ import { StorageKeys } from "@/constants/storageKeys";
 import YahooIcon from "@mui/icons-material/Mail";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
-import { googleAuth } from "@/config/firebase";
 import logo from "@/assets/logo.svg";
 import { observer } from "mobx-react";
 import styles from "./LeftSide.module.css";
@@ -31,10 +29,18 @@ import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 import validationSchema from "./authValidationSchema";
+import AuthContainer from "./AuthContainer";
+import SocialLoginButtons from "./SocialLoginButtons";
+import OtpVerification from "./OtpVerification";
+import LoginForm from "./LoginForm";
 
 const LeftSide = () => {
   const {
-    authStore: { loginWithGoogle, loginWithFacebook, loginWithYahoo, signInEmailAndPassword, errorMessage, setupRecaptcha, sendPhoneOtp, verifyPhoneOtp },
+    emailAuthStore: { loginWithEmailAndPassword, errorMessage },
+    phoneAuthStore: { setupRecaptcha, sendOtp, verifyPhoneOtp },
+    googleAuthStore: { loginWithGoogle },
+    facebookAuthStore: { loginWithFacebook },
+    yahooAuthStore: { loginWithYahoo },
     userStore: { setCurrentUser },
   } = useStore();
 
@@ -63,8 +69,8 @@ const LeftSide = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = async (provider: GoogleAuthProvider) => {
-    await loginWithGoogle(provider);
+  const handleLogin = async () => {
+    await loginWithGoogle();
     router.replace("/");
   };
 
@@ -84,7 +90,7 @@ const LeftSide = () => {
       }
   
       await setupRecaptcha(auth, "recaptcha-container");
-      const result = await sendPhoneOtp(auth, sanitizedPhoneNumber);
+      const result = await sendOtp(auth, sanitizedPhoneNumber);
       setConfirmationResult(result);
       setIsOtpSent(true);
     } catch (error: any) {
@@ -117,7 +123,7 @@ const LeftSide = () => {
       setIsLoading(true);
       setRequestError("");
   
-      await signInEmailAndPassword(formData.email, formData.password);
+      await loginWithEmailAndPassword(formData.email, formData.password);
   
       // Use Firebase onAuthStateChanged to confirm login success before redirect
       const auth = getAuth();
@@ -148,149 +154,47 @@ const LeftSide = () => {
 
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
+  const containerStyle: React.CSSProperties = {
+    display: "flex", // Use flexbox
+    flexDirection: "column", // Stack items vertically
+    justifyContent: "center", // Center items vertically
+    alignItems: "center", // Center items horizontally
+    height: "100%", // Ensure the container spans the full height of its parent
+    maxWidth: "480px", // Limit width for desktop
+    width: "100%", // Full width on smaller screens
+    margin: "0 auto", // Center horizontally in its parent
+    backgroundColor: "var(--color-white)", // Set background color
+    borderRadius: "8px", // Add rounded corners
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Optional shadow for desktop
+  };
+
   return (
-    <Container
-      className={isMobile ? styles.container : styles["container-desktop"]}
-    >
-      {isMobile && (
-        <Image src={logo} alt="eproprietar" width={152} style={{ marginTop: "32px" }} />
-      )}
-  
-      <Typography variant="h4" className={styles.title}>
-        Log in
-      </Typography>
-  
-      <Box className={styles["form-container"]}>
-        <Box className={styles["input-field-container"]}>
-          <InputField
-            label="Email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            helperText={formErrors.email}
-          />
-          <InputField
-            label="Password"
-            name="password"
-            value={formData.password}
-            onChange={onChange}
-            helperText={formErrors.password}
-            type="password"
-          />
-          <PrimaryButton onClick={onSubmit} text="Log in" size="large" />
-          {(requestError || errorMessage) && (
-            <ErrorText>{requestError || errorMessage}</ErrorText>
-          )}
-        </Box>
-  
-        <Box display="flex" justifyContent="space-between" width="100%">
-          <Typography
-            variant="subtitle1"
-            className={styles.link}
-            onClick={() => router.push("/forgot-password")}
-          >
-            Forgot Password
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            className={styles.link}
-            onClick={() => router.push("/register")}
-          >
-            Register
-          </Typography>
-        </Box>
-  
-        <Box>
-          <PrimaryButton onClick={onSubmit} text="Log in" size="large" />
-        </Box>
-  
-        <Divider>or</Divider>
-  
-        <Box display="flex" flexDirection="column" gap={2}>
-          {/* Google Button */}
-          <CommonButton
-            onClick={() => handleLogin(googleAuth)}
-            text={isMobile ? "Google" : "Sign in with Google"}
-            size="large"
-            fullWidth
-            startIcon={<GoogleIcon />}
-            sx={{
-              backgroundColor: COLOR_RED_BUTTON,
-              "&:hover": {
-                backgroundColor: COLOR_RED_BUTTON_HOVER,
-              },
-            }}
-          />
-
-          {/* Facebook Button */}
-          <CommonButton
-            onClick={() => loginWithFacebook()}
-            text={isMobile ? "Facebook" : "Sign in with Facebook"}
-            size="large"
-            fullWidth
-            startIcon={<FacebookIcon />}
-            sx={{
-              whiteSpace: "nowrap",
-              backgroundColor: "#3b5998", // Facebook's blue
-              "&:hover": {
-                backgroundColor: "#2d4373", // Darker shade of Facebook's blue
-              },
-            }}
-          />
-
-          {/* Yahoo Button */}
-          <CommonButton
-            onClick={() => loginWithYahoo()}
-            text={isMobile ? "Yahoo" : "Sign in with Yahoo"}
-            size="large"
-            fullWidth
-            startIcon={<YahooIcon />}
-            sx={{
-              whiteSpace: "nowrap",
-              backgroundColor: "#6001D2", // Yahoo's purple
-              "&:hover": {
-                backgroundColor: "#4b0091", // Darker shade of Yahoo's purple
-              },
-            }}
-          />
-        </Box>
-
-        <Divider>or</Divider>
-
-        <Box display="flex" flexDirection="column" gap={2}>
-          {!isOtpSent ? (
-            <>
-              <InputField
-                label="Phone Number"
-                name="phoneNumber"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+1XXXXXXXXXX"
-              />
-              <Box>
-                <PrimaryButton onClick={handleSendOtp} text="Trimite cod SMS pentru verificare" size="large" />
-              </Box>
-            </>
-          ) : (
-            <>
-              <InputField
-                label="Enter OTP"
-                name="otp"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="6-digit code"
-              />
-              <Box>
-                <PrimaryButton onClick={handleVerifyOtp} text="Confirmă codul de verificare" size="large" />
-              </Box>
-            </>
-          )}
-        </Box>
-
-        <div id="recaptcha-container"></div>  
-
-      </Box>
-    </Container>
+    <div style={containerStyle}>
+      <AuthContainer>
+        <LoginForm
+          formData={formData}
+          formErrors={formErrors}
+          requestError={requestError || errorMessage}
+          onChange={onChange}
+          onSubmit={onSubmit}
+        />
+        <SocialLoginButtons
+          handleGoogleLogin={loginWithGoogle}
+          handleFacebookLogin={loginWithFacebook}
+          handleYahooLogin={loginWithYahoo}
+          isMobile={isMobile}
+        />
+        <OtpVerification
+          isOtpSent={isOtpSent}
+          phoneNumber={phoneNumber}
+          otp={otp}
+          onPhoneNumberChange={setPhoneNumber}
+          onOtpChange={setOtp}
+          handleSendOtp={handleSendOtp}
+          handleVerifyOtp={handleVerifyOtp}
+        />
+      </AuthContainer>
+    </div>
   );
 };
 

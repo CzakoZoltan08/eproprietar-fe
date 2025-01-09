@@ -30,7 +30,7 @@ const INITIAL_DATA = {
 
 const LeftSide = () => {
   const {
-    authStore: { registerWithEmailAndPassword },
+    emailAuthStore: { register },
   } = useStore();
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [formErrors, setFormErrors] = useState(INITIAL_DATA);
@@ -85,7 +85,7 @@ const LeftSide = () => {
   
     try {
       // Call the registration logic
-      await registerWithEmailAndPassword(
+      await register(
         formData.email,
         formData.password,
         formData.firstName,
