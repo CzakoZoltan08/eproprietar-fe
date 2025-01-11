@@ -1,11 +1,12 @@
 import { FacebookAuthProvider, OAuthProvider, signInWithPopup } from "firebase/auth";
-import { runInAction, makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
+
+import { AuthProvider } from "@/constants/authProviders";
+import { StorageKeys } from "@/constants/storageKeys";
 import { UserApi } from "@/api/UserApi";
 import { UserStore } from "@/store/UserStore";
-import { StorageKeys } from "@/constants/storageKeys";
-import autoBind from "auto-bind";
 import { auth } from "@/config/firebase";
-import { AuthProvider } from "@/constants/authProviders";
+import autoBind from "auto-bind";
 
 export class YahooAuthStore {
   userApi: UserApi;
@@ -41,9 +42,11 @@ export class YahooAuthStore {
         this.userStore.setCurrentUser(userModel);
       });
 
-      const userByEmail = result.user.email ? await this.userApi.getUserByEmail(result.user.email) : null;
-      if (!userByEmail) {
-        await this.userApi.createUser(userModel);
+      if(result.user.email) {
+        const userByEmail = await this.userApi.getUserByEmail(result.user.email);
+        if (!userByEmail) {
+          await this.userApi.createUser(userModel);
+        }
       }
     } catch (error) {
       console.error("Yahoo login failed:", error);

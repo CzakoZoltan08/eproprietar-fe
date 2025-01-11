@@ -140,14 +140,13 @@ const LeftSide = () => {
     display: "flex", // Use flexbox
     flexDirection: "column", // Stack items vertically
     justifyContent: "center", // Center items vertically
-    alignItems: "center", // Center items horizontally
+    alignItems: isMobile ? "center" : "normal", // Center items horizontally
     height: "100%", // Ensure the container spans the full height of its parent
     maxWidth: "480px", // Limit width for desktop
     width: "100%", // Full width on smaller screens
     margin: "0 auto", // Center horizontally in its parent
     backgroundColor: "var(--color-white)", // Set background color
     borderRadius: "8px", // Add rounded corners
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Optional shadow for desktop
   };
 
   return (
