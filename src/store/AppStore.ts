@@ -1,15 +1,16 @@
+import { FacebookAuthProvider, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
+
 import { AnnouncementStore } from "@/store/AnnouncementStore";
 import { AppState } from "@/store/AppState";
+import { AuthProvider } from "@/constants/authProviders";
 import { AuthStore } from "@/store/AuthStore";
 import { EmailAuthStore } from "./EmailAuthStore";
+import { FacebookAuthStore } from "./FacebookAuthStore";
 import { GoogleAuthStore } from "./GoogleAuthStore";
 import { PhoneAuthStore } from "./PhoneAuthStore";
 import { UserStore } from "@/store/UserStore";
-import { configure } from "mobx";
-import { FacebookAuthProvider, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
-import { FacebookAuthStore } from "./FacebookAuthStore";
 import { YahooAuthStore } from "./YahooAuthStore";
-import { AuthProvider } from "@/constants/authProviders";
+import { configure } from "mobx";
 
 configure({ enforceActions: "observed" });
 

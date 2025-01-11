@@ -7,7 +7,6 @@ import { UserApi } from "@/api/UserApi";
 import { UserStore } from "@/store/UserStore";
 import { auth } from "@/config/firebase";
 import autoBind from "auto-bind";
-import { useNavigate } from "react-router-dom";
 
 export class GoogleAuthStore {
   userApi: UserApi;
@@ -47,9 +46,6 @@ export class GoogleAuthStore {
       if (!userByEmail) {
         await this.userApi.createUser(userModel);
       }
-
-      const navigate = useNavigate();
-      navigate("/");
     } catch (error) {
       console.error("Google login failed:", error);
       throw error;

@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
 import { Box, Divider } from "@mui/material";
+
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { CommonButton } from "@/common/button/CommonButton";
-import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
+import GoogleIcon from "@mui/icons-material/Google";
+import React from "react";
 import YahooIcon from "@mui/icons-material/Mail";
 
 const buttonStyles = {
@@ -33,18 +35,29 @@ const SocialLoginButtons = ({
   handleFacebookLogin,
   handleYahooLogin,
   isMobile,
+  router
 }: {
-  handleGoogleLogin: () => void;
-  handleFacebookLogin: () => void;
-  handleYahooLogin: () => void;
+  handleGoogleLogin: () => Promise<void>;
+  handleFacebookLogin: () => Promise<void>;
+  handleYahooLogin: () => Promise<void>;
   isMobile: boolean;
+  router: AppRouterInstance;
 }) => {
+  const handleSocialLogin = async (loginFn: () => Promise<void>, redirectPath: string) => {
+    try {
+      await loginFn();
+      router.replace(redirectPath); // Use the router here
+    } catch (error) {
+      console.error("Social login failed:", error);
+    }
+  };
+
   return (
     <Box>
       <Divider>or</Divider>
       <Box display="flex" flexDirection="column" gap={2} sx={{ marginTop: 2 , marginBottom: 2}}>
         <CommonButton
-          onClick={handleGoogleLogin}
+          onClick={() => handleSocialLogin(handleGoogleLogin, "/")}
           text={isMobile ? "Google" : "Sign in with Google"}
           size="large"
           fullWidth
@@ -52,7 +65,7 @@ const SocialLoginButtons = ({
           sx={buttonStyles.google}
         />
         <CommonButton
-          onClick={handleFacebookLogin}
+          onClick={() => handleSocialLogin(handleFacebookLogin, "/")}
           text={isMobile ? "Facebook" : "Sign in with Facebook"}
           size="large"
           fullWidth
@@ -60,7 +73,7 @@ const SocialLoginButtons = ({
           sx={buttonStyles.facebook}
         />
         <CommonButton
-          onClick={handleYahooLogin}
+          onClick={() => handleSocialLogin(handleYahooLogin, "/")}
           text={isMobile ? "Yahoo" : "Sign in with Yahoo"}
           size="large"
           fullWidth

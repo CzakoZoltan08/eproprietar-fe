@@ -1,7 +1,5 @@
 "use client";
 
-import { Box, Divider, Typography } from "@mui/material";
-import { COLOR_RED_BUTTON, COLOR_RED_BUTTON_HOVER } from "@/constants/colors";
 import { ChangeEvent, useState } from "react";
 import {
   getAuth,
@@ -9,30 +7,19 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 
-import { CommonButton } from "@/common/button/CommonButton";
-import { Container } from "@/style/authStyledComponents";
-import { ErrorText } from "@/style/formStyledComponents";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import GoogleIcon from "@mui/icons-material/Google";
-import Image from "next/image";
-import { InputField } from "@/common/input/InputField";
-import { PrimaryButton } from "@/common/button/PrimaryButton";
+import AuthContainer from "./AuthContainer";
+import LoginForm from "./LoginForm";
+import OtpVerification from "./OtpVerification";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import SocialLoginButtons from "./SocialLoginButtons";
 import { StorageKeys } from "@/constants/storageKeys";
-import YahooIcon from "@mui/icons-material/Mail";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
-import logo from "@/assets/logo.svg";
 import { observer } from "mobx-react";
-import styles from "./LeftSide.module.css";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 import validationSchema from "./authValidationSchema";
-import AuthContainer from "./AuthContainer";
-import SocialLoginButtons from "./SocialLoginButtons";
-import OtpVerification from "./OtpVerification";
-import LoginForm from "./LoginForm";
 
 const LeftSide = () => {
   const {
@@ -67,11 +54,6 @@ const LeftSide = () => {
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleLogin = async () => {
-    await loginWithGoogle();
-    router.replace("/");
   };
 
   const sanitizePhoneNumber = (phone: string): string => {
@@ -182,7 +164,8 @@ const LeftSide = () => {
           handleGoogleLogin={loginWithGoogle}
           handleFacebookLogin={loginWithFacebook}
           handleYahooLogin={loginWithYahoo}
-          isMobile={isMobile}
+          isMobile={isMobile} 
+          router={router}        
         />
         <OtpVerification
           isOtpSent={isOtpSent}
