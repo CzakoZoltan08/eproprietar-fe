@@ -29,6 +29,7 @@
     "react-hot-toast": "^2.4.1",
     "react-phone-input-2": "^2.15.1",
     "react-responsive": "^10.0.0",
+    "react-router-dom": "^7.1.1",
     "react-toast-notifications": "^2.5.1",
     "styled-components": "^6.1.13"
   },
