@@ -163,8 +163,7 @@ const LeftSide = () => {
           handleGoogleLogin={loginWithGoogle}
           handleFacebookLogin={loginWithFacebook}
           handleYahooLogin={loginWithYahoo}
-          isMobile={isMobile} 
-          router={router}        
+          isMobile={isMobile}
         />
         <OtpVerification
           isOtpSent={isOtpSent}

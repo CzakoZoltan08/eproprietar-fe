@@ -2,12 +2,12 @@
 
 import { Box, Divider } from "@mui/material";
 
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { CommonButton } from "@/common/button/CommonButton";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import GoogleIcon from "@mui/icons-material/Google";
 import React from "react";
 import YahooIcon from "@mui/icons-material/Mail";
+import { useRouter } from "next/navigation";
 
 const buttonStyles = {
   google: {
@@ -35,18 +35,18 @@ const SocialLoginButtons = ({
   handleFacebookLogin,
   handleYahooLogin,
   isMobile,
-  router
 }: {
   handleGoogleLogin: () => Promise<void>;
   handleFacebookLogin: () => Promise<void>;
   handleYahooLogin: () => Promise<void>;
   isMobile: boolean;
-  router: AppRouterInstance;
 }) => {
+  const router = useRouter();
+
   const handleSocialLogin = async (loginFn: () => Promise<void>, redirectPath: string) => {
     try {
       await loginFn();
-      router.replace(redirectPath); // Use the router here
+      router.replace(redirectPath); // Perform redirection
     } catch (error) {
       console.error("Social login failed:", error);
     }
