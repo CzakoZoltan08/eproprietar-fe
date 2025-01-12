@@ -2,12 +2,16 @@
 
 import { ChangeEvent, useState } from "react";
 import {
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  OAuthProvider,
   getAuth,
   getIdToken,
   onAuthStateChanged,
 } from "firebase/auth";
 
 import AuthContainer from "./AuthContainer";
+import { AuthProvider } from "@/constants/authProviders";
 import LoginForm from "./LoginForm";
 import OtpVerification from "./OtpVerification";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
@@ -15,6 +19,7 @@ import SocialLoginButtons from "./SocialLoginButtons";
 import { StorageKeys } from "@/constants/storageKeys";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
+import { handleSocialAuth } from "./socialAuthHandler";
 import { observer } from "mobx-react";
 import { useMediaQuery } from "@/hooks/useMediaquery";
 import { useRouter } from "next/navigation";
@@ -25,17 +30,16 @@ const LeftSide = () => {
   const {
     emailAuthStore: { loginWithEmailAndPassword, errorMessage },
     phoneAuthStore: { setupRecaptcha, sendOtp, verifyPhoneOtp },
-    googleAuthStore: { loginWithGoogle },
-    facebookAuthStore: { loginWithFacebook },
-    yahooAuthStore: { loginWithYahoo },
-    userStore: { setCurrentUser },
+    userStore,
+    appState,
   } = useStore();
+  
+  const userApi = appState.userAPi; // Extract userApi from appState
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
-
 
   const router = useRouter();
 
@@ -50,6 +54,24 @@ const LeftSide = () => {
   });
   const [requestError, setRequestError] = useState("");
   const [, setIsLoading] = useState(false);
+
+  const socialAuthConfigs = [
+    {
+      name: "Google",
+      provider: new GoogleAuthProvider(),
+      styleKey: "google" as "google",
+    },
+    {
+      name: "Facebook",
+      provider: new FacebookAuthProvider(),
+      styleKey: "facebook" as "facebook",
+    },
+    {
+      name: "Yahoo",
+      provider: new OAuthProvider(AuthProvider.YAHOO),
+      styleKey: "yahoo" as "yahoo",
+    },
+  ];
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -121,7 +143,7 @@ const LeftSide = () => {
             firebaseId: user.uid,
             email: user.email || "",
           };
-          setCurrentUser(userModel); // Update the global user state
+          userStore.setCurrentUser(userModel); // Update the global user state
           setIsLoading(false); // Hide loading indicator
           unsubscribe(); // Unsubscribe from the auth state listener
           router.replace("/"); // Redirect to the homepage
@@ -134,13 +156,12 @@ const LeftSide = () => {
     }
   };
 
-  const handleSocialLogin = async (loginFn: () => Promise<void>) => {
+  const handleSocialLogin = async (provider: any, authProviderName: string) => {
     try {
-      await loginFn();
-      router.replace("/"); // Redirect to the homepage after successful login
+      await handleSocialAuth(auth, provider, userApi, userStore, authProviderName);
+      router.replace("/"); // Redirect to the home page
     } catch (error) {
-      console.error("Social login failed:", error);
-      setRequestError("Social login failed. Please try again.");
+      console.error(`${authProviderName} login failed`, error);
     }
   };
 
@@ -170,10 +191,8 @@ const LeftSide = () => {
           onSubmit={onSubmit}
         />
         <SocialLoginButtons
-          handleGoogleLogin={() => handleSocialLogin(loginWithGoogle)}
-          handleFacebookLogin={() => handleSocialLogin(loginWithFacebook)}
-          handleYahooLogin={() => handleSocialLogin(loginWithYahoo)}
-          isMobile={isMobile}
+          socialAuthConfigs={socialAuthConfigs}
+          onSocialLogin={handleSocialLogin}
         />
         <OtpVerification
           isOtpSent={isOtpSent}
