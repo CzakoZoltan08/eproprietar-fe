@@ -1,5 +1,6 @@
 export const Endpoints = {
     ANNOUNCEMENTS: "/announcements",
+    PAGINATED_ANNOUNCEMENTS: "/announcements/paginated",
     EDIT_ANNOUNCEMENTS: "/edit-announcement",
     SAVED_ANNOUNCEMENTS: "/saved-announcements",
     FAVORITES: "/users/get-favourites",

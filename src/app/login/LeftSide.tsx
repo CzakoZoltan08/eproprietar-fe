@@ -134,6 +134,16 @@ const LeftSide = () => {
     }
   };
 
+  const handleSocialLogin = async (loginFn: () => Promise<void>) => {
+    try {
+      await loginFn();
+      router.replace("/"); // Redirect to the homepage after successful login
+    } catch (error) {
+      console.error("Social login failed:", error);
+      setRequestError("Social login failed. Please try again.");
+    }
+  };
+
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
   const containerStyle: React.CSSProperties = {
@@ -160,9 +170,9 @@ const LeftSide = () => {
           onSubmit={onSubmit}
         />
         <SocialLoginButtons
-          handleGoogleLogin={loginWithGoogle}
-          handleFacebookLogin={loginWithFacebook}
-          handleYahooLogin={loginWithYahoo}
+          handleGoogleLogin={() => handleSocialLogin(loginWithGoogle)}
+          handleFacebookLogin={() => handleSocialLogin(loginWithFacebook)}
+          handleYahooLogin={() => handleSocialLogin(loginWithYahoo)}
           isMobile={isMobile}
         />
         <OtpVerification

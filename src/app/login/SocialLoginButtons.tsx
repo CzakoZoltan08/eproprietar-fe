@@ -7,7 +7,6 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import GoogleIcon from "@mui/icons-material/Google";
 import React from "react";
 import YahooIcon from "@mui/icons-material/Mail";
-import { useRouter } from "next/navigation";
 
 const buttonStyles = {
   google: {
@@ -41,23 +40,12 @@ const SocialLoginButtons = ({
   handleYahooLogin: () => Promise<void>;
   isMobile: boolean;
 }) => {
-  const router = useRouter();
-
-  const handleSocialLogin = async (loginFn: () => Promise<void>, redirectPath: string) => {
-    try {
-      await loginFn();
-      router.replace(redirectPath); // Perform redirection
-    } catch (error) {
-      console.error("Social login failed:", error);
-    }
-  };
-
   return (
     <Box>
       <Divider>or</Divider>
-      <Box display="flex" flexDirection="column" gap={2} sx={{ marginTop: 2 , marginBottom: 2}}>
+      <Box display="flex" flexDirection="column" gap={2} sx={{ marginTop: 2, marginBottom: 2 }}>
         <CommonButton
-          onClick={() => handleSocialLogin(handleGoogleLogin, "/")}
+          onClick={handleGoogleLogin}
           text={isMobile ? "Google" : "Sign in with Google"}
           size="large"
           fullWidth
@@ -65,7 +53,7 @@ const SocialLoginButtons = ({
           sx={buttonStyles.google}
         />
         <CommonButton
-          onClick={() => handleSocialLogin(handleFacebookLogin, "/")}
+          onClick={handleFacebookLogin}
           text={isMobile ? "Facebook" : "Sign in with Facebook"}
           size="large"
           fullWidth
@@ -73,7 +61,7 @@ const SocialLoginButtons = ({
           sx={buttonStyles.facebook}
         />
         <CommonButton
-          onClick={() => handleSocialLogin(handleYahooLogin, "/")}
+          onClick={handleYahooLogin}
           text={isMobile ? "Yahoo" : "Sign in with Yahoo"}
           size="large"
           fullWidth
