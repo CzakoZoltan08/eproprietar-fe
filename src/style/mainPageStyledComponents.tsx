@@ -4,6 +4,16 @@ import * as palette from "@/constants/colors";
 import Flex from "@/common/flex/Flex";
 import styled from "styled-components";
 
+interface SelectDropdownContainerProps {
+  $isWide?: boolean;
+}
+
+export const SelectDropdownContainer = styled.div<SelectDropdownContainerProps>`
+  flex: ${(props) => (props.$isWide ? "2" : "1")}; /* Styled-components convention: Use $ for props */
+  min-width: ${(props) => (props.$isWide ? "200px" : "100px")};
+  max-width: ${(props) => (props.$isWide ? "400px" : "200px")};
+`;
+
 export const Container = styled.div`
   background: ${palette.COLOR_CONTRAST};
   width: 100vw;
@@ -24,7 +34,7 @@ export const Subtitle = styled.h2`
 `;
 
 export const SearchContainer = styled(Flex)`
-  height: 80px;
+  height: auto;
   width: 90%;
   justifyContent: center;
   max-width: 1200px; 
@@ -36,7 +46,7 @@ export const SearchContainer = styled(Flex)`
   border: 2px solid rgba(21, 85, 174, 0.5);
   display: flex;
   align-items: center;
-  gap: 8px; /* Reduced space between input and button */
+  gap: 4px; /* Reduced space between input and button */
 
   @media only screen and (max-width: ${breakpoints.SIZES_NUMBER_MEDIUM}) {
     width: 95%;

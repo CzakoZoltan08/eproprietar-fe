@@ -62,7 +62,7 @@ export class AnnouncementApi {
       .map(([key, value]) => `${key}=${value}`) // Map key-value pairs to query strings
       .join("&");
   
-    return `${Endpoints.ANNOUNCEMENTS}${params ? `?${params}` : ""}`;
+    return `${Endpoints.PAGINATED_ANNOUNCEMENTS}${params ? `?${params}` : ""}`;
   }
   
   private buildPaginationParams(data?: FetchAnnouncementsModel): Record<string, string> {

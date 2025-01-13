@@ -68,7 +68,7 @@ export class AnnouncementStore {
       const resp = await this.announcementApi.fetchPaginatedAnnouncements(data);
   
       // Set default values if data is missing
-      const announcements = resp ?? [];
+      const announcements = resp.data ?? [];
       const meta = resp?.meta ?? {
         currentPage: 1,
         totalPages: 0,

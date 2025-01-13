@@ -1,6 +1,6 @@
 import * as breakpoints from "./constants/breakpoints";
 
-import { Container, Divider, SearchContainer, Subtitle } from "./style/mainPageStyledComponents";
+import { Container, Divider, SearchContainer, SelectDropdownContainer, Subtitle } from "./style/mainPageStyledComponents";
 import React, { useEffect, useState } from "react";
 import { roomOptions, transactionTypeOptions, typeOptions } from "./constants/annountementConstants";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,8 +26,6 @@ function getDropdownValuesNumberRange(
   }));
 }
 
-const DEFAULT_OPTION = [{ id: 0, value: "0" }];
-
 export const Main = () => {
   const {
     announcementStore: { fetchPaginatedAnnouncements },
@@ -44,11 +42,11 @@ export const Main = () => {
   }>({
     city: undefined, // Allow undefined, not null
     type: typeOptions[0].value,
-    rooms: roomOptions[0].value,
+    rooms: roomOptions[1].value,
     transactionType: transactionTypeOptions[0].value,
-    price: 5000,
+    price: 50000,
     minSurface: 10,
-    maxSurface: 10,
+    maxSurface: 100,
   });
 
   type DropdownOption = { id: number; value: number };
@@ -146,15 +144,17 @@ export const Main = () => {
         />
         <Divider />
       
-        <SelectDropdown
-          name="type"
-          label={"Tipul cautarii"}
-          options={typeOptions}
-          value={filters.type}
-          handleChange={(event) =>
-            setFilters({ ...filters, type: event.target.value.toString() })
-          }
-        />
+        <SelectDropdownContainer $isWide={true}>
+          <SelectDropdown
+            name="type"
+            label={"Tipul cautarii"}
+            options={typeOptions}
+            value={filters.type}
+            handleChange={(event) =>
+              setFilters({ ...filters, type: event.target.value.toString() })
+            }
+          />
+        </SelectDropdownContainer>
         <Divider />
       
         {filters.type === "Apartamente" && (
