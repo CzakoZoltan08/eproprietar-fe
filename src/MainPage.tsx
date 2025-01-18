@@ -1,13 +1,23 @@
 import * as breakpoints from "./constants/breakpoints";
 
-import { Container, Divider, SearchContainer, SelectDropdownContainer, Subtitle } from "./style/mainPageStyledComponents";
+import {
+  Container,
+  Divider,
+  SearchContainer,
+  SelectDropdownContainer,
+  Subtitle,
+} from "./style/mainPageStyledComponents";
 import React, { useEffect, useState } from "react";
 import { roomOptions, transactionTypeOptions, typeOptions } from "./constants/annountementConstants";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "./common/autocomplete/AutocompleteCities";
+import { DEFAULT_FILTERS } from "./constants/filters";
+import { DROPDOWN_RANGES } from "./constants/dropdown";
+import { Endpoints } from "./constants/endpoints";
 import FloatingCardWrapper from "./common/floatingCard/FloatingCardWrapper";
 import Image from "next/image";
+import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
 import { ResponsiveLogoContainer } from "./style/ResponsiveLogoContainer";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
@@ -15,14 +25,10 @@ import logo from "./assets/logo-white.svg";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
 
-function getDropdownValuesNumberRange(
-  start: number,
-  end: number,
-  range: number
-): { id: number; value: number }[] {
-  return Array.from({ length: (end - start) / range + 1 }, (_, i) => ({
-    id: start + i * range,
-    value: start + i * range,
+function getDropdownValuesNumberRange(start: number, end: number, step: number) {
+  return Array.from({ length: (end - start) / step + 1 }, (_, i) => ({
+    id: start + i * step,
+    value: start + i * step,
   }));
 }
 
@@ -31,29 +37,11 @@ export const Main = () => {
     announcementStore: { fetchPaginatedAnnouncements },
   } = useStore();
 
-  const [filters, setFilters] = useState<{
-    city: string | undefined;
-    type: string;
-    rooms: string;
-    transactionType: string;
-    price: number;
-    minSurface: number;
-    maxSurface: number;
-  }>({
-    city: undefined, // Allow undefined, not null
-    type: typeOptions[0].value,
-    rooms: roomOptions[1].value,
-    transactionType: transactionTypeOptions[0].value,
-    price: 50000,
-    minSurface: 10,
-    maxSurface: 100,
-  });
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
-  type DropdownOption = { id: number; value: number };
-
-  const [priceOptions, setPriceOptions] = useState<DropdownOption[]>([]);
-  const [minSurfaceOptions, setMinSurfaceOptions] = useState<DropdownOption[]>([]);
-  const [maxSurfaceOptions, setMaxSurfaceOptions] = useState<DropdownOption[]>([]);
+  const [priceOptions, setPriceOptions] = useState<{ id: number; value: number }[]>([]);
+  const [minSurfaceOptions, setMinSurfaceOptions] = useState<{ id: number; value: number }[]>([]);
+  const [maxSurfaceOptions, setMaxSurfaceOptions] = useState<{ id: number; value: number }[]>([]);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,16 +57,34 @@ export const Main = () => {
   }, []);
 
   useEffect(() => {
-    setPriceOptions(getDropdownValuesNumberRange(5000, 500000, 5000));
-    setMinSurfaceOptions(getDropdownValuesNumberRange(10, 500, 15));
-    setMaxSurfaceOptions(getDropdownValuesNumberRange(10, 500, 15));
+    setPriceOptions(
+      getDropdownValuesNumberRange(
+        DROPDOWN_RANGES.PRICE.START,
+        DROPDOWN_RANGES.PRICE.END,
+        DROPDOWN_RANGES.PRICE.STEP
+      )
+    );
+    setMinSurfaceOptions(
+      getDropdownValuesNumberRange(
+        DROPDOWN_RANGES.SURFACE.START,
+        DROPDOWN_RANGES.SURFACE.END,
+        DROPDOWN_RANGES.SURFACE.STEP
+      )
+    );
+    setMaxSurfaceOptions(
+      getDropdownValuesNumberRange(
+        DROPDOWN_RANGES.SURFACE.START,
+        DROPDOWN_RANGES.SURFACE.END,
+        DROPDOWN_RANGES.SURFACE.STEP
+      )
+    );
   }, []);
 
   const handleQueryParams = (
     params: URLSearchParams,
     term: string,
     val: string | number | null | undefined
-  ): URLSearchParams => {
+  ) => {
     if (val) {
       params.set(term, val.toString());
     } else {
@@ -88,9 +94,9 @@ export const Main = () => {
   };
 
   const onSearch = async () => {
-    const selectedType = typeOptions.find((it) => it.value === filters.type);
+    const selectedType = typeOptions.find((it) => it.value === filters.TYPE);
     const selectedTransactionType = transactionTypeOptions.find(
-      (it) => it.value === filters.transactionType
+      (it) => it.value === filters.TRANSACTION_TYPE
     );
 
     const queryParams = new URLSearchParams(searchParams.toString());
@@ -99,145 +105,147 @@ export const Main = () => {
       page: 1,
       limit: 8,
       filter: {
-        rooms: parseInt(filters.rooms, 10),
-        price: filters.price,
-        minSurface: filters.minSurface,
-        maxSurface: filters.maxSurface,
+        rooms: parseInt(filters.ROOMS, 10),
+        price: filters.PRICE,
+        minSurface: filters.MIN_SURFACE,
+        maxSurface: filters.MAX_SURFACE,
       },
     });
 
     [
       ["page", "1"],
-      ["price", filters.price],
-      ["minSurface", filters.minSurface],
-      ["maxSurface", filters.maxSurface],
-      ["city", filters.city],
-      ["rooms", filters.rooms],
+      ["price", filters.PRICE],
+      ["minSurface", filters.MIN_SURFACE],
+      ["maxSurface", filters.MAX_SURFACE],
+      ["city", filters.CITY],
+      ["rooms", filters.ROOMS],
       ["transactionType", selectedTransactionType?.id],
       ["type", selectedType?.id],
     ].forEach(([key, value]) =>
       handleQueryParams(queryParams, key!.toString(), value)
     );
 
-    router.push(`/announcements?${queryParams.toString()}`);
+    router.push(`${Endpoints.ANNOUNCEMENTS}?${queryParams.toString()}`);
   };
 
   if (!isClient) {
-    // Prevent rendering of media query-dependent components on the server
     return null;
   }
 
   return (
     <Container>
       <ResponsiveLogoContainer isDesktop={isDesktop}>
-        <Image src={logo} alt="eproprietar" fill style={{ objectFit: "contain" }} />
+        <Image
+          src={logo}
+          alt="eproprietar"
+          fill
+          style={{ objectFit: "contain" }}
+        />
       </ResponsiveLogoContainer>
       <Subtitle>Tu ce cauți azi?</Subtitle>
 
       {isDesktop ? (
         <SearchContainer>
-        <AutocompleteCities
-          onChange={(event, value) =>
-            setFilters({ ...filters, city: value?.toString() ?? "" })
-          }
-          label={"Caută după localitate"}
-        />
-        <Divider />
-      
-        <SelectDropdownContainer $isWide={true}>
-          <SelectDropdown
-            name="type"
-            label={"Tipul cautarii"}
-            options={typeOptions}
-            value={filters.type}
-            handleChange={(event) =>
-              setFilters({ ...filters, type: event.target.value.toString() })
+          <AutocompleteCities
+            onChange={(event, value) =>
+              setFilters({ ...filters, CITY: value?.toString() ?? "" })
             }
+            label={MESSAGES.SEARCH_CITY_LABEL}
           />
-        </SelectDropdownContainer>
-        <Divider />
-      
-        {filters.type === "Apartamente" && (
-          <>
+          <Divider />
+
+          <SelectDropdownContainer $isWide={true}>
             <SelectDropdown
-              name="rooms"
-              label={"Nr. camere"}
-              options={roomOptions}
-              value={filters.rooms}
+              name="type"
+              label={MESSAGES.SEARCH_TYPE_LABEL}
+              options={typeOptions}
+              value={filters.TYPE}
               handleChange={(event) =>
-                setFilters({
-                  ...filters,
-                  rooms: event.target.value.toString(),
-                })
+                setFilters({ ...filters, TYPE: event.target.value.toString() })
               }
             />
-            <Divider />
-          </>
-        )}
-      
-        <SelectDropdown
-          name="minSurface"
-          label={"Suprafata min"}
-          options={minSurfaceOptions}
-          value={filters.minSurface}
-          handleChange={(event) =>
-            setFilters({
-              ...filters,
-              minSurface: Number(event.target.value),
-            })
-          }
-        />
-        <SelectDropdown
-          name="maxSurface"
-          label={"Suprafata max"}
-          options={maxSurfaceOptions}
-          value={filters.maxSurface}
-          handleChange={(event) =>
-            setFilters({
-              ...filters,
-              maxSurface: Number(event.target.value),
-            })
-          }
-        />
-        <Divider />
-      
-        <SelectDropdown
-          name="price"
-          label={"Pret maxim"}
-          options={priceOptions}
-          value={filters.price}
-          handleChange={(event) =>
-            setFilters({
-              ...filters,
-              price: Number(event.target.value),
-            })
-          }
-        />
-        <Divider />
-      
-        <SelectDropdown
-          name="transactionType"
-          label={"Tip tranzactie"}
-          options={transactionTypeOptions}
-          value={filters.transactionType}
-          handleChange={(event) =>
-            setFilters({
-              ...filters,
-              transactionType: event.target.value.toString(),
-            })
-          }
-        />
-      
-        {/* Button with full width and margin */}
-        <PrimaryButton
-          icon="search"
-          text="Caută"
-          onClick={onSearch}
-          fullWidth
-          sx={{ padding: '15px 0' }} // Adjust margin and padding
-        />
-      </SearchContainer>
-      
+          </SelectDropdownContainer>
+          <Divider />
+
+          {filters.TYPE === "Apartamente" && (
+            <>
+              <SelectDropdown
+                name="rooms"
+                label={MESSAGES.SEARCH_ROOMS_LABEL}
+                options={roomOptions}
+                value={filters.ROOMS}
+                handleChange={(event) =>
+                  setFilters({
+                    ...filters,
+                    ROOMS: event.target.value.toString(),
+                  })
+                }
+              />
+              <Divider />
+            </>
+          )}
+
+          <SelectDropdown
+            name="minSurface"
+            label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
+            options={minSurfaceOptions}
+            value={filters.MIN_SURFACE}
+            handleChange={(event) =>
+              setFilters({
+                ...filters,
+                MIN_SURFACE: Number(event.target.value),
+              })
+            }
+          />
+          <SelectDropdown
+            name="maxSurface"
+            label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
+            options={maxSurfaceOptions}
+            value={filters.MAX_SURFACE}
+            handleChange={(event) =>
+              setFilters({
+                ...filters,
+                MAX_SURFACE: Number(event.target.value),
+              })
+            }
+          />
+          <Divider />
+
+          <SelectDropdown
+            name="price"
+            label={MESSAGES.SEARCH_PRICE_LABEL}
+            options={priceOptions}
+            value={filters.PRICE}
+            handleChange={(event) =>
+              setFilters({
+                ...filters,
+                PRICE: Number(event.target.value),
+              })
+            }
+          />
+          <Divider />
+
+          <SelectDropdown
+            name="transactionType"
+            label={MESSAGES.SEARCH_TRANSACTION_TYPE_LABEL}
+            options={transactionTypeOptions}
+            value={filters.TRANSACTION_TYPE}
+            handleChange={(event) =>
+              setFilters({
+                ...filters,
+                TRANSACTION_TYPE: event.target.value.toString(),
+              })
+            }
+          />
+
+          <PrimaryButton
+            icon="search"
+            text="Caută"
+            onClick={onSearch}
+            fullWidth
+            sx={{ padding: "15px 0" }}
+          />
+        </SearchContainer>
       ) : (
         <FloatingCardWrapper>
           <p>Mobile layout simplified</p>
