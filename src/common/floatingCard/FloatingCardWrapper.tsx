@@ -25,7 +25,7 @@ const FloatingCardWrapper: React.FC<FloatingCardWrapperProps> = ({
         background: palette.COLOR_WHITE,
         border: `1px solid ${palette.COLOR_BORDER_PRIMARY}`,
         borderRadius: "6px",
-        width: "100%",
+        width: "75%",
         position: "relative",
         ...sx, // Spread custom styles
       }}

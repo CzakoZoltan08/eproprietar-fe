@@ -38,7 +38,6 @@ export const Main = () => {
   } = useStore();
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-
   const [priceOptions, setPriceOptions] = useState<{ id: number; value: number }[]>([]);
   const [minSurfaceOptions, setMinSurfaceOptions] = useState<{ id: number; value: number }[]>([]);
   const [maxSurfaceOptions, setMaxSurfaceOptions] = useState<{ id: number; value: number }[]>([]);
@@ -105,10 +104,12 @@ export const Main = () => {
       page: 1,
       limit: 8,
       filter: {
-        rooms: parseInt(filters.ROOMS, 10),
+        rooms: filters.ROOMS,
         price: filters.PRICE,
         minSurface: filters.MIN_SURFACE,
         maxSurface: filters.MAX_SURFACE,
+        transactionType: filters.TRANSACTION_TYPE,
+        type: filters.TYPE,
       },
     });
 
@@ -132,123 +133,109 @@ export const Main = () => {
     return null;
   }
 
+  const citiesAutcompleteWidth = isDesktop ? "" : "100%";
+  const renderFilters = () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: isDesktop ? "row" : "column",
+        flexWrap: isDesktop ? "nowrap" : "nowrap",
+        gap: "16px",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        width: isDesktop ? "100%" : "90%",
+      }}
+    >
+      <AutocompleteCities
+        onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+        label={MESSAGES.SEARCH_CITY_LABEL}
+        customWidth={citiesAutcompleteWidth}
+      />
+      <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
+        <SelectDropdown
+          name="type"
+          label={MESSAGES.SEARCH_TYPE_LABEL}
+          options={typeOptions}
+          value={filters.TYPE}
+          handleChange={(event) => setFilters({ ...filters, TYPE: event.target.value.toString() })}
+        />
+      </SelectDropdownContainer>
+      {filters.TYPE === "Apartamente" && (
+        <SelectDropdown
+          name="rooms"
+          label={MESSAGES.SEARCH_ROOMS_LABEL}
+          options={roomOptions}
+          value={filters.ROOMS}
+          handleChange={(event) => setFilters({ ...filters, ROOMS: Number(event.target.value) })}
+          sx={{ flex: "1 1 30%" }}
+        />
+      )}
+      <SelectDropdown
+        name="minSurface"
+        label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
+        options={minSurfaceOptions}
+        value={filters.MIN_SURFACE}
+        handleChange={(event) =>
+          setFilters({ ...filters, MIN_SURFACE: Number(event.target.value) })
+        }
+        sx={{ flex: "1 1 30%" }}
+      />
+      <SelectDropdown
+        name="maxSurface"
+        label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
+        options={maxSurfaceOptions}
+        value={filters.MAX_SURFACE}
+        handleChange={(event) =>
+          setFilters({ ...filters, MAX_SURFACE: Number(event.target.value) })
+        }
+        sx={{ flex: "1 1 30%" }}
+      />
+      <SelectDropdown
+        name="price"
+        label={MESSAGES.SEARCH_PRICE_LABEL}
+        options={priceOptions}
+        value={filters.PRICE}
+        handleChange={(event) =>
+          setFilters({ ...filters, PRICE: Number(event.target.value) })
+        }
+        sx={{ flex: "1 1 30%" }}
+      />
+      <PrimaryButton
+        icon="search"
+        text="Caută"
+        onClick={onSearch}
+        fullWidth={!isDesktop}
+        sx={{
+          flex: "1 1 30%",
+          padding: isDesktop ? "15px 20px" : "6px 16px",
+          alignSelf: isDesktop ? "flex-end" : "center",
+        }}
+      />
+    </div>
+  );
+
   return (
     <Container>
       <ResponsiveLogoContainer isDesktop={isDesktop}>
-        <Image
-          src={logo}
-          alt="eproprietar"
-          fill
-          style={{ objectFit: "contain" }}
-        />
+        <Image src={logo} alt="eproprietar" fill style={{ objectFit: "contain" }} />
       </ResponsiveLogoContainer>
       <Subtitle>Tu ce cauți azi?</Subtitle>
 
       {isDesktop ? (
-        <SearchContainer>
-          <AutocompleteCities
-            onChange={(event, value) =>
-              setFilters({ ...filters, CITY: value?.toString() ?? "" })
-            }
-            label={MESSAGES.SEARCH_CITY_LABEL}
-          />
-          <Divider />
-
-          <SelectDropdownContainer $isWide={true}>
-            <SelectDropdown
-              name="type"
-              label={MESSAGES.SEARCH_TYPE_LABEL}
-              options={typeOptions}
-              value={filters.TYPE}
-              handleChange={(event) =>
-                setFilters({ ...filters, TYPE: event.target.value.toString() })
-              }
-            />
-          </SelectDropdownContainer>
-          <Divider />
-
-          {filters.TYPE === "Apartamente" && (
-            <>
-              <SelectDropdown
-                name="rooms"
-                label={MESSAGES.SEARCH_ROOMS_LABEL}
-                options={roomOptions}
-                value={filters.ROOMS}
-                handleChange={(event) =>
-                  setFilters({
-                    ...filters,
-                    ROOMS: event.target.value.toString(),
-                  })
-                }
-              />
-              <Divider />
-            </>
-          )}
-
-          <SelectDropdown
-            name="minSurface"
-            label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
-            options={minSurfaceOptions}
-            value={filters.MIN_SURFACE}
-            handleChange={(event) =>
-              setFilters({
-                ...filters,
-                MIN_SURFACE: Number(event.target.value),
-              })
-            }
-          />
-          <SelectDropdown
-            name="maxSurface"
-            label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
-            options={maxSurfaceOptions}
-            value={filters.MAX_SURFACE}
-            handleChange={(event) =>
-              setFilters({
-                ...filters,
-                MAX_SURFACE: Number(event.target.value),
-              })
-            }
-          />
-          <Divider />
-
-          <SelectDropdown
-            name="price"
-            label={MESSAGES.SEARCH_PRICE_LABEL}
-            options={priceOptions}
-            value={filters.PRICE}
-            handleChange={(event) =>
-              setFilters({
-                ...filters,
-                PRICE: Number(event.target.value),
-              })
-            }
-          />
-          <Divider />
-
-          <SelectDropdown
-            name="transactionType"
-            label={MESSAGES.SEARCH_TRANSACTION_TYPE_LABEL}
-            options={transactionTypeOptions}
-            value={filters.TRANSACTION_TYPE}
-            handleChange={(event) =>
-              setFilters({
-                ...filters,
-                TRANSACTION_TYPE: event.target.value.toString(),
-              })
-            }
-          />
-
-          <PrimaryButton
-            icon="search"
-            text="Caută"
-            onClick={onSearch}
-            fullWidth
-            sx={{ padding: "15px 0" }}
-          />
+        <SearchContainer
+          style={{
+            width: "80%",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {renderFilters()}
         </SearchContainer>
       ) : (
         <FloatingCardWrapper>
-          <p>Mobile layout simplified</p>
+          <div style={{ padding: "16px", width: "100%" }}>{renderFilters()}</div>
         </FloatingCardWrapper>
       )}
     </Container>

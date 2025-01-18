@@ -10,8 +10,6 @@ interface SelectDropdownContainerProps {
 
 export const SelectDropdownContainer = styled.div<SelectDropdownContainerProps>`
   flex: ${(props) => (props.$isWide ? "2" : "1")}; /* Styled-components convention: Use $ for props */
-  min-width: ${(props) => (props.$isWide ? "200px" : "100px")};
-  max-width: ${(props) => (props.$isWide ? "400px" : "200px")};
 `;
 
 export const Container = styled.div`

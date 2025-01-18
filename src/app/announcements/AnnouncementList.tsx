@@ -37,8 +37,8 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
       userId: searchParams.get("userId") || sessionStorage.getItem("userId") || "",
     };
 
-    // Ensure `rooms` is included only when `type` is "case"
-    if (type === "case") {
+    // Ensure `rooms` is included only when `type` is "apartament"
+    if (type === "apartament") {
       initialFilters.rooms = searchParams.get("rooms") || sessionStorage.getItem("rooms") || "";
     }
 
