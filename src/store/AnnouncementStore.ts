@@ -47,8 +47,8 @@ export class AnnouncementStore {
     });
   }
 
-  async createAnnouncement(data: CreateAnnouncementDto) {
-    await this.announcementApi.createAnnouncement(data);
+  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null> {
+    return await this.announcementApi.createAnnouncement(data);
   }
 
   async updateAnnouncement(id: string, data: Partial<CreateAnnouncementDto>) {

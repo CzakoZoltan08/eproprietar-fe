@@ -13,7 +13,7 @@ import{ QueryKeys } from "@/constants/query-keys";
 export class AnnouncementApi {
   constructor(private apiConfig: ApiConfig) {}
 
-  async createAnnouncement(data: CreateAnnouncementDto) {
+  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null>{
     return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.ANNOUNCEMENTS, data);
   }
 

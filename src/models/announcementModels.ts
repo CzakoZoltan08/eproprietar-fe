@@ -47,6 +47,7 @@ export class CreateAnnouncementDto {
   floor?: number;
   isNew?: boolean;
   user: { id: string; firebaseId: string } = { id: '', firebaseId: ''};
+  imageUrl?: string;
 }
 
 export interface FetchAnnouncementsModel {
