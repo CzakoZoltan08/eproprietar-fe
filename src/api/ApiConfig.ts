@@ -11,7 +11,8 @@ export class ApiConfig {
     method: Method,
     endpoint: string,
     data?: any,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    contentType: ContentTypes = ContentTypes.JSON
   ): Promise<T | null> {
     if (typeof window === "undefined") return null;
 
@@ -24,7 +25,7 @@ export class ApiConfig {
         params,
         headers: {
           [Headers.AUTHORIZATION]: `Bearer ${accessToken}`,
-          [Headers.CONTENT_TYPE]: ContentTypes.JSON,
+          [Headers.CONTENT_TYPE]: contentType,
         },
       });
 

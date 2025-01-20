@@ -5,7 +5,8 @@ import {
 } from "@/models/announcementModels";
 
 import { ApiConfig } from "./ApiConfig";
-import{ Endpoints } from "@/constants/endpoints";
+import { ContentTypes } from "@/constants/content-types.enum";
+import { Endpoints } from "@/constants/endpoints";
 import{ FilterOperators } from "@/constants/filter-operators.enum";
 import{ HttpMethods } from "@/constants/http-methods.enum";
 import{ QueryKeys } from "@/constants/query-keys";
@@ -13,8 +14,12 @@ import{ QueryKeys } from "@/constants/query-keys";
 export class AnnouncementApi {
   constructor(private apiConfig: ApiConfig) {}
 
-  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null>{
+  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null> {
     return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.ANNOUNCEMENTS, data);
+  }
+
+  async createImageOrVideo(fileData: FormData, userId: string, announcementId: string): Promise<any | null> {
+    return this.apiConfig.sendRequest(HttpMethods.POST, `${Endpoints.UPLOADS}/${userId}/${announcementId}`, fileData, undefined, ContentTypes.MULTIPART);
   }
 
   async updateAnnouncement(

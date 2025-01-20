@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CircularProgress, SelectChangeEvent, Tooltip, Typography } from "@mui/material";
+import { Box, CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import {
   apartamentPartitionings,
@@ -46,7 +46,7 @@ const SubtitleAdvice = styled.h2`
 const AnnouncementForm = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
-    announcementStore: { createAnnouncement, updateAnnouncement, currentAnnouncement },
+    announcementStore: { createAnnouncement, updateAnnouncement, createImageOrVideo, currentAnnouncement },
   } = useStore();
 
   const [formData, setFormData] = useState({
@@ -201,19 +201,17 @@ const AnnouncementForm = () => {
         formDataToSend.append("file", thumbnail);
         formDataToSend.append("type", "image");
 
-        const response = await fetch(`/uploads/${user?.id}/${announcementId}`, {
-          method: "POST",
-          body: formDataToSend,
-        });
+        if (user?.id) {
+          const response = await createImageOrVideo(formDataToSend, user.id, announcementId);
 
-        if (response.ok) {
-          const result = await response.json();
-          const optimizedUrl = result.optimized_url; // Get the optimized image URL
-
-          // Step 4: Update the announcement with the optimized image URL
-          await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
-
-          router.push("/");
+          if (response.optimized_url) {
+            const optimizedUrl = response.optimized_url; // Get the optimized image URL
+  
+            // Step 4: Update the announcement with the optimized image URL
+            await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
+  
+            router.push("/");
+          }
         }
       }
     } catch (error) {

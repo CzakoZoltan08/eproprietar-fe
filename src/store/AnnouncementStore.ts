@@ -51,6 +51,10 @@ export class AnnouncementStore {
     return await this.announcementApi.createAnnouncement(data);
   }
 
+  async createImageOrVideo(data: FormData, userId: string, announcementId: string): Promise<any | null> {
+    return await this.announcementApi.createImageOrVideo(data, userId, announcementId);
+  }
+
   async updateAnnouncement(id: string, data: Partial<CreateAnnouncementDto>) {
     const updated = await this.announcementApi.updateAnnouncement(id, data);
 

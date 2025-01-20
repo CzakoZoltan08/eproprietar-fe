@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['eproprietar.ro'],
+    domains: ['eproprietar.ro', 'res.cloudinary.com'],
   },
   compiler: {
     styledComponents: true, // Enables styled-components support with SWC
