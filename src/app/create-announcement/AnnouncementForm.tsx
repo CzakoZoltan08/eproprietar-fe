@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
   apartmentFloors,
@@ -61,6 +61,48 @@ const RadioGroupContainer = styled.div`
   margin-bottom: 16px;
 `;
 
+const DropArea = styled.div<{ $isDragging: boolean }>`
+  border: 2px dashed ${({ $isDragging }) => ($isDragging ? "#007BFF" : "#ccc")};
+  background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: background-color 0.3s, border-color 0.3s;
+`;
+
+const PreviewContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const PreviewImage = styled.img`
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+const PreviewVideo = styled.video`
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
 const StyledTextField = styled(TextField)`
   width: 100%; /* Take the full width of InputContainer */
 `;
@@ -90,11 +132,19 @@ const AnnouncementForm = () => {
     balcony: "",
     parking: "",
     thumbnail: null as File | null, // Thumbnail file
+    images: [] as File[],
+    videos: [] as File[], // Store multiple videos
   });
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [isDragging, setIsDragging] = useState(false); // Highlight drag area
+  const fileInputRef = useRef<HTMLInputElement>(null); // Reference to hidden file inpu
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]); // Store preview URLs for videos
+  const [isDraggingVideos, setIsDraggingVideos] = useState(false);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -130,6 +180,8 @@ const AnnouncementForm = () => {
         balcony: currentAnnouncement.balcony || "",
         parking: currentAnnouncement.parking || "",
         thumbnail: null,
+        images: [],
+        videos: [],
       });
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
@@ -160,6 +212,148 @@ const AnnouncementForm = () => {
       setFormData({ ...formData, thumbnail: file });
       setThumbnailPreview(URL.createObjectURL(file));
     }
+  };
+
+  const validateImageFiles = (files: FileList | File[]) => {
+    const validImages = Array.from(files).filter((file) =>
+      file.type.startsWith("image/") // Check if MIME type starts with 'image/'
+    );
+    if (validImages.length < files.length) {
+      setError("Only image files are allowed.");
+    }
+    else{
+      setError("");
+    }
+    return validImages;
+  };
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const validImages = validateImageFiles(files);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...validImages],
+      }));
+      setImagePreviews((prev) => [
+        ...prev,
+        ...validImages.map((file) => URL.createObjectURL(file)),
+      ]);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = event.dataTransfer.files;
+    const validImages = validateImageFiles(files);
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...validImages],
+    }));
+    setImagePreviews((prev) => [
+      ...prev,
+      ...validImages.map((file) => URL.createObjectURL(file)),
+    ]);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageRemove = (index: number) => {
+    setFormData((prev) => {
+      const updatedImages = [...prev.images];
+      updatedImages.splice(index, 1);
+      return { ...prev, images: updatedImages };
+    });
+    setImagePreviews((prev) => {
+      const updatedPreviews = [...prev];
+      updatedPreviews.splice(index, 1);
+      return updatedPreviews;
+    });
+  };
+
+  const validateVideoFiles = (files: FileList | File[]) => {
+    const validVideos = Array.from(files).filter((file) =>
+      file.type.startsWith("video/") // Check if MIME type starts with 'video/'
+    );
+    if (validVideos.length < files.length) {
+      setError("Only video files are allowed.");
+    }
+    else{
+      setError("");
+    }
+    return validVideos;
+  };
+
+  const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const validVideos = validateVideoFiles(files);
+      setFormData((prev) => ({
+        ...prev,
+        videos: [...prev.videos, ...validVideos],
+      }));
+      setVideoPreviews((prev) => [
+        ...prev,
+        ...validVideos.map((file) => URL.createObjectURL(file)),
+      ]);
+    }
+  };
+
+  const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = event.dataTransfer.files;
+    const validVideos = validateVideoFiles(files);
+    setFormData((prev) => ({
+      ...prev,
+      videos: [...prev.videos, ...validVideos],
+    }));
+    setVideoPreviews((prev) => [
+      ...prev,
+      ...validVideos.map((file) => URL.createObjectURL(file)),
+    ]);
+  };
+
+  const handleVideoDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingVideos(true);
+  };
+
+  const handleVideoDragLeave = () => {
+    setIsDraggingVideos(false);
+  };
+
+  const handleVideoClick = () => {
+    if (videoFileInputRef.current) {
+      videoFileInputRef.current.click();
+    }
+  };
+
+  const handleVideoRemove = (index: number) => {
+    setFormData((prev) => {
+      const updatedVideos = [...prev.videos];
+      updatedVideos.splice(index, 1);
+      return { ...prev, videos: updatedVideos };
+    });
+    setVideoPreviews((prev) => {
+      const updatedPreviews = [...prev];
+      updatedPreviews.splice(index, 1);
+      return updatedPreviews;
+    });
   };
 
   const onSubmit = async () => {
@@ -217,6 +411,18 @@ const AnnouncementForm = () => {
         announcementId = newAnnouncement.id; // Assume the response contains the new ID
       }
 
+      if (announcementId) {
+        for (const image of formData.images) {
+          const formDataToSend = new FormData();
+          formDataToSend.append("file", image);
+          formDataToSend.append("type", "image");
+
+          if (user?.id) {
+            await createImageOrVideo(formDataToSend, user.id, announcementId); // Replace with actual IDs
+          }
+        }
+      }
+
       // Step 3: Upload the thumbnail (if provided)
       if (thumbnail && announcementId) {
         const formDataToSend = new FormData();
@@ -231,11 +437,23 @@ const AnnouncementForm = () => {
   
             // Step 4: Update the announcement with the optimized image URL
             await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
-  
-            router.push("/");
           }
         }
       }
+
+      if (announcementId) {
+        for (const video of formData.videos) {
+          const formDataToSend = new FormData();
+          formDataToSend.append("file", video);
+          formDataToSend.append("type", "video");
+  
+          if (user?.id) {
+            await createImageOrVideo(formDataToSend, user.id, announcementId); // Replace with actual IDs
+          }
+        }
+      }
+
+      router.push("/");
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");
@@ -441,6 +659,72 @@ const AnnouncementForm = () => {
                 style={{ marginTop: "8px" }}
               />
             </Box>
+
+            <Typography variant="h6">Add Images</Typography>
+
+            <DropArea
+              $isDragging={isDragging}
+              onClick={handleClick}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              Drag & Drop images here or click to browse
+            </DropArea>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
+
+            <PreviewContainer>
+              {imagePreviews.map((src, index) => (
+                <PreviewImage
+                  key={index}
+                  src={src}
+                  alt={`Preview ${index}`}
+                  onClick={() => handleImageRemove(index)} // Remove image on click
+                />
+              ))}
+            </PreviewContainer>
+
+            <DropArea
+              $isDragging={isDraggingVideos}
+              onClick={handleVideoClick}
+              onDragOver={handleVideoDragOver}
+              onDragLeave={handleVideoDragLeave}
+              onDrop={handleVideoDrop}
+            >
+              Drag & Drop videos here or click to browse
+            </DropArea>
+            <input
+              type="file"
+              accept="video/*"
+              multiple
+              ref={videoFileInputRef}
+              style={{ display: "none" }}
+              onChange={handleVideoChange}
+            />
+
+            <PreviewContainer>
+              {videoPreviews.map((src, index) => (
+                <PreviewVideo
+                  key={index}
+                  src={src}
+                  controls
+                  onClick={() => handleVideoRemove(index)} // Remove video on click
+                />
+              ))}
+            </PreviewContainer>
+
+            {error && (
+              <Typography color="error">{error}</Typography>
+            )}
+
+
           </InputContainer>
 
           {/* Submit Button */}
