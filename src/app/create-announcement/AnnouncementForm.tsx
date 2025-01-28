@@ -43,6 +43,28 @@ const SubtitleAdvice = styled.h2`
   margin-bottom: 50px;
 `;
 
+const InputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 35%; /* Half of the parent container */
+  margin: 0 auto; /* Center horizontally */
+  gap: 16px;
+`;
+
+const RadioGroupContainer = styled.div`
+  width: 100%; /* Full width of the parent container */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align the content to the left */
+  gap: 16px;
+  margin-bottom: 16px;
+`;
+
+const StyledTextField = styled(TextField)`
+  width: 100%; /* Take the full width of InputContainer */
+`;
+
 const AnnouncementForm = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
@@ -236,186 +258,190 @@ const AnnouncementForm = () => {
             </Typography>
           )}
 
-          {/* Announcement Type */}
-          <RadioButtonsGroup
-            options={propertyTypes}
-            value={formData.announcementType.toLowerCase()}
-            id="announcementType"
-            onChange={handleSelectChange}
-            label="Announcement Type"
-          />
-
-          {/* Transaction Type */}
-          <RadioButtonsGroup
-            options={serviceTypes}
-            value={formData.transactionType}
-            id="transactionType"
-            onChange={handleSelectChange}
-            label="Transaction Type"
-          />
-
-          {/* City */}
-          <AutocompleteCities
-            label="City"
-            customWidth="100%"
-            value={formData.city}
-            onChange={(event, value) => setFormData({ ...formData, city: value || "" })}
-          />
-
-          {/* Street */}
-          <TextField
-            label="Street"
-            name="street"
-            value={formData.street}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ marginBottom: "16px" }}
-          />
-
-          {/* Title */}
-          <TextField
-            label="Title"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ marginBottom: "16px" }}
-          />
-
-          {/* Description */}
-          <TextField
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            multiline
-            rows={4}
-            fullWidth
-            sx={{ marginBottom: "16px" }}
-          />
-
-          {/* Phone Number */}
-          <PhoneInputField
-            label="Contact Phone Number"
-            name="contactPhone"
-            value={contactPhone}
-            onChange={(phoneValue) => setContactPhone(phoneValue)}
-            error={error && !contactPhone ? error : undefined}
-            setError={(err) => setError(err)}
-          />
-
-          {/* Price */}
-          <TextField
-            label="Price (€)"
-            name="price"
-            value={formData.price}
-            onChange={handleInputChange}
-            type="number"
-            fullWidth
-            required
-            sx={{ marginBottom: "16px" }}
-          />
-
-          {/* Surface */}
-          <TextField
-            label="Surface (sqm)"
-            name="surface"
-            value={formData.surface}
-            onChange={handleInputChange}
-            type="number"
-            fullWidth
-            sx={{ marginBottom: "16px" }}
-          />
-
-          {/* Number of Rooms */}
-          <SelectDropdown
-            label="Number of Rooms"
-            options={roomOptions}
-            name="rooms"
-            value={formData.rooms}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Number of Baths */}
-          <SelectDropdown
-            label="Number of Baths"
-            options={roomOptions}
-            name="baths"
-            value={formData.baths}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Number of Kitchens */}
-          <SelectDropdown
-            label="Number of Kitchens"
-            options={roomOptions}
-            name="numberOfKitchens"
-            value={formData.numberOfKitchens}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Partitioning */}
-          <SelectDropdown
-            label="Partitioning"
-            options={apartamentPartitionings}
-            name="partitioning"
-            value={formData.partitioning}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Comfort Level */}
-          <SelectDropdown
-            label="Comfort Level"
-            options={comfortLevels}
-            name="comfortLevel"
-            value={formData.comfortLevel}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Floor */}
-          <SelectDropdown
-            label="Floor"
-            options={apartmentFloors}
-            name="floor"
-            value={formData.floor}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Balcony */}
-          <SelectDropdown
-            label="Balcony"
-            options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
-            name="balcony"
-            value={formData.balcony}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Parking */}
-          <SelectDropdown
-            label="Parking"
-            options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
-            name="parking"
-            value={formData.parking}
-            handleChange={handleSelectChange}
-          />
-
-          {/* Thumbnail Upload */}
-          <Box sx={{ marginBottom: "16px", width: "100%" }}>
-            <Typography variant="h6">Thumbnail Image</Typography>
-            {thumbnailPreview && (
-              <img
-                src={thumbnailPreview}
-                alt="Thumbnail Preview"
-                style={{ width: "100%", maxHeight: "200px", objectFit: "cover", marginTop: "8px" }}
+          <InputContainer>
+            <RadioGroupContainer> 
+              {/* Announcement Type */}
+              <RadioButtonsGroup
+                options={propertyTypes}
+                value={formData.announcementType.toLowerCase()}
+                id="announcementType"
+                onChange={handleSelectChange}
+                label="Announcement Type"
               />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ marginTop: "8px" }}
+
+              {/* Transaction Type */}
+              <RadioButtonsGroup
+                options={serviceTypes}
+                value={formData.transactionType}
+                id="transactionType"
+                onChange={handleSelectChange}
+                label="Transaction Type"
+              />
+            </RadioGroupContainer>
+          
+            {/* City */}
+            <AutocompleteCities
+              label="City"
+              customWidth="100%"
+              value={formData.city}
+              onChange={(event, value) => setFormData({ ...formData, city: value || "" })}
             />
-          </Box>
+
+            {/* Street */}
+            <StyledTextField
+              label="Street"
+              name="street"
+              value={formData.street}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ marginBottom: "16px" }}
+            />
+
+            {/* Title */}
+            <StyledTextField
+              label="Title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ marginBottom: "16px" }}
+            />
+
+            {/* Description */}
+            <StyledTextField
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              multiline
+              rows={4}
+              fullWidth
+              sx={{ marginBottom: "16px" }}
+            />
+
+            {/* Phone Number */}
+            <PhoneInputField
+              label="Contact Phone Number"
+              name="contactPhone"
+              value={contactPhone}
+              onChange={(phoneValue) => setContactPhone(phoneValue)}
+              error={error && !contactPhone ? error : undefined}
+              setError={(err) => setError(err)}
+            />
+
+            {/* Price */}
+            <TextField
+              label="Price (€)"
+              name="price"
+              value={formData.price}
+              onChange={handleInputChange}
+              type="number"
+              fullWidth
+              required
+              sx={{ marginBottom: "16px" }}
+            />
+
+            {/* Surface */}
+            <TextField
+              label="Surface (sqm)"
+              name="surface"
+              value={formData.surface}
+              onChange={handleInputChange}
+              type="number"
+              fullWidth
+              sx={{ marginBottom: "16px" }}
+            />
+
+            {/* Number of Rooms */}
+            <SelectDropdown
+              label="Number of Rooms"
+              options={roomOptions}
+              name="rooms"
+              value={formData.rooms}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Number of Baths */}
+            <SelectDropdown
+              label="Number of Baths"
+              options={roomOptions}
+              name="baths"
+              value={formData.baths}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Number of Kitchens */}
+            <SelectDropdown
+              label="Number of Kitchens"
+              options={roomOptions}
+              name="numberOfKitchens"
+              value={formData.numberOfKitchens}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Partitioning */}
+            <SelectDropdown
+              label="Partitioning"
+              options={apartamentPartitionings}
+              name="partitioning"
+              value={formData.partitioning}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Comfort Level */}
+            <SelectDropdown
+              label="Comfort Level"
+              options={comfortLevels}
+              name="comfortLevel"
+              value={formData.comfortLevel}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Floor */}
+            <SelectDropdown
+              label="Floor"
+              options={apartmentFloors}
+              name="floor"
+              value={formData.floor}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Balcony */}
+            <SelectDropdown
+              label="Balcony"
+              options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
+              name="balcony"
+              value={formData.balcony}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Parking */}
+            <SelectDropdown
+              label="Parking"
+              options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
+              name="parking"
+              value={formData.parking}
+              handleChange={handleSelectChange}
+            />
+
+            {/* Thumbnail Upload */}
+            <Box sx={{ marginBottom: "16px", width: "100%" }}>
+              <Typography variant="h6">Thumbnail Image</Typography>
+              {thumbnailPreview && (
+                <img
+                  src={thumbnailPreview}
+                  alt="Thumbnail Preview"
+                  style={{ width: "100%", maxHeight: "200px", objectFit: "cover", marginTop: "8px" }}
+                />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ marginTop: "8px" }}
+              />
+            </Box>
+          </InputContainer>
 
           {/* Submit Button */}
           <PrimaryButton
