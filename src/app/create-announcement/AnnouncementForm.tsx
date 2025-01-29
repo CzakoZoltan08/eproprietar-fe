@@ -33,8 +33,16 @@ const Container = styled.div`
   border: 1px solid #e0e0e0;
   color: #000;
   background: #fff;
-  padding: 12px;
+  padding: 16px;
   gap: 16px;
+  max-width: 800px; /* Prevent excessive width on large screens */
+  margin: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  
+  @media (max-width: 768px) {
+    max-width: 100%; /* Ensure it fits within mobile screens */
+    padding: 12px;
+  }
 `;
 
 const SubtitleAdvice = styled.h2`
@@ -47,9 +55,12 @@ const InputContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 35%; /* Half of the parent container */
-  margin: 0 auto; /* Center horizontally */
+  width: 100%;
   gap: 16px;
+
+  @media (min-width: 768px) {
+    width: 80%; /* Make it slightly narrower on bigger screens */
+  }
 `;
 
 const RadioGroupContainer = styled.div`
@@ -66,10 +77,14 @@ const DropArea = styled.div<{ $isDragging: boolean }>`
   background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
   padding: 20px;
   text-align: center;
-  width: 100%;
+  width: 85%;
   cursor: pointer;
   margin-top: 16px;
   transition: background-color 0.3s, border-color 0.3s;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
 `;
 
 const PreviewContainer = styled.div`
@@ -80,8 +95,9 @@ const PreviewContainer = styled.div`
 `;
 
 const PreviewImage = styled.img`
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  max-width: 120px;
+  height: auto;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -92,8 +108,9 @@ const PreviewImage = styled.img`
 `;
 
 const PreviewVideo = styled.video`
-  width: 150px;
-  height: 150px;
+  width: 100%;
+  max-width: 180px;
+  height: auto;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;

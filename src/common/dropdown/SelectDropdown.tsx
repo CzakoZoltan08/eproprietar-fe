@@ -36,10 +36,10 @@ const SelectDropdown = ({
   return (
     <FormControl fullWidth sx={sx}>
       {label && (
-        <InputLabel sx={labelStyle} variant="standard">
+        <InputLabel sx={{ pl: "10px", ...labelStyle }} variant="standard">
           {label}
         </InputLabel>
-      )}
+      )} 
       <Select
         sx={{
           height: "100%",
