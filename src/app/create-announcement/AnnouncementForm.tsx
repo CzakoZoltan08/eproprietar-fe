@@ -124,6 +124,13 @@ const StyledTextField = styled(TextField)`
   width: 100%; /* Take the full width of InputContainer */
 `;
 
+const MAX_VIDEOS = 3;
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+
+const MAX_IMAGES = 20;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 const AnnouncementForm = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
@@ -232,38 +239,57 @@ const AnnouncementForm = () => {
   };
 
   const validateImageFiles = (files: FileList | File[]) => {
-    const validImages = Array.from(files).filter((file) =>
-      file.type.startsWith("image/") // Check if MIME type starts with 'image/'
-    );
-    if (validImages.length < files.length) {
-      setError("Only image files are allowed.");
-    }
-    else{
-      setError("");
-    }
+    let validImages: File[] = Array.from(files).filter((file) => {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setError("Only JPEG, PNG, or WebP images are allowed.");
+        return false;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setError(`Image ${file.name} exceeds 5MB limit.`);
+        return false;
+      }
+      
+      return true;
+    });
+
     return validImages;
   };
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      const validImages = validateImageFiles(files);
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...validImages],
-      }));
-      setImagePreviews((prev) => [
-        ...prev,
-        ...validImages.map((file) => URL.createObjectURL(file)),
-      ]);
+
+    if (!files) {
+      return;
     }
+
+    const validImages = validateImageFiles(files);
+
+    if (formData.images.length + validImages.length > MAX_IMAGES) {
+      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...validImages],
+    }));
+    setImagePreviews((prev) => [
+      ...prev,
+      ...validImages.map((file) => URL.createObjectURL(file)),
+    ]);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(false);
     const files = event.dataTransfer.files;
+
     const validImages = validateImageFiles(files);
+    if (formData.images.length + validImages.length > MAX_IMAGES) {
+      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      return;
+    }
+    
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...validImages],
@@ -303,22 +329,33 @@ const AnnouncementForm = () => {
   };
 
   const validateVideoFiles = (files: FileList | File[]) => {
-    const validVideos = Array.from(files).filter((file) =>
-      file.type.startsWith("video/") // Check if MIME type starts with 'video/'
-    );
-    if (validVideos.length < files.length) {
-      setError("Only video files are allowed.");
-    }
-    else{
-      setError("");
-    }
+    let validVideos: File[] = Array.from(files).filter((file) => {
+      if (!file.type.startsWith("video/")) {
+        setError("Only video files are allowed.");
+        return false;
+      }
+
+      if (file.size > MAX_VIDEO_SIZE) {
+        setError(`File ${file.name} exceeds 100MB limit.`);
+        return false;
+      }
+      
+      return true;
+    });
+
     return validVideos;
   };
 
   const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
+      
       const validVideos = validateVideoFiles(files);
+      if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
+        setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         videos: [...prev.videos, ...validVideos],
@@ -334,7 +371,13 @@ const AnnouncementForm = () => {
     event.preventDefault();
     setIsDragging(false);
     const files = event.dataTransfer.files;
+    
     const validVideos = validateVideoFiles(files);
+    if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
+      setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       videos: [...prev.videos, ...validVideos],
