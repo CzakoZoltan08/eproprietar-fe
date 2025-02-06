@@ -27,6 +27,7 @@ export interface PropertyAnnouncementModel {
   numberOfKitchens?: number;
   balcony?: string;
   parking?: string;
+  images?: { original: string; thumbnail: string }[];
 }
 
 export class CreateAnnouncementDto {

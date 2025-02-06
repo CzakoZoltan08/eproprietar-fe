@@ -1,7 +1,14 @@
 "use client";
 
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/thumbs";
+
 import { Box, CircularProgress } from "@mui/material";
+import { Navigation, Pagination, Thumbs } from "swiper/modules";
 import React, { useEffect } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
@@ -39,9 +46,54 @@ const ColumnBox = styled(Box)`
   gap: 16px;
 `;
 
+const GalleryContainer = styled.div`
+  width: 100%;  // ✅ Allows the gallery to resize with the screen
+  max-width: 800px; // ✅ Limits the max width on larger screens
+  height: 400px; // ✅ Keeps the height fixed to avoid layout shifts
+  margin: 0 auto 20px auto; // ✅ Centers the gallery
+  overflow: hidden;
+
+  .swiper {
+    width: 100%;
+    height: 100%;
+  }
+
+  .swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .swiper-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  @media (max-width: 1024px) {
+    max-width: 700px;
+    height: 350px;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 500px;
+    height: 300px;
+  }
+
+  @media (max-width: 480px) {
+    max-width: 100%; // ✅ Ensures full width on mobile
+    height: 250px; // ✅ Adjust height for small screens
+  }
+`;
+
+
 const AnnouncementDetailPage: React.FC = () => {
   const {
-    announcementStore: { getAnnouncementById, currentAnnouncement },
+    announcementStore: { getAnnouncementById, currentAnnouncement, fetchAnnouncementImages },
   } = useStore();
   const params = useParams();
   const { id } = params;
@@ -54,6 +106,12 @@ const AnnouncementDetailPage: React.FC = () => {
     }
   }, [id, getAnnouncementById]);
 
+  useEffect(() => {
+    if (currentAnnouncement?.id && currentAnnouncement?.user?.id) {
+      fetchAnnouncementImages(currentAnnouncement.user.id, currentAnnouncement.id);
+    }
+  }, [currentAnnouncement?.id, currentAnnouncement?.user?.id, fetchAnnouncementImages]);
+
   // Render Loading Spinner
   if (!currentAnnouncement?.id) {
     return (
@@ -63,11 +121,55 @@ const AnnouncementDetailPage: React.FC = () => {
     );
   }
 
+  // Prepare images for the gallery
+  const images = currentAnnouncement.images?.map((image) => ({
+    original: image.original,
+    thumbnail: image.thumbnail,
+  })) ?? [];
+
   // Common Layout
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <div>
-        <ImagesCardComponent />
+      <GalleryContainer>
+          {images.length > 0 ? (
+            <>
+              <Swiper
+                modules={[Navigation, Pagination, Thumbs]}
+                navigation
+                pagination={{ clickable: true }}
+                spaceBetween={10}
+                slidesPerView={1}
+                loop={true}
+                style={{ width: "100%", height: "100%" }} // ✅ Ensures the gallery scales properly
+                breakpoints={{
+                  1024: { slidesPerView: 1 },
+                  768: { slidesPerView: 1 },
+                  480: { slidesPerView: 1 },
+                }}
+              >
+                {images.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <img src={image.original} alt={`Image ${index}`} />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </>
+          ) : (
+            <Box>No images available</Box>
+          )}
+        </GalleryContainer>
+
         {currentAnnouncement?.description && <DescriptionCard />}
         <CharacteristicsCard />
       </div>

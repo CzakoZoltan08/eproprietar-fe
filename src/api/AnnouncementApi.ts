@@ -55,6 +55,13 @@ export class AnnouncementApi {
     return this.apiConfig.sendRequest(HttpMethods.GET, endpoint);
   }
 
+  async getAnnouncementImages(userId: string, announcementId: string) {
+    return this.apiConfig.sendRequest(
+      HttpMethods.GET,
+      `${Endpoints.GET_ANNOUNCEMENT_IMAGES}/${userId}/${announcementId}`
+    );
+  }
+
   private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {
     const filters = {
       ...this.buildPaginationParams(data),

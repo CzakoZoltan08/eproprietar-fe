@@ -63,9 +63,15 @@ export class AnnouncementStore {
 
   async getAnnouncementById(id: string) {
     const announcement = await this.announcementApi.getAnnouncementById(id);
-
+    
     this.setCurrentAnnouncement(announcement);
+  
+    // Fetch images separately
+    if (announcement?.user?.id) {
+      this.fetchAnnouncementImages(announcement.user.id, announcement.id);
+    }
   }
+  
 
   async fetchPaginatedAnnouncements(data: FetchAnnouncementsModel) {
     try {
@@ -101,4 +107,28 @@ export class AnnouncementStore {
 
     this.setAnnouncements(resp);
   }
+
+  async fetchAnnouncementImages(userId: string, announcementId: string) {
+    try {
+      const response = await this.announcementApi.getAnnouncementImages(userId, announcementId);
+      
+      // Ensure valid response
+      const images = response?.resources?.map((resource: any) => ({
+        original: resource.optimized_url,
+        thumbnail: resource.optimized_url,
+      })) ?? [];
+  
+      // Update current announcement with images
+      runInAction(() => {
+        if (this.currentAnnouncement) {
+          this.currentAnnouncement = {
+            ...this.currentAnnouncement,
+            images, // Add images to the announcement object
+          };
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
+  }  
 }
