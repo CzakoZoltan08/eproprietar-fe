@@ -21,7 +21,6 @@ const PaddingContainer = styled.div`
   min-height: 100vh;
   color: ${palette.COLOR_WHITE};
   padding: 60px 120px;
-  width: 100%;
   max-width: 100vw; /* Prevents horizontal overflow */
 
   @media only screen and (max-width: ${breakpoints.MAX_PHONE}) {
