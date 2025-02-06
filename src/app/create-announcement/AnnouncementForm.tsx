@@ -444,7 +444,8 @@ const AnnouncementForm = () => {
       let announcementId = "";
       if (isEdit) {
         await updateAnnouncement(params.id as string, { 
-          ...data, 
+          ...data,
+          announcementType: data.announcementType.toLowerCase(),
           price: Number(data.price),
           rooms: Number(data.rooms),
           baths: Number(data.baths),
@@ -541,7 +542,7 @@ const AnnouncementForm = () => {
               {/* Announcement Type */}
               <RadioButtonsGroup
                 options={propertyTypes}
-                value={formData.announcementType.toLowerCase()}
+                value={formData.announcementType}
                 id="announcementType"
                 onChange={handleSelectChange}
                 label="Announcement Type"
