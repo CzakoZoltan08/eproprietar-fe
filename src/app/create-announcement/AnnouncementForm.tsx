@@ -118,6 +118,32 @@ const PreviewVideo = styled.video`
   &:hover {
     opacity: 0.7;
   }
+`
+
+const ThumbnailContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ThumbnailPreviewWrapper = styled.div`
+  width: 150px; /* Thumbnail size */
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 2px dashed #ccc;
+  background-color: #f8f8f8;
+  overflow: hidden; /* Ensures no overflow */
+  cursor: pointer;
+`;
+
+const ThumbnailPreviewImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures it stays square and centered */
 `;
 
 const StyledTextField = styled(TextField)`
@@ -161,6 +187,7 @@ const AnnouncementForm = () => {
   });
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
+  const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -232,12 +259,24 @@ const AnnouncementForm = () => {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+  
     if (file) {
-      setFormData({ ...formData, thumbnail: file });
-      setThumbnailPreview(URL.createObjectURL(file));
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        if (img.width > 1920 || img.height > 1080) {
+          setError("Image resolution cannot exceed 1920x1080.");
+          return;
+        }
+  
+        setFormData({ ...formData, thumbnail: file });
+        setThumbnailPreview(img.src);
+        setError('');
+      };
     }
   };
-
+  
   const validateImageFiles = (files: FileList | File[]) => {
     let validImages: File[] = Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -277,6 +316,7 @@ const AnnouncementForm = () => {
       ...prev,
       ...validImages.map((file) => URL.createObjectURL(file)),
     ]);
+    setError('');
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -298,6 +338,7 @@ const AnnouncementForm = () => {
       ...prev,
       ...validImages.map((file) => URL.createObjectURL(file)),
     ]);
+    setError('');
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -364,6 +405,7 @@ const AnnouncementForm = () => {
         ...prev,
         ...validVideos.map((file) => URL.createObjectURL(file)),
       ]);
+      setError('');
     }
   };
 
@@ -386,6 +428,7 @@ const AnnouncementForm = () => {
       ...prev,
       ...validVideos.map((file) => URL.createObjectURL(file)),
     ]);
+    setError('');
   };
 
   const handleVideoDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -704,22 +747,27 @@ const AnnouncementForm = () => {
             />
 
             {/* Thumbnail Upload */}
-            <Box sx={{ marginBottom: "16px", width: "100%" }}>
+            <ThumbnailContainer>
               <Typography variant="h6">Thumbnail Image</Typography>
-              {thumbnailPreview && (
-                <img
-                  src={thumbnailPreview}
-                  alt="Thumbnail Preview"
-                  style={{ width: "100%", maxHeight: "200px", objectFit: "cover", marginTop: "8px" }}
-                />
-              )}
+              
+              <ThumbnailPreviewWrapper onClick={() => thumbnailFileInputRef.current?.click()}>
+                {thumbnailPreview ? (
+                  <ThumbnailPreviewImage src={thumbnailPreview} alt="Thumbnail Preview" />
+                ) : (
+                  <Typography sx={{ color: "#aaa", textAlign: "center" }}>
+                    No Image
+                  </Typography>
+                )}
+              </ThumbnailPreviewWrapper>
+
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                style={{ marginTop: "8px" }}
+                style={{ display: "none" }}
+                ref={thumbnailFileInputRef}
               />
-            </Box>
+            </ThumbnailContainer>
 
             <Typography variant="h6">Add Images</Typography>
 
