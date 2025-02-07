@@ -1,14 +1,11 @@
 "use client";
 
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/thumbs";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
+import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { Box, CircularProgress } from "@mui/material";
-import { Navigation, Pagination, Thumbs } from "swiper/modules";
-import React, { useEffect } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
+import React, { useEffect, useState } from "react";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
@@ -16,6 +13,7 @@ import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
 import ImagesCardComponent from "@/app/announcements/[id]/ImagesCard";
 import { Layout } from "@/common/layout/Layout";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import Slider from "react-slick";
 import TitleCard from "@/app/announcements/[id]/TitleCard";
 import { observer } from "mobx-react";
 import styled from "styled-components";
@@ -47,32 +45,11 @@ const ColumnBox = styled(Box)`
 `;
 
 const GalleryContainer = styled.div`
-  width: 100%;  // ✅ Allows the gallery to resize with the screen
-  max-width: 800px; // ✅ Limits the max width on larger screens
-  height: 400px; // ✅ Keeps the height fixed to avoid layout shifts
-  margin: 0 auto 20px auto; // ✅ Centers the gallery
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  margin: 0 auto 20px auto;
   overflow: hidden;
-
-  .swiper {
-    width: 100%;
-    height: 100%;
-  }
-
-  .swiper-slide {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-  }
-
-  .swiper-slide img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-  }
 
   @media (max-width: 1024px) {
     max-width: 700px;
@@ -85,11 +62,101 @@ const GalleryContainer = styled.div`
   }
 
   @media (max-width: 480px) {
-    max-width: 100%; // ✅ Ensures full width on mobile
-    height: 250px; // ✅ Adjust height for small screens
+    max-width: 100%;
+    height: 250px;
   }
 `;
 
+// 🔹 Custom navigation arrows with better styling
+const ArrowButton = styled.button<{ $left?: boolean }>`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  ${(props) => (props.$left ? "left: 15px;" : "right: 15px;")}
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  transition: background 0.3s ease-in-out;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+// 🔹 Custom Arrow Components
+const PrevArrow = (props: { onClick: any; }) => {
+  const { onClick } = props;
+  return (
+    <ArrowButton $left onClick={onClick}>
+      <ArrowLeft />
+    </ArrowButton>
+  );
+};
+
+const NextArrow = (props: { onClick: any; }) => {
+  const { onClick } = props;
+  return (
+    <ArrowButton onClick={onClick}>
+      <ArrowRight />
+    </ArrowButton>
+  );
+};
+
+// 🔹 Ensure images fill the space properly
+const ImageContainer = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Image = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+interface Image {
+  original: string;
+  thumbnail?: string;
+}
+
+const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: true,
+    nextArrow: <NextArrow onClick={undefined} />, // ✅ Custom Right Arrow
+    prevArrow: <PrevArrow onClick={undefined} />, // ✅ Custom Left Arrow
+  };
+
+  return (
+    <Slider {...settings}>
+      {images.map((image: { original: string | undefined; }, index: React.Key | null | undefined) => (
+        <ImageContainer key={index}>
+          <Image src={image.original} alt={`Image ${index}`} />
+        </ImageContainer>
+      ))}
+    </Slider>
+  );
+};
 
 const AnnouncementDetailPage: React.FC = () => {
   const {
@@ -133,38 +200,7 @@ const AnnouncementDetailPage: React.FC = () => {
       <div>
       <GalleryContainer>
           {images.length > 0 ? (
-            <>
-              <Swiper
-                modules={[Navigation, Pagination, Thumbs]}
-                navigation
-                pagination={{ clickable: true }}
-                spaceBetween={10}
-                slidesPerView={1}
-                loop={true}
-                style={{ width: "100%", height: "100%" }} // ✅ Ensures the gallery scales properly
-                breakpoints={{
-                  1024: { slidesPerView: 1 },
-                  768: { slidesPerView: 1 },
-                  480: { slidesPerView: 1 },
-                }}
-              >
-                {images.map((image, index) => (
-                  <SwiperSlide key={index}>
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <img src={image.original} alt={`Image ${index}`} />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            </>
+            <ImageGallery images={images} />
           ) : (
             <Box>No images available</Box>
           )}
