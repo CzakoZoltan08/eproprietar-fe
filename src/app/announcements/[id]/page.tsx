@@ -47,23 +47,20 @@ const ColumnBox = styled(Box)`
 const GalleryContainer = styled.div`
   width: 100%;
   max-width: 800px;
-  height: 400px;
+  aspect-ratio: 16 / 9;
   margin: 0 auto 20px auto;
   overflow: hidden;
-
-  @media (max-width: 1024px) {
-    max-width: 700px;
-    height: 350px;
-  }
+  position: relative;
 
   @media (max-width: 768px) {
-    max-width: 500px;
-    height: 300px;
+    max-width: 100%;
+    height: auto; /* Allows it to scale dynamically */
   }
 
   @media (max-width: 480px) {
-    max-width: 100%;
-    height: 250px;
+    max-width: 100vw; /* Ensures no horizontal scrolling */
+    padding: 0 8px;
+    overflow-x: hidden;
   }
 `;
 
@@ -94,6 +91,43 @@ const ArrowButton = styled.button<{ $left?: boolean }>`
     width: 24px;
     height: 24px;
   }
+
+  @media (max-width: 600px) {
+    width: 50px;
+    height: 50px;
+    
+    svg {
+      width: 30px;
+      height: 30px;
+    }
+  }
+`;
+
+const CustomSlider = styled(Slider)`
+  .slick-dots {
+    position: absolute;
+    bottom: 10px; /* Ensures consistent position */
+    width: 100%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slick-dots li {
+    margin: 0 5px; /* Adds spacing between dots */
+  }
+
+  .slick-dots li button:before {
+    font-size: 12px; /* Adjust dot size */
+    color: white; /* Change color if needed */
+    opacity: 0.75;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .slick-dots li.slick-active button:before {
+    opacity: 1;
+    color: white;
+  }
 `;
 
 // 🔹 Custom Arrow Components
@@ -115,6 +149,17 @@ const NextArrow = (props: { onClick: any; }) => {
   );
 };
 
+const ResponsiveBox = styled(Box)`
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+
+  @media (max-width: 480px) {
+    width: 100vw; /* Ensures it does not exceed viewport width */
+  }
+`;
+
+
 // 🔹 Ensure images fill the space properly
 const ImageContainer = styled.div`
   width: 100%;
@@ -135,6 +180,12 @@ interface Image {
   thumbnail?: string;
 }
 
+const ImageGalleryWrapper = styled.div`
+  width: 100%;
+  max-width: 100%; /* Ensures it doesn’t exceed parent */
+  overflow: hidden; /* Prevents unexpected overflows */
+`;
+
 const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
   const settings = {
     dots: true,
@@ -142,19 +193,24 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    arrows: true,
-    nextArrow: <NextArrow onClick={undefined} />, // ✅ Custom Right Arrow
-    prevArrow: <PrevArrow onClick={undefined} />, // ✅ Custom Left Arrow
+    arrows: !useMediaQuery(SIZES_NUMBER_TINY_SMALL), // Hide arrows on mobile
+    swipe: true,
+    nextArrow: <NextArrow onClick={undefined} />,
+    prevArrow: <PrevArrow onClick={undefined} />,
+    lazyLoad: "ondemand" as const,
+    adaptiveHeight: false, // ❌ Disables height jumping issue
   };
 
   return (
-    <Slider {...settings}>
-      {images.map((image: { original: string | undefined; }, index: React.Key | null | undefined) => (
-        <ImageContainer key={index}>
-          <Image src={image.original} alt={`Image ${index}`} />
-        </ImageContainer>
-      ))}
-    </Slider>
+    <ImageGalleryWrapper>
+      <CustomSlider {...settings}>
+        {images.map((image, index) => (
+          <ImageContainer key={index}>
+            <Image src={image.original} alt={`Image ${index}`} />
+          </ImageContainer>
+        ))}
+      </CustomSlider>
+    </ImageGalleryWrapper>
   );
 };
 
@@ -198,13 +254,15 @@ const AnnouncementDetailPage: React.FC = () => {
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <div>
-      <GalleryContainer>
-          {images.length > 0 ? (
-            <ImageGallery images={images} />
-          ) : (
-            <Box>No images available</Box>
-          )}
-        </GalleryContainer>
+        <ResponsiveBox>
+          <GalleryContainer>
+            {images.length > 0 ? (
+              <ImageGallery images={images} />
+            ) : (
+              <Box>No images available</Box>
+            )}
+          </GalleryContainer>
+        </ResponsiveBox>
 
         {currentAnnouncement?.description && <DescriptionCard />}
         <CharacteristicsCard />
