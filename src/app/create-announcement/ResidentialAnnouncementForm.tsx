@@ -107,6 +107,7 @@ const ResidentialAnnouncementForm = () => {
           user: { id: user.id, firebaseId: user.firebaseId },
           price: 0,
           transactionType: serviceTypes[0],
+          status: "active",
         };
 
         await createAnnouncement(announcementData);
