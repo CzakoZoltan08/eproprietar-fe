@@ -1,7 +1,7 @@
 "use client";
 
 import { CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
   apartmentFloors,
@@ -157,7 +157,7 @@ const MAX_IMAGES = 20;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const AnnouncementForm = () => {
+const AnnouncementFormContent = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
     announcementStore: { createPaymentSession, updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
@@ -874,6 +874,14 @@ const AnnouncementForm = () => {
         </>
       )}
     </Container>
+  );
+};
+
+const AnnouncementForm = () => {
+  return (
+    <Suspense fallback={<CircularProgress size={50} style={{ marginTop: "50px" }} />}>
+      <AnnouncementFormContent />
+    </Suspense>
   );
 };
 

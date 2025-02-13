@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import { observer } from "mobx-react";
 import { useStore } from "@/hooks/useStore";
 
-const PaymentStatus = () => {
-  const { 
-    announcementStore: { updateAnnouncement } } = useStore();
-  
+const PaymentStatusContent = () => {
+  const {
+    announcementStore: { updateAnnouncement },
+  } = useStore();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
@@ -47,8 +48,8 @@ const PaymentStatus = () => {
 
       setStatusMessage("Activating your announcement...");
 
-      await updateAnnouncement(announcementId as string, { 
-        status: 'active'
+      await updateAnnouncement(announcementId as string, {
+        status: "active",
       });
 
       setStatusMessage("Your announcement has been successfully activated!");
@@ -77,6 +78,14 @@ const PaymentStatus = () => {
       )}
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
+  );
+};
+
+const PaymentStatus = () => {
+  return (
+    <Suspense fallback={<CircularProgress size={50} style={{ marginTop: "50px" }} />}>
+      <PaymentStatusContent />
+    </Suspense>
   );
 };
 
