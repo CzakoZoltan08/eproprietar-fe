@@ -8,5 +8,6 @@ export const Endpoints = {
     REGISTER: "/auth/register",
     USERS: "/users",
     USERS_BY_EMAIL: "/users/by-email",
-    GET_ANNOUNCEMENT_IMAGES: "/uploads"
+    GET_ANNOUNCEMENT_IMAGES: "/uploads",
+    PAYMENT_CREATE: "/payment/create"
   } as const;

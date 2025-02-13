@@ -49,6 +49,7 @@ export class CreateAnnouncementDto {
   isNew?: boolean;
   user: { id: string; firebaseId: string } = { id: '', firebaseId: ''};
   imageUrl?: string;
+  status: string = 'pending';
 }
 
 export interface FetchAnnouncementsModel {

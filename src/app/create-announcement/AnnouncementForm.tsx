@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
+import { CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -12,7 +12,7 @@ import {
   roomOptions,
   serviceTypes,
 } from "@/constants/annountementConstants";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import PhoneInputField from "@/common/input/PhoneInputField";
@@ -160,7 +160,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const AnnouncementForm = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
-    announcementStore: { createAnnouncement, updateAnnouncement, createImageOrVideo, currentAnnouncement },
+    announcementStore: { createPaymentSession, updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
   } = useStore();
 
   const [formData, setFormData] = useState({
@@ -197,9 +197,9 @@ const AnnouncementForm = () => {
   const [isDraggingVideos, setIsDraggingVideos] = useState(false);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
 
-  const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
+  const searchParams = useSearchParams();
   const isEdit = params?.id && pathname.includes("/edit-announcement");
 
   // Load current user
@@ -208,6 +208,17 @@ const AnnouncementForm = () => {
       getCurrentUser();
     }
   }, [user]);
+
+  // Prefill data if redirected from failed payment
+  useEffect(() => {
+    const failed = searchParams.get("failed");
+    if (failed) {
+      const savedData = sessionStorage.getItem("announcementData");
+      if (savedData) {
+        setFormData(JSON.parse(savedData));
+      }
+    }
+  }, []);
 
   // Load current announcement for editing
   useEffect(() => {
@@ -459,6 +470,43 @@ const AnnouncementForm = () => {
     });
   };
 
+  const uploadMedia = async (announcementId: string) => {
+    try {
+      for (const image of formData.images) {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", image);
+        formDataToSend.append("type", "image");
+        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+      }
+
+      if (formData.thumbnail && announcementId) {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", formData.thumbnail);
+        formDataToSend.append("type", "image");
+
+        if (user?.id) {
+          const response = await createImageOrVideo(formDataToSend, user.id, announcementId);
+
+          if (response.optimized_url) {
+            const optimizedUrl = response.optimized_url; // Get the optimized image URL
+  
+            // Step 4: Update the announcement with the optimized image URL
+            await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
+          }
+        }
+      }
+
+      for (const video of formData.videos) {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", video);
+        formDataToSend.append("type", "video");
+        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+      }
+    } catch (error) {
+      console.error("Error uploading media:", error);
+    }
+  };
+
   const onSubmit = async () => {
     if (!formData.title || !formData.description || !formData.price || !formData.city) {
       setError("Please fill in all required fields.");
@@ -497,6 +545,7 @@ const AnnouncementForm = () => {
           surface: Number(data.surface)
         });
         announcementId = params.id as string;
+        await uploadMedia(announcementId);
       } else {
         const newAnnouncement = await createAnnouncement({
           ...data,
@@ -507,57 +556,37 @@ const AnnouncementForm = () => {
           numberOfKitchens: Number(data.numberOfKitchens),
           floor: Number(data.floor),
           surface: Number(data.surface),
+          status: "pending",
           user: {
             id: user?.id || "",
             firebaseId: user?.firebaseId || ""
           }
         }) as unknown as PropertyAnnouncementModel;
-        announcementId = newAnnouncement.id; // Assume the response contains the new ID
-      }
+        announcementId = newAnnouncement.id; 
 
-      if (announcementId) {
-        for (const image of formData.images) {
-          const formDataToSend = new FormData();
-          formDataToSend.append("file", image);
-          formDataToSend.append("type", "image");
+        await uploadMedia(announcementId);
 
-          if (user?.id) {
-            await createImageOrVideo(formDataToSend, user.id, announcementId); // Replace with actual IDs
-          }
+        localStorage.setItem(
+          "announcementData",
+          JSON.stringify({
+            ...formData,
+            announcementId
+          })
+        );
+
+        // 🏦 Step 1: Request Stripe Payment Session
+        const response = await createPaymentSession({
+          orderId: `ANN_${Date.now()}`,
+          amount: 1,
+          currency: "EUR",
+        });
+
+        if (!response?.checkoutUrl) {
+          throw new Error("Failed to initiate payment");
         }
+
+        window.location.href = response.checkoutUrl;
       }
-
-      // Step 3: Upload the thumbnail (if provided)
-      if (thumbnail && announcementId) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", thumbnail);
-        formDataToSend.append("type", "image");
-
-        if (user?.id) {
-          const response = await createImageOrVideo(formDataToSend, user.id, announcementId);
-
-          if (response.optimized_url) {
-            const optimizedUrl = response.optimized_url; // Get the optimized image URL
-  
-            // Step 4: Update the announcement with the optimized image URL
-            await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
-          }
-        }
-      }
-
-      if (announcementId) {
-        for (const video of formData.videos) {
-          const formDataToSend = new FormData();
-          formDataToSend.append("file", video);
-          formDataToSend.append("type", "video");
-  
-          if (user?.id) {
-            await createImageOrVideo(formDataToSend, user.id, announcementId); // Replace with actual IDs
-          }
-        }
-      }
-
-      router.push("/");
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");

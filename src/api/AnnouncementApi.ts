@@ -62,6 +62,10 @@ export class AnnouncementApi {
     );
   }
 
+  async createPaymentSession(paymentData: { orderId: string; amount: number; currency: string }): Promise<{ checkoutUrl: string } | null> {
+    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.PAYMENT_CREATE, paymentData);
+  }
+
   private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {
     const filters = {
       ...this.buildPaginationParams(data),

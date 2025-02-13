@@ -31,7 +31,6 @@ export class ApiConfig {
 
       return response.data;
     } catch (error) {
-      this.logError(error);
       return null;
     }
   }

@@ -130,5 +130,15 @@ export class AnnouncementStore {
     } catch (error) {
       console.error("Error fetching images:", error);
     }
-  }  
+  }
+
+  async createPaymentSession(paymentData: { orderId: string; amount: number; currency: string }) {
+    try {
+      const response = await this.announcementApi.createPaymentSession(paymentData);
+      return response;
+    } catch (error) {
+      console.error("Error creating payment session:", error);
+      return null;
+    }
+  }
 }
