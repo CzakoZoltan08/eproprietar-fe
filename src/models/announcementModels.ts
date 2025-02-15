@@ -28,6 +28,7 @@ export interface PropertyAnnouncementModel {
   balcony?: string;
   parking?: string;
   images?: { original: string; thumbnail: string }[];
+  videos?: { original: string; format: string }[];
 }
 
 export class CreateAnnouncementDto {

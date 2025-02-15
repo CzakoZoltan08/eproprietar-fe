@@ -4,13 +4,12 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
 import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
-import ImagesCardComponent from "@/app/announcements/[id]/ImagesCard";
 import { Layout } from "@/common/layout/Layout";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import Slider from "react-slick";
@@ -214,6 +213,36 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
   );
 };
 
+const VideoContainer = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+`;
+
+const Video = styled.video`
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+`;
+
+const VideoGallery: React.FC<{ videos: { original: string; format: string }[] }> = ({ videos }) => {
+  if (videos.length === 0) return null; // Hide if no videos
+
+  return (
+    <VideoContainer>
+      <Typography variant="h6">Videos</Typography>
+      {videos.map((video, index) => (
+        <Video key={index} controls>
+          <source src={video.original} type={`video/${video.format}`} />
+          Your browser does not support the video tag.
+        </Video>
+      ))}
+    </VideoContainer>
+  );
+};
+
 const AnnouncementDetailPage: React.FC = () => {
   const {
     announcementStore: { getAnnouncementById, currentAnnouncement, fetchAnnouncementImages },
@@ -250,6 +279,8 @@ const AnnouncementDetailPage: React.FC = () => {
     thumbnail: image.thumbnail,
   })) ?? [];
 
+  const videos = currentAnnouncement.videos ?? [];
+
   // Common Layout
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
@@ -263,10 +294,21 @@ const AnnouncementDetailPage: React.FC = () => {
             )}
           </GalleryContainer>
         </ResponsiveBox>
-
+  
+        {/* ✅ Responsive Video Gallery Section */}
+        <ResponsiveBox>
+          {videos.length > 0 && (
+            <GalleryContainer>
+              <VideoGallery videos={videos} />
+            </GalleryContainer>
+          )}
+        </ResponsiveBox>
+  
+        {/* Description & Characteristics */}
         {currentAnnouncement?.description && <DescriptionCard />}
         <CharacteristicsCard />
       </div>
+  
       <ContactContainer>
         <ContactCardComponent />
       </ContactContainer>

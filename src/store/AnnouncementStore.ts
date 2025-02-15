@@ -118,18 +118,29 @@ export class AnnouncementStore {
     try {
       const response = await this.announcementApi.getAnnouncementImages(userId, announcementId);
       
-      // Ensure valid response
-      const images = response?.resources?.map((resource: any) => ({
-        original: resource.optimized_url,
-        thumbnail: resource.optimized_url,
-      })) ?? [];
+      // ✅ Filter only image resources
+      const images = response?.resources
+        ?.filter((resource: any) => resource.type === "image") // 🛑 Excludes videos
+        .map((resource: any) => ({
+          original: resource.optimized_url,
+          thumbnail: resource.optimized_url,
+        })) ?? [];
   
-      // Update current announcement with images
+      // ✅ Separate videos (optional)
+      const videos = response?.resources
+        ?.filter((resource: any) => resource.type === "video") // 🛑 Excludes images
+        .map((resource: any) => ({
+          original: resource.optimized_url,
+          format: resource.format, // Might be useful for video rendering
+        })) ?? [];
+  
+      // ✅ Update state with separate images & videos
       runInAction(() => {
         if (this.currentAnnouncement) {
           this.currentAnnouncement = {
             ...this.currentAnnouncement,
-            images, // Add images to the announcement object
+            images,  // ✅ Only images here
+            videos,  // ✅ Now videos are stored separately
           };
         }
       });
