@@ -61,6 +61,12 @@ export class AnnouncementStore {
     this.setCurrentAnnouncement(updated);
   }
 
+  async deleteAnnouncement(id: string) {
+    const updated = await this.announcementApi.deleteAnnouncementById(id);
+
+    this.setCurrentAnnouncement(updated);
+  }
+
   async getAnnouncementById(id: string) {
     const announcement = await this.announcementApi.getAnnouncementById(id);
     

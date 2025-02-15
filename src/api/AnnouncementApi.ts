@@ -43,6 +43,10 @@ export class AnnouncementApi {
     return this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.ANNOUNCEMENTS}/${id}`);
   }
 
+  async deleteAnnouncementById(id: string) {
+    return this.apiConfig.sendRequest(HttpMethods.DELETE, `${Endpoints.ANNOUNCEMENTS}/${id}`);
+  }
+
   async fetchSavedAnnouncements(userId: string) {
     return this.apiConfig.sendRequest(
       HttpMethods.GET,

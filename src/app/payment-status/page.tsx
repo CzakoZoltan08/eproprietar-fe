@@ -9,7 +9,7 @@ import { useStore } from "@/hooks/useStore";
 
 const PaymentStatusContent = () => {
   const {
-    announcementStore: { updateAnnouncement },
+    announcementStore: { updateAnnouncement, deleteAnnouncement },
   } = useStore();
 
   const router = useRouter();
@@ -25,10 +25,14 @@ const PaymentStatusContent = () => {
     if (success === "true" && orderId) {
       uploadMedia(orderId);
     } else {
-      // Todo: delete media files of the announcement
+      deleteAnnouncementById(orderId as string);
       setTimeout(() => router.push("/create-announcement?failed=true"), 3000);
     }
   }, [success, orderId, router]);
+
+  const deleteAnnouncementById = async (announcementId: string) => {
+    await deleteAnnouncement(orderId as string);
+  }
 
   const uploadMedia = async (announcementId: string) => {
     try {

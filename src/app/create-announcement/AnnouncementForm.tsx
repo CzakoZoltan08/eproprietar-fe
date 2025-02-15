@@ -576,7 +576,7 @@ const AnnouncementFormContent = () => {
 
         // 🏦 Step 1: Request Stripe Payment Session
         const response = await createPaymentSession({
-          orderId: `ANN_${Date.now()}`,
+          orderId: announcementId,
           amount: 1,
           currency: "EUR",
         });
