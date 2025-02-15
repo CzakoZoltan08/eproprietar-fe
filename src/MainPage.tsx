@@ -110,6 +110,7 @@ export const Main = () => {
         maxSurface: filters.MAX_SURFACE,
         transactionType: filters.TRANSACTION_TYPE,
         type: filters.TYPE,
+        status: "active",
       },
     });
 
@@ -122,6 +123,7 @@ export const Main = () => {
       ["rooms", filters.ROOMS],
       ["transactionType", selectedTransactionType?.id],
       ["type", selectedType?.id],
+      ["status", "active"],
     ].forEach(([key, value]) =>
       handleQueryParams(queryParams, key!.toString(), value)
     );

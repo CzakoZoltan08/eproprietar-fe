@@ -35,6 +35,7 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
       city: searchParams.get("city") || sessionStorage.getItem("city") || "",
       type,
       userId: searchParams.get("userId") || sessionStorage.getItem("userId") || "",
+      status: "active"
     };
 
     // Ensure `rooms` is included only when `type` is "apartament"
@@ -43,6 +44,7 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
     }
 
     setPage(Number(sessionStorage.getItem("page")) || Number(searchParams.get("page")) || 1);
+    initialFilters.status = "active";
     setFilters(initialFilters);
     setIsInitialized(true);
   };

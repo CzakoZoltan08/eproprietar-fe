@@ -6,4 +6,5 @@ export const DEFAULT_FILTERS = {
     PRICE: 50000,
     MIN_SURFACE: 10,
     MAX_SURFACE: 100,
+    STATUS: "active",
 };  

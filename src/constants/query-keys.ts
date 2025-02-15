@@ -8,5 +8,6 @@ export const QueryKeys = {
     FILTER_ANNOUNCEMENT_TYPE: "filter.announcementType",
     FILTER_TRANSACTION_TYPE: "filter.transactionType",
     FILTER_USER: "filter.user",
+    FILTER_STATUS: "filter.status",
     SEARCH: "search",
 };

@@ -104,6 +104,7 @@ export class AnnouncementApi {
       type,
       transactionType,
       userId,
+      status
     } = filter;
   
     return {
@@ -126,6 +127,9 @@ export class AnnouncementApi {
         : undefined,
       [QueryKeys.FILTER_USER]: userId
         ? `${FilterOperators.EQUAL}:${userId}`
+        : undefined,
+        [QueryKeys.FILTER_STATUS]: status
+        ? `${FilterOperators.IN}:${status}`
         : undefined,
     };
   }
