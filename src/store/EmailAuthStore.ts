@@ -38,6 +38,7 @@ export class EmailAuthStore {
         lastName,
         firebaseId: user.uid,
         authProvider: AuthProvider.EMAIL,
+        role: "user"
       };
 
       await this.userApi.createUser(userModel);

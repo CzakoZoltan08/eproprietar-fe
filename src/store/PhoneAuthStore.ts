@@ -57,6 +57,7 @@ export class PhoneAuthStore {
           lastName: userCredential.user.displayName?.split(" ")[1] || null,
           authProvider: AuthProvider.PHONE,
           firebaseId: userCredential.user.uid,
+          role: "user"
         };
   
         this.userStore.setCurrentUser(user);

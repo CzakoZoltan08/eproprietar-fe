@@ -22,6 +22,7 @@ export const handleSocialAuth = async (
       lastName: result.user.displayName?.split(" ")[1] || "",
       firebaseId: result.user.uid,
       authProvider: authProviderName,
+      role: "user"
     };
 
     userStore.setCurrentUser(userModel);
