@@ -284,6 +284,10 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   const [currentTime, setCurrentTime] = useState<number[]>(Array(videos.length).fill(0));
   const [isPlaying, setIsPlaying] = useState<boolean[]>(Array(videos.length).fill(false));
 
+  useEffect(() => {
+    videoRefs.current = videoRefs.current.slice(0, videos.length); // Keep refs array length in sync
+  }, [videos.length]);  
+
   const handleTimeUpdate = (index: number) => {
     const video = videoRefs.current[index];
     if (video) {
@@ -377,7 +381,9 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
             <VideoWrapper>
               <Video
                 ref={(el) => {
-                  if (el) videoRefs.current[index] = el;
+                  if (el && !videoRefs.current[index]) {
+                    videoRefs.current[index] = el;
+                  }
                 }}
                 controls={false}
                 onTimeUpdate={() => handleTimeUpdate(index)}
