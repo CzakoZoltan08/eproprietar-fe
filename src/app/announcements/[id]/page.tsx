@@ -234,16 +234,27 @@ const Video = styled.video`
   display: block; /* Prevent unwanted space under video */
 `;
 
-const ProgressBarContainer = styled.div`
+const ControlsContainer = styled.div`
   position: absolute;
-  bottom: 0; /* ✅ Progress bar aligned at the bottom */
+  bottom: 0;
   left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10;
+`;
+
+const Controls = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+`;
+
+const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
   background: #e0e0e0;
-  border-radius: 0;
   cursor: pointer;
-  z-index: 11; /* ✅ Ensure progress bar is above everything */
 `;
 
 const ProgressBar = styled.div<{ progress: number }>`
@@ -252,27 +263,13 @@ const ProgressBar = styled.div<{ progress: number }>`
   background: #3f51b5;
 `;
 
-const Controls = styled.div`
-  position: absolute;
-  bottom: 1px; /* ✅ Move controls within the video container */
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.6); /* ✅ Transparent background for controls */
-  box-sizing: border-box;
-  z-index: 10;
-`;
-
 const Time = styled.span`
   font-size: 14px;
-  color: #555;
+  color: #fff;
 `;
 
 const IconButtonStyled = styled(IconButton)`
-  color: #3f51b5;
+  color: #fff;
 `;
 
 interface VideoItem {
@@ -281,46 +278,74 @@ interface VideoItem {
 }
 
 const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [progress, setProgress] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(0);
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const videoRefs = useRef<HTMLVideoElement[]>([]);
+  const [progress, setProgress] = useState<number[]>(Array(videos.length).fill(0));
+  const [duration, setDuration] = useState<number[]>(Array(videos.length).fill(0));
+  const [currentTime, setCurrentTime] = useState<number[]>(Array(videos.length).fill(0));
+  const [isPlaying, setIsPlaying] = useState<boolean[]>(Array(videos.length).fill(false));
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const currentTime = videoRef.current.currentTime;
-      const duration = videoRef.current.duration;
-      setCurrentTime(currentTime);
-      setProgress((currentTime / duration) * 100);
+  const handleTimeUpdate = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
+      const currentTime = video.currentTime;
+      const duration = video.duration;
+      setCurrentTime((prev) => {
+        const newTimes = [...prev];
+        newTimes[index] = currentTime;
+        return newTimes;
+      });
+      setProgress((prev) => {
+        const newProgress = [...prev];
+        newProgress[index] = (currentTime / duration) * 100;
+        return newProgress;
+      });
     }
   };
 
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
+  const handleLoadedMetadata = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
+      setDuration((prev) => {
+        const newDurations = [...prev];
+        newDurations[index] = video.duration;
+        return newDurations;
+      });
     }
   };
 
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (videoRef.current) {
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
       const rect = e.currentTarget.getBoundingClientRect();
       const clickPosition = e.clientX - rect.left;
-      const newTime = (clickPosition / rect.width) * duration;
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-      setProgress((newTime / duration) * 100);
+      const newTime = (clickPosition / rect.width) * duration[index];
+      video.currentTime = newTime;
+      setCurrentTime((prev) => {
+        const newTimes = [...prev];
+        newTimes[index] = newTime;
+        return newTimes;
+      });
+      setProgress((prev) => {
+        const newProgress = [...prev];
+        newProgress[index] = (newTime / duration[index]) * 100;
+        return newProgress;
+      });
     }
   };
 
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
+  const togglePlayPause = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
+      if (isPlaying[index]) {
+        video.pause();
       } else {
-        videoRef.current.play();
+        video.play();
       }
-      setIsPlaying(!isPlaying);
+      setIsPlaying((prev) => {
+        const newPlaying = [...prev];
+        newPlaying[index] = !prev[index];
+        return newPlaying;
+      });
     }
   };
 
@@ -351,23 +376,31 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
           <div key={index}>
             <VideoWrapper>
               <Video
-                ref={videoRef}
-                controls={false} // Hide native controls
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
+                ref={(el) => {
+                  if (el) videoRefs.current[index] = el;
+                }}
+                controls={false}
+                onTimeUpdate={() => handleTimeUpdate(index)}
+                onLoadedMetadata={() => handleLoadedMetadata(index)}
               >
                 <source src={video.original} type={`video/${video.format}`} />
                 Your browser does not support the video tag.
               </Video>
-              <Controls>
-                <IconButtonStyled onClick={togglePlayPause}>
-                  {isPlaying ? <Pause /> : <PlayArrow />}
-                </IconButtonStyled>
-                <Time>{formatTime(currentTime)} / {formatTime(duration)}</Time>
-              </Controls>
-              <ProgressBarContainer onClick={handleProgressBarClick}>
-                <ProgressBar progress={progress} />
-              </ProgressBarContainer>
+
+              <ControlsContainer>
+                <ProgressBarContainer onClick={(e) => handleProgressBarClick(e, index)}>
+                  <ProgressBar progress={progress[index]} />
+                </ProgressBarContainer>
+
+                <Controls>
+                  <IconButtonStyled onClick={() => togglePlayPause(index)}>
+                    {isPlaying[index] ? <Pause /> : <PlayArrow />}
+                  </IconButtonStyled>
+                  <Time>
+                    {formatTime(currentTime[index])} / {formatTime(duration[index])}
+                  </Time>
+                </Controls>
+              </ControlsContainer>
             </VideoWrapper>
           </div>
         ))}
