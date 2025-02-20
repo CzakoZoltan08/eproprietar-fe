@@ -3,9 +3,9 @@
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-import { ArrowLeft, ArrowRight } from "@mui/icons-material";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, Pause, PlayArrow } from "@mui/icons-material";
+import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
@@ -47,7 +47,6 @@ const GalleryContainer = styled.div`
   width: 100%;
   max-width: 800px;
   aspect-ratio: 16 / 9;
-  margin: 0 auto 20px auto;
   overflow: hidden;
   position: relative;
 
@@ -130,7 +129,7 @@ const CustomSlider = styled(Slider)`
 `;
 
 // 🔹 Custom Arrow Components
-const PrevArrow = (props: { onClick: any; }) => {
+const PrevArrow = (props: any) => {
   const { onClick } = props;
   return (
     <ArrowButton $left onClick={onClick}>
@@ -139,7 +138,7 @@ const PrevArrow = (props: { onClick: any; }) => {
   );
 };
 
-const NextArrow = (props: { onClick: any; }) => {
+const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
     <ArrowButton onClick={onClick}>
@@ -217,28 +216,162 @@ const VideoContainer = styled(Box)`
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 20px;
+  overflow: visible;
+`;
+
+const VideoWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: black; /* Added background to prevent transparency issues */
 `;
 
 const Video = styled.video`
   width: 100%;
-  max-width: 800px;
   border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: block; /* Prevent unwanted space under video */
 `;
 
-const VideoGallery: React.FC<{ videos: { original: string; format: string }[] }> = ({ videos }) => {
-  if (videos.length === 0) return null; // Hide if no videos
+const ProgressBarContainer = styled.div`
+  position: absolute;
+  bottom: 0; /* ✅ Progress bar aligned at the bottom */
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 0;
+  cursor: pointer;
+  z-index: 11; /* ✅ Ensure progress bar is above everything */
+`;
+
+const ProgressBar = styled.div<{ progress: number }>`
+  width: ${(props) => props.progress}%;
+  height: 100%;
+  background: #3f51b5;
+`;
+
+const Controls = styled.div`
+  position: absolute;
+  bottom: 1px; /* ✅ Move controls within the video container */
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.6); /* ✅ Transparent background for controls */
+  box-sizing: border-box;
+  z-index: 10;
+`;
+
+const Time = styled.span`
+  font-size: 14px;
+  color: #555;
+`;
+
+const IconButtonStyled = styled(IconButton)`
+  color: #3f51b5;
+`;
+
+interface VideoItem {
+  original: string;
+  format: string;
+}
+
+const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const currentTime = videoRef.current.currentTime;
+      const duration = videoRef.current.duration;
+      setCurrentTime(currentTime);
+      setProgress((currentTime / duration) * 100);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  };
+
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (videoRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickPosition = e.clientX - rect.left;
+      const newTime = (clickPosition / rect.width) * duration;
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      setProgress((newTime / duration) * 100);
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const formatTime = (time: number): string => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: true,
+    swipe: true,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    lazyLoad: "ondemand" as const,
+    adaptiveHeight: false,
+  };
 
   return (
     <VideoContainer>
-      <Typography variant="h6">Videos</Typography>
-      {videos.map((video, index) => (
-        <Video key={index} controls>
-          <source src={video.original} type={`video/${video.format}`} />
-          Your browser does not support the video tag.
-        </Video>
-      ))}
+      <CustomSlider {...settings}>
+        {videos.map((video, index) => (
+          <div key={index}>
+            <VideoWrapper>
+              <Video
+                ref={videoRef}
+                controls={false} // Hide native controls
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+              >
+                <source src={video.original} type={`video/${video.format}`} />
+                Your browser does not support the video tag.
+              </Video>
+              <Controls>
+                <IconButtonStyled onClick={togglePlayPause}>
+                  {isPlaying ? <Pause /> : <PlayArrow />}
+                </IconButtonStyled>
+                <Time>{formatTime(currentTime)} / {formatTime(duration)}</Time>
+              </Controls>
+              <ProgressBarContainer onClick={handleProgressBarClick}>
+                <ProgressBar progress={progress} />
+              </ProgressBarContainer>
+            </VideoWrapper>
+          </div>
+        ))}
+      </CustomSlider>
     </VideoContainer>
   );
 };
