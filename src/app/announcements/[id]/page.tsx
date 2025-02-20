@@ -148,8 +148,11 @@ const NextArrow = (props: any) => {
 };
 
 const ResponsiveBox = styled(Box)`
-  width: 100%;
-  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  justifyContent: center;
+  alignItems: center;
+  width: 50%;
   overflow: hidden;
 
   @media (max-width: 480px) {
@@ -285,8 +288,14 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   const [isPlaying, setIsPlaying] = useState<boolean[]>(Array(videos.length).fill(false));
 
   useEffect(() => {
-    videoRefs.current = videoRefs.current.slice(0, videos.length); // Keep refs array length in sync
-  }, [videos.length]);  
+    videoRefs.current = videoRefs.current.slice(0, videos.length);
+  }, [videos.length]); 
+
+  const getVideoRef = (index: number) => (el: HTMLVideoElement | null) => {
+    if (el && !videoRefs.current[index]) {
+      videoRefs.current[index] = el;
+    }
+  };
 
   const handleTimeUpdate = (index: number) => {
     const video = videoRefs.current[index];
@@ -340,10 +349,10 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   const togglePlayPause = (index: number) => {
     const video = videoRefs.current[index];
     if (video) {
-      if (isPlaying[index]) {
-        video.pause();
+      if (video.paused) {
+        video.play().catch((error) => console.error("Play error:", error)); // ✅ Catch autoplay errors
       } else {
-        video.play();
+        video.pause();
       }
       setIsPlaying((prev) => {
         const newPlaying = [...prev];
@@ -380,11 +389,8 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
           <div key={index}>
             <VideoWrapper>
               <Video
-                ref={(el) => {
-                  if (el && !videoRefs.current[index]) {
-                    videoRefs.current[index] = el;
-                  }
-                }}
+                ref={getVideoRef(index)}
+                muted // 🔥 Helps with autoplay during testing
                 controls={false}
                 onTimeUpdate={() => handleTimeUpdate(index)}
                 onLoadedMetadata={() => handleLoadedMetadata(index)}
@@ -456,7 +462,7 @@ const AnnouncementDetailPage: React.FC = () => {
   // Common Layout
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", alignItems: "center" }}>
         <ResponsiveBox>
           <GalleryContainer>
             {images.length > 0 ? (
