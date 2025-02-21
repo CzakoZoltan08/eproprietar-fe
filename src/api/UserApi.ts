@@ -11,6 +11,18 @@ export class UserApi {
     this.apiConfig = apiConfig;
   }
 
+  async getAllUsers() {
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.USERS}`);
+  }
+
+  async getUserByEmail(email: string) {
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.USERS_BY_EMAIL}/${email}`);
+  }
+
+  async getUserById(id: string) {
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.USERS}/${id}`);
+  }
+
   async createUser(data: CreateUserModel): Promise<any> {
     // Validate the input data
     if (!data || !data.email) {
@@ -21,11 +33,11 @@ export class UserApi {
     return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.USERS, data);
   }
 
-  async getUserByEmail(email: string) {
-    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.USERS_BY_EMAIL}/${email}`);
-  }
-
   async updateUser(id: string, data: Partial<UserModel>) {
     return await this.apiConfig.sendRequest(HttpMethods.PATCH, `${Endpoints.USERS}/${id}`, data);
+  }
+
+  async deleteUser(id: string) {
+    return await this.apiConfig.sendRequest(HttpMethods.DELETE, `${Endpoints.USERS}/${id}`);
   }
 }

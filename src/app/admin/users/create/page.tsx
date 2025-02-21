@@ -1,0 +1,52 @@
+"use client";
+
+import { Box, Button, Container, TextField, Typography } from "@mui/material";
+
+import { observer } from "mobx-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useStore } from "@/hooks/useStore";
+
+const CreateUserPage = observer(() => {
+    const { userStore } = useStore();
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleCreate = async () => {
+        try {
+            if (!email || !firstName) {
+                setError('All fields are required');
+                return;
+            }
+            await userStore.userApi.createUser({
+                email, firstName,
+                lastName: "",
+                firebaseId: "",
+                authProvider: ""
+            });
+            router.push('/users');
+        } catch (err) {
+            console.error('Failed to create user', err);
+            setError('Failed to create user');
+        }
+    };
+
+    return (
+        <Container>
+            <Typography variant="h4" gutterBottom>Create User</Typography>
+            {error && <Typography color="error" gutterBottom>{error}</Typography>}
+            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <TextField label="Name" value={name} onChange={(e) => setFirstName(e.target.value)} required />
+                <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Button variant="contained" color="primary" onClick={handleCreate}>Create</Button>
+                <Button onClick={() => router.push('.')}>Cancel</Button>
+            </Box>
+        </Container>
+    );
+});
+
+export default CreateUserPage;
