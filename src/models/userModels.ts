@@ -6,6 +6,7 @@ export interface UserModel {
   firebaseId: string | null;
   id?: string;
   favourites?: string[];
+  role: string;
 }
 
 export interface CreateUserModel {

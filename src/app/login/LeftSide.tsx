@@ -142,6 +142,7 @@ const LeftSide = () => {
             lastName: user.displayName?.split(" ")[1] || "",
             firebaseId: user.uid,
             email: user.email || "",
+            role: "user",
           };
           userStore.setCurrentUser(userModel); // Update the global user state
           setIsLoading(false); // Hide loading indicator

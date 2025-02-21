@@ -1,9 +1,9 @@
-import autoBind from "auto-bind";
-import { makeAutoObservable, runInAction } from "mobx";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { makeAutoObservable, runInAction } from "mobx";
 
 import { UserApi } from "@/api/UserApi";
 import { UserModel } from "@/models/userModels";
+import autoBind from "auto-bind";
 
 export class UserStore {
   userApi: UserApi;
@@ -17,17 +17,28 @@ export class UserStore {
     autoBind(this);
   }
 
-  getCurrentUser() {
-    const auth = getAuth();
-
-    onAuthStateChanged(auth, async (user: any) => {
-      if (user) {
-        const userByEmail = await this.userApi.getUserByEmail(user.email);
-        this.setCurrentUser(userByEmail);
-      }
+  getCurrentUser(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const auth = getAuth();
+  
+      onAuthStateChanged(auth, async (user: any) => {
+        if (user) {
+          try {
+            const userByEmail = await this.userApi.getUserByEmail(user.email);
+            runInAction(() => {
+              this.user = userByEmail;
+            });
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          resolve(); // Resolve even if no user is authenticated
+        }
+      }, reject); // Reject if onAuthStateChanged encounters an error
     });
   }
-
+  
   setCurrentUser(currentUser: UserModel) {
     runInAction(() => {
       this.user = currentUser;

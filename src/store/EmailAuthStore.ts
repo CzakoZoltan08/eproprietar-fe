@@ -72,17 +72,22 @@ export class EmailAuthStore {
         localStorage.setItem(StorageKeys.token, token);
       }
 
-      const userModel = {
-        firstName: user.displayName?.split(" ")[0] || "",
-        lastName: user.displayName?.split(" ")[1] || "",
-        firebaseId: user.uid,
-        email: user.email || "",
-        authProvider: AuthProvider.EMAIL,
-      };
+      const userByEmail = await this.userApi.getUserByEmail(user.email || "");
 
-      runInAction(() => {
+      if (userByEmail) {
+        this.userStore.setCurrentUser(userByEmail); // Use the API response that includes the role
+      } else {
+        const userModel = {
+          firstName: user.displayName?.split(" ")[0] || "",
+          lastName: user.displayName?.split(" ")[1] || "",
+          firebaseId: user.uid,
+          email: user.email || "",
+          authProvider: AuthProvider.EMAIL,
+          role: "user",
+        };
         this.userStore.setCurrentUser(userModel);
-      });
+        await this.userApi.createUser(userModel); // Save user to the database
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       var errorMessage = "";

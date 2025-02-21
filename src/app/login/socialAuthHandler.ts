@@ -25,13 +25,18 @@ export const handleSocialAuth = async (
       role: "user"
     };
 
-    userStore.setCurrentUser(userModel);
-
     if (result.user.email) {
       const userByEmail = await userApi.getUserByEmail(result.user.email);
       if (!userByEmail) {
         await userApi.createUser(userModel);
+        userStore.setCurrentUser(userModel);
       }
+      else{
+        userStore.setCurrentUser(userByEmail);
+      }
+    }
+    else{
+      userStore.setCurrentUser(userModel);
     }
   } catch (error) {
     console.error(`${authProviderName} login failed:`, error);
