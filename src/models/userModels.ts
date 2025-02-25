@@ -16,3 +16,10 @@ export interface CreateUserModel {
   firebaseId: string;
   authProvider: string;
 }
+
+export interface CreateFirebaseUserModel {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}

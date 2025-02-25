@@ -41,24 +41,32 @@ export class EmailAuthStore {
         role: "user"
       };
 
-      await this.userApi.createUser(userModel);
+      const createdUser = await this.userApi.createUser(userModel);
+      if (!createdUser) {
+        localStorage.removeItem(StorageKeys.token); // Remove token if user creation fails
+        throw new Error("User creation failed. Please try again.");
+      }
 
       runInAction(() => {
-        this.userStore.setCurrentUser(userModel);
+        this.userStore.setCurrentUser(createdUser); // Use BE response
       });
+
     } catch (error: any) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(StorageKeys.token); // Ensure token is removed on error
+      }
 
-        runInAction(() => {
-            if (error.code === FirebaseErrors.EmailAlreadyInUse) {
-                this.errorMessage = ErrorMessages.EmailAlreadyInUse;
-            } else if (error.code === FirebaseErrors.InvalidEmail) {
-              this.errorMessage = ErrorMessages.InvalidEmailAddress;
-            } else {
-              this.errorMessage = "An unexpected error occurred during registration.";
-            }
-        });
+      runInAction(() => {
+        if (error.code === FirebaseErrors.EmailAlreadyInUse) {
+          this.errorMessage = ErrorMessages.EmailAlreadyInUse;
+        } else if (error.code === FirebaseErrors.InvalidEmail) {
+          this.errorMessage = ErrorMessages.InvalidEmailAddress;
+        } else {
+          this.errorMessage = "An unexpected error occurred during registration.";
+        }
+      });
 
-        throw new Error(this.errorMessage); // Throw error for the component to catch
+      throw new Error(this.errorMessage); // Throw error for the component to catch
     }
   }
 
@@ -73,27 +81,25 @@ export class EmailAuthStore {
       }
 
       const userByEmail = await this.userApi.getUserByEmail(user.email || "");
-
-      if (userByEmail) {
-        this.userStore.setCurrentUser(userByEmail); // Use the API response that includes the role
-      } else {
-        const userModel = {
-          firstName: user.displayName?.split(" ")[0] || "",
-          lastName: user.displayName?.split(" ")[1] || "",
-          firebaseId: user.uid,
-          email: user.email || "",
-          authProvider: AuthProvider.EMAIL,
-          role: "user",
-        };
-        this.userStore.setCurrentUser(userModel);
-        await this.userApi.createUser(userModel); // Save user to the database
+      if (!userByEmail) {
+        // User must exist in the backend to proceed
+        localStorage.removeItem(StorageKeys.token); // Remove token if user is not found
+        throw new Error("User not found in our system. Please register.");
       }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      var errorMessage = "";
 
       runInAction(() => {
-        
+        this.userStore.setCurrentUser(userByEmail); // Use BE response
+      });
+
+    } catch (error: any) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(StorageKeys.token); // Ensure token is removed on error
+      }
+
+      console.error("Login error:", error);
+      let errorMessage = "";
+
+      runInAction(() => {
         // Map Firebase errors to user-friendly messages
         if (error.code === FirebaseErrors.InvalidEmail) {
           errorMessage = ErrorMessages.InvalidEmailAddress;
@@ -105,7 +111,7 @@ export class EmailAuthStore {
           errorMessage = "An unexpected error occurred.";
         }
       });
-  
+
       throw new Error(errorMessage);
     }
   }

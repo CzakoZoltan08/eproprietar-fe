@@ -12,12 +12,20 @@ export const handleSocialAuth = async (
     const result = await signInWithPopup(auth, provider);
     const token = await result.user?.getIdToken();
 
+    // Store token temporarily to use in user API calls
     if (token && typeof window !== "undefined") {
       localStorage.setItem(StorageKeys.token, token);
     }
 
+    // Ensure that email is not empty
+    const email = result.user.email?.trim();
+    if (!email) {
+      throw new Error("Login failed: Email is required.");
+    }
+
+    // Create user model
     const userModel = {
-      email: result.user.email || "",
+      email,
       firstName: result.user.displayName?.split(" ")[0] || "",
       lastName: result.user.displayName?.split(" ")[1] || "",
       firebaseId: result.user.uid,
@@ -25,21 +33,30 @@ export const handleSocialAuth = async (
       role: "user"
     };
 
-    if (result.user.email) {
-      const userByEmail = await userApi.getUserByEmail(result.user.email);
-      if (!userByEmail) {
-        await userApi.createUser(userModel);
-        userStore.setCurrentUser(userModel);
-      }
-      else{
-        userStore.setCurrentUser(userByEmail);
-      }
+    // Retrieve or create user
+    let userByEmail = await userApi.getUserByEmail(email);
+    if (!userByEmail) {
+      userByEmail = await userApi.createUser(userModel);
     }
-    else{
-      userStore.setCurrentUser(userModel);
+
+    // Ensure user was successfully created or retrieved
+    if (!userByEmail) {
+      // Remove token since user could not be created/retrieved
+      localStorage.removeItem(StorageKeys.token);
+      throw new Error("Login failed: User could not be created or retrieved.");
     }
+
+    // Set user in store
+    userStore.setCurrentUser(userByEmail);
+
   } catch (error) {
     console.error(`${authProviderName} login failed:`, error);
+
+    // Remove token from localStorage if login flow fails
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(StorageKeys.token);
+    }
+
     throw error;
   }
 };

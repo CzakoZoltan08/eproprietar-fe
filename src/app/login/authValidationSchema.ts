@@ -8,14 +8,11 @@ const validationSchema = Joi.object({
       "string.empty": "The email address is required!",
     })
     .label("Email"),
-  password: Joi.string()
-    .min(8)
-    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,64}$/)
+    password: Joi.string()
+    .regex(/^(?:(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,64}|[a-f0-9]{16})$/)
     .messages({
       "string.pattern.base":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.min":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
+        "Password must either contain at least 8 characters with at least one lowercase, one uppercase, and one digit, or be a valid generated password (16 hex characters).",
       "string.empty": "The password is required!",
     })
     .label("Password"),

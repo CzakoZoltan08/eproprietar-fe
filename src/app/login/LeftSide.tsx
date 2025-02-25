@@ -127,33 +127,46 @@ const LeftSide = () => {
       setIsLoading(true);
       setRequestError("");
   
+      // Attempt to log in using Firebase
       await loginWithEmailAndPassword(formData.email, formData.password);
   
-      // Use Firebase onAuthStateChanged to confirm login success before redirect
+      // Confirm Firebase login success and retrieve the user
       const auth = getAuth();
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const token = await getIdToken(user);
-          if (token && typeof window !== "undefined") {
-            localStorage.setItem(StorageKeys.token, token);
-          }
-          const userModel = {
-            firstName: user.displayName?.split(" ")[0] || "",
-            lastName: user.displayName?.split(" ")[1] || "",
-            firebaseId: user.uid,
-            email: user.email || "",
-            role: "user",
-          };
-          userStore.setCurrentUser(userModel); // Update the global user state
-          setIsLoading(false); // Hide loading indicator
-          unsubscribe(); // Unsubscribe from the auth state listener
-          router.replace("/"); // Redirect to the homepage
-        }
-      });
+      const user = auth.currentUser;
+  
+      if (!user) {
+        throw new Error("User not found after login.");
+      }
+  
+      // Get Firebase token
+      const token = await getIdToken(user);
+      if (!token) {
+        throw new Error("Failed to retrieve authentication token.");
+      }
+  
+      // Retrieve user from backend to confirm existence
+      const userByEmail = await userApi.getUserByEmail(user.email || "");
+      if (!userByEmail) {
+        throw new Error("User not found in the system.");
+      }
+  
+      // Store token and update global user state
+      if (typeof window !== "undefined") {
+        localStorage.setItem(StorageKeys.token, token);
+      }
+      userStore.setCurrentUser(userByEmail);
+  
+      setIsLoading(false); // Hide loading indicator
+      router.replace("/"); // Redirect to the homepage
     } catch (error) {
       console.error("Login failed:", error);
       setIsLoading(false); // Hide loading indicator
       setRequestError("Email or password is incorrect!"); // Show error to the user
+  
+      // Ensure token is removed if login fails
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(StorageKeys.token);
+      }
     }
   };
 

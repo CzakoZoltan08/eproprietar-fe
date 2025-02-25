@@ -1,4 +1,4 @@
-import { CreateUserModel, UserModel } from "@/models/userModels";
+import { CreateFirebaseUserModel, CreateUserModel, UserModel } from "@/models/userModels";
 
 import { ApiConfig } from "./ApiConfig";
 import { Endpoints } from "@/constants/endpoints";
@@ -32,6 +32,17 @@ export class UserApi {
     // Send the request to the backend
     return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.USERS, data);
   }
+
+  async createFirebaseUser(data: CreateFirebaseUserModel): Promise<any> {
+    // Validate the input data
+    if (!data || !data.email) {
+      throw new Error("Invalid user data: email is required");
+    }
+  
+    // Send the request to the backend
+    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.USERS_FIREBASE, data);
+  }
+
 
   async updateUser(id: string, data: Partial<UserModel>) {
     return await this.apiConfig.sendRequest(HttpMethods.PATCH, `${Endpoints.USERS}/${id}`, data);

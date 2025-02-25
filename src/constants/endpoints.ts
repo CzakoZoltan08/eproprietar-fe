@@ -8,6 +8,7 @@ export const Endpoints = {
     REGISTER: "/auth/register",
     USERS: "/users",
     USERS_BY_EMAIL: "/users/by-email",
+    USERS_FIREBASE: "/users/firebase",
     GET_ANNOUNCEMENT_IMAGES: "/uploads",
     PAYMENT_CREATE: "/payment/create"
   } as const;
