@@ -19,7 +19,6 @@ export interface CreateUserModel {
 
 export interface CreateFirebaseUserModel {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
 }

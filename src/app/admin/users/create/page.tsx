@@ -13,19 +13,17 @@ const CreateUserPage = observer(() => {
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleCreate = async () => {
         try {
-            if (!email || !firstName || !password || !lastName) {
+            if (!email || !firstName || !lastName) {
                 setError('All fields are required');
                 return;
             }
 
             await userStore.userApi.createFirebaseUser({
                 email,
-                password,
                 firstName,
                 lastName
             });
@@ -44,7 +42,6 @@ const CreateUserPage = observer(() => {
                 <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                 <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-                <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <Button variant="contained" color="primary" onClick={handleCreate}>Create</Button>
                 <Button onClick={() => router.push('.')}>Cancel</Button>
             </Box>
