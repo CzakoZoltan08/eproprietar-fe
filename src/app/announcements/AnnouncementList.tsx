@@ -49,6 +49,22 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
     setIsInitialized(true);
   };
 
+  // Run `initializeFilters` when URL search parameters change
+  useEffect(() => {
+    initializeFilters();
+  }, [searchParams.toString()]); // Depend on searchParams to detect changes
+
+  // Fetch announcements when filters or page changes
+  useEffect(() => {
+    if (isInitialized) {
+      fetchPaginatedAnnouncements({
+        page: page || 1,
+        limit: 8,
+        filter: filters,
+      });
+    }
+  }, [filters, page, isInitialized]);
+
   const fetchData = async (newPage?: number) => {
     if (!isInitialized) return;
 

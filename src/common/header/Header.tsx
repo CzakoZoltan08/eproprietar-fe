@@ -1,10 +1,13 @@
 import * as breakpoints from "../../constants/breakpoints";
 import * as colors from "../../constants/colors";
 
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import React, { useState } from "react";
+
 import AuthButton from "./AuthButton";
+import { Button } from "@mui/material";
 import Image from "next/image";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
-import React from "react";
 import logo from "../../assets/logo-white.svg";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
@@ -48,11 +51,12 @@ const PrincipalHeader = styled.div`
 
 const SecondaryHeader = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start; /* Align menu points to the left */
   align-items: center;
   color: ${colors.COLOR_WHITE};
   height: 100%;
   padding: 0 120px;
+  gap: 20px; /* Add spacing between items */
 
   @media only screen and (max-width: ${breakpoints.MAX_TABLET}) {
     margin: 0;
@@ -70,37 +74,123 @@ const SecondaryHeader = styled.div`
   }
 `;
 
-const ButtonWrapper = styled.div`
+const RightSection = styled.div`
+  margin-left: auto; /* Pushes the button to the right */
   margin-top: -4px;
+`;
+
+const NavItem = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 15px;
+  cursor: pointer;
+  color: white;
+
+  &:hover > div {
+    display: block;
+  }
+`;
+
+const DropdownMenu = styled.div`
+  display: none;
+  position: absolute;
+  background: white;
+  color: black;
+  min-width: 220px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  border-radius: 4px;
+  overflow: hidden;
+  left: 0;
+  top: 35px; /* Ensure dropdown appears below */
+
+  div {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #f0f0f0;
+    }
+  }
 `;
 
 const Header = () => {
   const router = useRouter();
 
-  const goHome = () => {
-    router.push("/");
+  // Menu state
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const handleMouseEnter = (menu: string) => setOpenMenu(menu);
+  const handleMouseLeave = () => setOpenMenu(null);
+
+  const navigateWithFilters = (transactionType: string, type: string, rooms?: number) => {
+    let url = `/announcements?transactionType=${transactionType}&type=${type}`;
+    url += `&price=9999999&minSurface=1&maxSurface=10000&status=active`;
+    if (rooms) url += `&rooms=${rooms}`;
+    router.push(url);
   };
 
   return (
     <Wrapper>
       <PrincipalHeader>
         <Image
-          onClick={goHome}
+          onClick={() => router.push("/")}
           src={logo}
           alt="eproprietar"
           width={152}
-          style={{ cursor: "pointer" }} // Add pointer cursor for clickable logo
+          style={{ cursor: "pointer" }}
         />
         <AuthButton />
       </PrincipalHeader>
+
       <SecondaryHeader>
-        <ButtonWrapper>
+        {/* Vânzare */}
+        <NavItem onMouseEnter={() => handleMouseEnter("Vanzare")} onMouseLeave={handleMouseLeave}>
+          Vânzare {openMenu === "Vanzare" ? <FaChevronUp /> : <FaChevronDown />}
+          <DropdownMenu>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament")}>Apartamente</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament", 1)}>Apartamente 1 cameră</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament", 2)}>Apartamente 2 camere</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament", 3)}>Apartamente 3 camere</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament", 4)}>Apartamente 4 camere</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "apartament", 5)}>Apartamente 5 camere</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "casa")}>Case</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "vila")}>Vile</div>
+            <div onClick={() => navigateWithFilters("Vanzare", "teren")}>Terenuri</div>
+          </DropdownMenu>
+        </NavItem>
+
+        {/* Închiriere */}
+        <NavItem onMouseEnter={() => handleMouseEnter("Inchiriere")} onMouseLeave={handleMouseLeave}>
+          Închiriere {openMenu === "Inchiriere" ? <FaChevronUp /> : <FaChevronDown />}
+          <DropdownMenu>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament")}>Apartamente</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament", 1)}>Apartamente 1 cameră</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament", 2)}>Apartamente 2 camere</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament", 3)}>Apartamente 3 camere</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament", 4)}>Apartamente 4 camere</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "apartament", 5)}>Apartamente 5 camere</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "casa")}>Case</div>
+            <div onClick={() => navigateWithFilters("Inchiriere", "teren")}>Terenuri</div>
+          </DropdownMenu>
+        </NavItem>
+
+        {/* Ansambluri Rezidentiale (No submenu needed) */}
+        <Button onClick={() => navigateWithFilters("Vanzare", "ansambluri_rezidentiale")} color="inherit">
+          Ansambluri Rezidențiale
+        </Button>
+
+        {/* "Adaugă anunț" button on the right */}
+        <RightSection>
           <PrimaryButton
             icon="add"
             text="Adaugă anunț"
             onClick={() => router.push("/create-announcement")}
           />
-        </ButtonWrapper>
+        </RightSection>
       </SecondaryHeader>
     </Wrapper>
   );
