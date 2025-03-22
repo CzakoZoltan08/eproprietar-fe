@@ -512,29 +512,28 @@ const AnnouncementFormContent = () => {
       setError("Please fill in all required fields.");
       return;
     }
-
+  
     if (!contactPhone) {
       setError("Contact phone number is required.");
       return;
     }
-
+  
     setLoading(true);
     setError("");
-
+  
     try {
-      // Step 1: Create a new object without the thumbnail property
       const { thumbnail, ...data } = formData;
-
+  
       if (contactPhone !== user?.phoneNumber) {
         if (user?.id) {
           await updateUser(user.id, { phoneNumber: contactPhone });
         }
       }
-
-      // Step 2: Create or update the announcement (without the thumbnail)
+  
       let announcementId = "";
+  
       if (isEdit) {
-        await updateAnnouncement(params.id as string, { 
+        await updateAnnouncement(params.id as string, {
           ...data,
           announcementType: data.announcementType.toLowerCase(),
           price: Number(data.price),
@@ -562,30 +561,16 @@ const AnnouncementFormContent = () => {
             firebaseId: user?.firebaseId || ""
           }
         }) as unknown as PropertyAnnouncementModel;
-        announcementId = newAnnouncement.id; 
-
+  
+        announcementId = newAnnouncement.id;
+  
         await uploadMedia(announcementId);
-
-        localStorage.setItem(
-          "announcementData",
-          JSON.stringify({
-            ...formData,
-            announcementId
-          })
-        );
-
-        // 🏦 Step 1: Request Stripe Payment Session
-        const response = await createPaymentSession({
-          orderId: announcementId,
-          amount: 1,
-          currency: "EUR",
-        });
-
-        if (!response?.checkoutUrl) {
-          throw new Error("Failed to initiate payment");
-        }
-
-        window.location.href = response.checkoutUrl;
+  
+        localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId }));
+  
+        // ✅ NEW: Redirect to select-package page
+        window.location.href = `/select-package?announcementId=${announcementId}`;
+        return;
       }
     } catch (error) {
       console.error("Error saving announcement:", error);
@@ -593,12 +578,15 @@ const AnnouncementFormContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <Container>
       {loading ? (
-        <CircularProgress />
+        <>
+          <CircularProgress />
+          <Typography mt={2}>Creating your announcement. Please wait...</Typography>
+        </>
       ) : (
         <>
           <SubtitleAdvice>{isEdit ? "Edit Announcement" : "Create Announcement"}</SubtitleAdvice>

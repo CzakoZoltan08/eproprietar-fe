@@ -10,5 +10,6 @@ export const Endpoints = {
     USERS_BY_EMAIL: "/users/by-email",
     USERS_FIREBASE: "/users/firebase",
     GET_ANNOUNCEMENT_IMAGES: "/uploads",
-    PAYMENT_CREATE: "/payment/create"
+    PAYMENT_CREATE: "/payment/create",
+    PRICING_OPTIONS: "/payment/announcement-options"
   } as const;

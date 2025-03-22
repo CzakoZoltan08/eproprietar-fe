@@ -3,6 +3,7 @@ import { AppState } from "@/store/AppState";
 import { AuthStore } from "@/store/AuthStore";
 import { EmailAuthStore } from "./EmailAuthStore";
 import { PhoneAuthStore } from "./PhoneAuthStore";
+import { PricingStore } from "./PricingStore";
 import { UserStore } from "@/store/UserStore";
 import { configure } from "mobx";
 
@@ -15,6 +16,7 @@ export default class RootStore {
   phoneAuthStore: PhoneAuthStore;
   userStore: UserStore;
   announcementStore: AnnouncementStore;
+  pricingStore: PricingStore;
   constructor() {
     this.appState = new AppState();
     this.userStore = new UserStore(this.appState.userAPi);
@@ -28,5 +30,6 @@ export default class RootStore {
     );
     this.emailAuthStore = new EmailAuthStore(this.appState.userAPi, this.userStore);
     this.phoneAuthStore = new PhoneAuthStore(this.userStore);
+    this.pricingStore = new PricingStore(this.appState.pricingApi);
   }
 }

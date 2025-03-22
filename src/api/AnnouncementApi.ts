@@ -66,7 +66,14 @@ export class AnnouncementApi {
     );
   }
 
-  async createPaymentSession(paymentData: { orderId: string; amount: number; currency: string }): Promise<{ checkoutUrl: string } | null> {
+  async createPaymentSession(paymentData: {
+    orderId: string;
+    amount: number;
+    currency: string;
+    packageId: string;
+    originalAmount?: number;
+    discountCode?: string;
+  }): Promise<{ checkoutUrl: string } | null> {
     return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.PAYMENT_CREATE, paymentData);
   }
 
