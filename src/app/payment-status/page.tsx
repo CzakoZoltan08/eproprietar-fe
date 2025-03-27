@@ -1,96 +1,71 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 
-import CircularProgress from "@mui/material/CircularProgress";
-import { observer } from "mobx-react";
-import { useStore } from "@/hooks/useStore";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-const PaymentStatusContent = () => {
-  const {
-    announcementStore: { updateAnnouncement, deleteAnnouncement },
-  } = useStore();
-
-  const router = useRouter();
+const PaymentStatusPage = () => {
   const searchParams = useSearchParams();
-  const success = searchParams.get("success");
   const orderId = searchParams.get("orderId");
+  const success = searchParams.get("success") === "true";
 
   const [loading, setLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState("Publishing your announcement...");
-  const [error, setError] = useState("");
+  const [announcementUrl, setAnnouncementUrl] = useState<string>("");
 
   useEffect(() => {
-    if (success === "true" && orderId) {
-      uploadMedia(orderId);
+    if (success && orderId) {
+      // You can also fetch the announcement if needed
+      setAnnouncementUrl(`/announcements/${orderId}`);
+      setLoading(false);
     } else {
-      deleteAnnouncementById(orderId as string);
-      setTimeout(() => router.push("/create-announcement?failed=true"), 3000);
-    }
-  }, [success, orderId, router]);
-
-  const deleteAnnouncementById = async (announcementId: string) => {
-    await deleteAnnouncement(orderId as string);
-  }
-
-  const uploadMedia = async (announcementId: string) => {
-    try {
-      const storedData = JSON.parse(localStorage.getItem("announcementData") || "{}");
-
-      if (!storedData || Object.keys(storedData).length === 0) {
-        setStatusMessage("No announcement data found. Redirecting...");
-        setTimeout(() => router.push("/"), 2000);
-        return;
-      }
-      
-      const { announcementId } = storedData;
-
-      if (!announcementId) {
-        throw new Error("Announcement ID missing.");
-      }
-
-      setStatusMessage("Activating your announcement...");
-
-      await updateAnnouncement(announcementId as string, {
-        status: "active",
-      });
-
-      setStatusMessage("Your announcement has been successfully activated!");
-      
-      // ✅ Clear stored data after successful upload
-      localStorage.removeItem("announcementData");
-
-      setTimeout(() => router.push("/"), 3000);
-    } catch (error) {
-      console.error("Error activating announcement:", error);
-      setError("Error activating announcement.");
-    } finally {
       setLoading(false);
     }
-  };
+  }, [orderId, success]);
+
+  if (loading) {
+    return (
+      <Box textAlign="center" mt={10}>
+        <CircularProgress />
+        <Typography mt={2}>Verifying your payment...</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      {loading ? (
+    <Box maxWidth="600px" mx="auto" textAlign="center" mt={10}>
+      {success ? (
         <>
-          <CircularProgress size={50} />
-          <p>{statusMessage}</p>
+          <Typography variant="h4" gutterBottom>
+            🎉 Payment successful!
+          </Typography>
+          <Typography variant="body1" mb={4}>
+            Your announcement has been published and is now visible on the platform.
+          </Typography>
+          <Link href={announcementUrl}>
+            <Button variant="contained" color="primary">
+              View Your Announcement
+            </Button>
+          </Link>
         </>
       ) : (
-        <h1>{error ? "❌ Error occurred" : "🎉 Announcement Published!"}</h1>
+        <>
+          <Typography variant="h5" color="error">
+            ❌ Payment failed or was cancelled
+          </Typography>
+          <Typography mt={2}>
+            Please try again or contact support if the issue persists.
+          </Typography>
+          <Link href="/create-announcement">
+            <Button variant="outlined" sx={{ mt: 3 }}>
+              Go Back to Create Announcement
+            </Button>
+          </Link>
+        </>
       )}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+    </Box>
   );
 };
 
-const PaymentStatus = () => {
-  return (
-    <Suspense fallback={<CircularProgress size={50} style={{ marginTop: "50px" }} />}>
-      <PaymentStatusContent />
-    </Suspense>
-  );
-};
-
-export default observer(PaymentStatus);
+export default PaymentStatusPage;
