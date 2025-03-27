@@ -31,6 +31,45 @@ const Badge = styled(Chip)`
   right: 10px;
 `;
 
+const PriceWithDiscount = ({ item }: { item: any }) => (
+  <>
+    <Typography variant="h6">{item.label}</Typography>
+    <Typography>
+      {item.discountedPrice} {item.currency}
+      {item.originalPrice !== item.discountedPrice && (
+        <>
+          <Typography
+            component="span"
+            ml={1}
+            sx={{ textDecoration: "line-through", color: "gray", fontSize: "0.9rem" }}
+          >
+            {item.originalPrice} {item.currency}
+          </Typography>
+          <Typography
+            component="span"
+            variant="caption"
+            ml={1}
+            color="green"
+            fontWeight="bold"
+          >
+            {item.discountCode && `(-${item.discountCode})`}
+          </Typography>
+        </>
+      )}
+    </Typography>
+    {item.durationDays && (
+      <Typography variant="body2" mt={1}>
+        Duration: {item.durationDays} days
+      </Typography>
+    )}
+    {item.discountValidTo && (
+      <Typography variant="caption" color="text.secondary">
+        Discount valid until: {new Date(item.discountValidTo).toLocaleDateString()}
+      </Typography>
+    )}
+  </>
+);
+
 const SelectPackagePage = () => {
   const searchParams = useSearchParams();
   const announcementId = searchParams.get("announcementId");
@@ -54,9 +93,7 @@ const SelectPackagePage = () => {
   useEffect(() => {
     const loadUser = async () => {
       if (!user?.id) {
-        console.log("👀 user before getCurrentUser:", user);
-        await getCurrentUser(); // ⏳ Wait for the user to be fetched
-        console.log("✅ user after getCurrentUser:", user);
+        await getCurrentUser();
       }
     };
     loadUser();
@@ -72,7 +109,10 @@ const SelectPackagePage = () => {
           getAnnouncementPackages(user.id),
           getPromotionPackages(user.id),
         ]);
-  
+
+        console.log("🎯 fetchedPackages", fetchedPackages);
+        console.log("🎯 fetchedPromotions", fetchedPromotions);
+
         setPackages(fetchedPackages ?? []);
         setPromotions(fetchedPromotions ?? []);
       } catch (err) {
@@ -142,33 +182,15 @@ const SelectPackagePage = () => {
             onClick={() => setSelectedPackage(pkg)}
           >
             {pkg.discountCode && (
-              <Badge label={`-${Math.round(((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100)}%`} color="success" />
+              <Badge
+                label={`-${Math.round(
+                  ((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100
+                )}%`}
+                color="success"
+              />
             )}
             <CardContent>
-              <Typography variant="h6">{pkg.label}</Typography>
-              <Typography>
-                {pkg.discountedPrice} {pkg.currency}
-                {pkg.originalPrice !== pkg.discountedPrice && (
-                  <>
-                    <Typography component="span" ml={1} sx={{ textDecoration: "line-through", color: "gray" }}>
-                      {pkg.originalPrice} {pkg.currency}
-                    </Typography>
-                    <Typography variant="caption" ml={1} color="green">
-                      ({pkg.discountCode})
-                    </Typography>
-                  </>
-                )}
-              </Typography>
-              {pkg.durationDays && (
-                <Typography variant="body2" mt={1}>
-                  Duration: {pkg.durationDays} days
-                </Typography>
-              )}
-              {pkg.discountValidTo && (
-                <Typography variant="caption" color="text.secondary">
-                  Discount valid until: {new Date(pkg.discountValidTo).toLocaleDateString()}
-                </Typography>
-              )}
+              <PriceWithDiscount item={pkg} />
             </CardContent>
           </StyledCard>
         ))}
@@ -187,33 +209,15 @@ const SelectPackagePage = () => {
                 onClick={() => setSelectedPromotion(promo)}
               >
                 {promo.discountCode && (
-                  <Badge label={`-${Math.round(((promo.originalPrice - promo.discountedPrice) / promo.originalPrice) * 100)}%`} color="success" />
+                  <Badge
+                    label={`-${Math.round(
+                      ((promo.originalPrice - promo.discountedPrice) / promo.originalPrice) * 100
+                    )}%`}
+                    color="success"
+                  />
                 )}
                 <CardContent>
-                  <Typography variant="h6">{promo.label}</Typography>
-                  <Typography>
-                    {promo.discountedPrice} {promo.currency}
-                    {promo.originalPrice !== promo.discountedPrice && (
-                      <>
-                        <Typography component="span" ml={1} sx={{ textDecoration: "line-through", color: "gray" }}>
-                          {promo.originalPrice} {promo.currency}
-                        </Typography>
-                        <Typography variant="caption" ml={1} color="green">
-                          ({promo.discountCode})
-                        </Typography>
-                      </>
-                    )}
-                  </Typography>
-                  {promo.durationDays && (
-                    <Typography variant="body2" mt={1}>
-                      Duration: {promo.durationDays} days
-                    </Typography>
-                  )}
-                  {promo.discountValidTo && (
-                    <Typography variant="caption" color="text.secondary">
-                      Discount valid until: {new Date(promo.discountValidTo).toLocaleDateString()}
-                    </Typography>
-                  )}
+                  <PriceWithDiscount item={promo} />
                 </CardContent>
               </StyledCard>
             ))}
@@ -221,11 +225,7 @@ const SelectPackagePage = () => {
 
           {selectedPromotion && (
             <Box mt={2} textAlign="center">
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => setSelectedPromotion(null)}
-              >
+              <Button variant="outlined" color="secondary" onClick={() => setSelectedPromotion(null)}>
                 Remove Promotion
               </Button>
             </Box>
@@ -237,7 +237,11 @@ const SelectPackagePage = () => {
         <Typography variant="h6" mb={1}>
           Total: {totalPrice} {selectedPackage?.currency}
           {originalTotalPrice > totalPrice && (
-            <Typography component="span" ml={1} sx={{ textDecoration: "line-through", color: "gray" }}>
+            <Typography
+              component="span"
+              ml={1}
+              sx={{ textDecoration: "line-through", color: "gray" }}
+            >
               {originalTotalPrice} {selectedPackage?.currency}
             </Typography>
           )}
