@@ -71,10 +71,35 @@ export class AnnouncementApi {
     amount: number;
     currency: string;
     packageId: string;
+    promotionId?: string;
     originalAmount?: number;
     discountCode?: string;
+    promotionDiscountCode?: string;
   }): Promise<{ checkoutUrl: string } | null> {
-    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.PAYMENT_CREATE, paymentData);
+    const payload: any = {
+      orderId: paymentData.orderId,
+      amount: Number(paymentData.amount),
+      currency: paymentData.currency,
+      packageId: paymentData.packageId
+    };
+    
+    if (paymentData.discountCode) {
+      payload.discountCode = paymentData.discountCode;
+    }
+
+    if (paymentData.originalAmount) {
+      payload.originalAmount = Number(paymentData.originalAmount);
+    }
+
+    if (paymentData.promotionId) {
+      payload.promotionId = paymentData.promotionId;
+    }
+
+    if (paymentData.promotionDiscountCode) {
+      payload.promotionDiscountCode = paymentData.promotionDiscountCode;
+    }
+    
+    return await this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.PAYMENT_CREATE, payload);
   }
 
   private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {

@@ -569,7 +569,7 @@ const AnnouncementFormContent = () => {
         localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId }));
   
         // ✅ NEW: Redirect to select-package page
-        window.location.href = `/select-package?announcementId=${announcementId}`;
+        window.location.href = `/payment-packages?announcementId=${announcementId}`;
         return;
       }
     } catch (error) {

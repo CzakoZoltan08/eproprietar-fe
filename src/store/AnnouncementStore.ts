@@ -154,8 +154,10 @@ export class AnnouncementStore {
     amount: number;
     currency: string;
     packageId: string;
+    promotionId?: string;
     originalAmount?: number;
     discountCode?: string;
+    promotionDiscountCode?: string;
   }) {
     try {
       const response = await this.announcementApi.createPaymentSession(paymentData);

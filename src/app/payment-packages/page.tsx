@@ -3,6 +3,7 @@
 import { Box, Button, Card, CardContent, Chip, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
+import { observer } from "mobx-react";
 import styled from "styled-components";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
@@ -46,26 +47,38 @@ const SelectPackagePage = () => {
     pricingStore: { getPricingOptions },
   } = useStore();
 
+  // 1. Load user on mount
   useEffect(() => {
+    const loadUser = async () => {
       if (!user?.id) {
-        getCurrentUser();
+        console.log("👀 user before getCurrentUser:", user);
+        await getCurrentUser(); // ⏳ Wait for the user to be fetched
+        console.log("✅ user after getCurrentUser:", user);
       }
-    }, [user]);
-
-  useEffect(() => {
-    const loadOptions = async () => {
-        if (!user?.id) return;
-        try {
-            const { packages, promotions } = await getPricingOptions(user.id);
-            setPackages(packages);
-            setPromotions(promotions);
-        } catch (err) {
-            console.error("Failed to fetch pricing options", err);
-        }
     };
-
-    loadOptions();
+    loadUser();
   }, []);
+  
+  // This runs AFTER user is set
+  useEffect(() => {
+    if (!user?.id) return;
+  
+    const loadOptions = async () => {
+      try {
+        if (!user.id) throw new Error("User ID is undefined");
+        const result = await getPricingOptions(user.id);
+        if (!result) throw new Error("getPricingOptions returned null");
+  
+        const { packages, promotions } = result;
+        setPackages(packages);
+        setPromotions(promotions);
+      } catch (err) {
+        console.error("Failed to fetch pricing options", err);
+      }
+    };
+  
+    loadOptions();
+  }, [user?.id]);
 
   const handlePay = async () => {
     if (!selectedPackage || !announcementId) return;
@@ -75,10 +88,12 @@ const SelectPackagePage = () => {
       const res = await createPaymentSession({
         orderId: announcementId,
         packageId: selectedPackage.id,
+        promotionId: selectedPromotion?.id ?? null,
         amount: selectedPackage.discountedPrice,
         currency: selectedPackage.currency,
         originalAmount: selectedPackage.originalPrice,
         discountCode: selectedPackage.discountCode,
+        promotionDiscountCode: selectedPromotion?.discountCode ?? undefined, 
       });
 
       if (res?.checkoutUrl) {
@@ -90,6 +105,14 @@ const SelectPackagePage = () => {
       setLoading(false);
     }
   };
+
+  if (!user?.id) {
+    return (
+      <Box px={3} py={4}>
+        <Typography>Loading user data...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
@@ -198,4 +221,4 @@ const SelectPackagePage = () => {
   );
 };
 
-export default SelectPackagePage;
+export default observer(SelectPackagePage);
