@@ -5,10 +5,11 @@ import { HttpMethods } from "@/constants/http-methods.enum";
 export class PricingApi {
   constructor(private apiConfig: ApiConfig) {}
 
-  async getPricingOptions(userId: string) {
-    return this.apiConfig.sendRequest(
-      HttpMethods.GET,
-      `${Endpoints.PRICING_OPTIONS}?userId=${userId}`
-    );
+  async getAnnouncementPackages(userId: string) {
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.PRICING_PACKAGES}?userId=${userId}`);
+  }
+  
+  async getPromotionPackages(userId: string) {
+    return await this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.PRICING_PROMOTIONS}?userId=${userId}`);
   }
 }

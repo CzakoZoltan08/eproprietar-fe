@@ -15,18 +15,31 @@ export class PricingStore {
     autoBind(this);
   }
 
-  async getPricingOptions(userId: string) {
+  async getAnnouncementPackages(userId: string) {
     try {
-      const response = await this.pricingApi.getPricingOptions(userId);
+      const response = await this.pricingApi.getAnnouncementPackages(userId);
       runInAction(() => {
         this.packages = response?.packages || [];
+      });
+
+      return response;
+    } catch (error) {
+      console.error("Failed to fetch pricing packages", error);
+      return { packages: [] };
+    }
+  }
+
+  async getPromotionPackages(userId: string) {
+    try {
+      const response = await this.pricingApi.getPromotionPackages(userId);
+      runInAction(() => {
         this.promotions = response?.promotions || [];
       });
 
       return response;
     } catch (error) {
-      console.error("Failed to fetch pricing options", error);
-      return { packages: [], promotions: [] };
+      console.error("Failed to fetch promotion options", error);
+      return { promotions: [] };
     }
   }
 }

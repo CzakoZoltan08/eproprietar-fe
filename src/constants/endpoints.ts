@@ -11,5 +11,6 @@ export const Endpoints = {
     USERS_FIREBASE: "/users/firebase",
     GET_ANNOUNCEMENT_IMAGES: "/uploads",
     PAYMENT_CREATE: "/payment/create",
-    PRICING_OPTIONS: "/payment/announcement-options"
+    PRICING_PACKAGES: "/payment/announcement-packages",
+    PRICING_PROMOTIONS: "/payment/promotion-packages",
   } as const;

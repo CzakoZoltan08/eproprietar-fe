@@ -41,10 +41,13 @@ const SelectPackagePage = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [originalTotalPrice, setOriginalTotalPrice] = useState<number>(0);
+
   const {
     userStore: { user, getCurrentUser },
     announcementStore: { createPaymentSession },
-    pricingStore: { getPricingOptions },
+    pricingStore: { getAnnouncementPackages, getPromotionPackages },
   } = useStore();
 
   // 1. Load user on mount
@@ -61,24 +64,35 @@ const SelectPackagePage = () => {
   
   // This runs AFTER user is set
   useEffect(() => {
-    if (!user?.id) return;
+    const fetchPricingData = async () => {
+      if (!user?.id) return;
   
-    const loadOptions = async () => {
       try {
-        if (!user.id) throw new Error("User ID is undefined");
-        const result = await getPricingOptions(user.id);
-        if (!result) throw new Error("getPricingOptions returned null");
+        const [fetchedPackages, fetchedPromotions] = await Promise.all([
+          getAnnouncementPackages(user.id),
+          getPromotionPackages(user.id),
+        ]);
   
-        const { packages, promotions } = result;
-        setPackages(packages);
-        setPromotions(promotions);
+        setPackages(fetchedPackages ?? []);
+        setPromotions(fetchedPromotions ?? []);
       } catch (err) {
-        console.error("Failed to fetch pricing options", err);
+        console.error("Failed to load pricing options", err);
       }
     };
   
-    loadOptions();
+    fetchPricingData();
   }, [user?.id]);
+
+  useEffect(() => {
+    const pkgPrice = Number(selectedPackage?.discountedPrice) || 0;
+    const promoPrice = Number(selectedPromotion?.discountedPrice) || 0;
+    const originalPkg = Number(selectedPackage?.originalPrice) || 0;
+    const originalPromo = Number(selectedPromotion?.originalPrice) || 0;
+  
+    setTotalPrice(pkgPrice + promoPrice);
+    setOriginalTotalPrice(originalPkg + originalPromo);
+  }, [selectedPackage, selectedPromotion]);
+  
 
   const handlePay = async () => {
     if (!selectedPackage || !announcementId) return;
@@ -89,11 +103,11 @@ const SelectPackagePage = () => {
         orderId: announcementId,
         packageId: selectedPackage.id,
         promotionId: selectedPromotion?.id ?? null,
-        amount: selectedPackage.discountedPrice,
+        amount: totalPrice,
         currency: selectedPackage.currency,
-        originalAmount: selectedPackage.originalPrice,
+        originalAmount: originalTotalPrice,
         discountCode: selectedPackage.discountCode,
-        promotionDiscountCode: selectedPromotion?.discountCode ?? undefined, 
+        promotionDiscountCode: selectedPromotion?.discountCode ?? undefined,
       });
 
       if (res?.checkoutUrl) {
@@ -204,10 +218,31 @@ const SelectPackagePage = () => {
               </StyledCard>
             ))}
           </PackageGrid>
+
+          {selectedPromotion && (
+            <Box mt={2} textAlign="center">
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setSelectedPromotion(null)}
+              >
+                Remove Promotion
+              </Button>
+            </Box>
+          )}
         </>
       )}
 
       <Box textAlign="center" mt={4}>
+        <Typography variant="h6" mb={1}>
+          Total: {totalPrice} {selectedPackage?.currency}
+          {originalTotalPrice > totalPrice && (
+            <Typography component="span" ml={1} sx={{ textDecoration: "line-through", color: "gray" }}>
+              {originalTotalPrice} {selectedPackage?.currency}
+            </Typography>
+          )}
+        </Typography>
+
         <Button
           variant="contained"
           color="primary"
@@ -217,6 +252,7 @@ const SelectPackagePage = () => {
           {loading ? "Processing..." : "Pay and Publish"}
         </Button>
       </Box>
+
     </Box>
   );
 };
