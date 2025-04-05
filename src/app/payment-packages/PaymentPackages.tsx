@@ -12,9 +12,6 @@ import {
 } from "@mui/material";
 import {
   COLOR_BORDER_PRIMARY,
-  COLOR_CONTRAST,
-  COLOR_DARK,
-  COLOR_GREY,
   COLOR_PRIMARY,
   COLOR_RED_BUTTON,
   COLOR_RED_BUTTON_HOVER,
@@ -22,13 +19,13 @@ import {
   COLOR_WHITE,
 } from "@/constants/colors";
 import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import CheckIcon from "@mui/icons-material/Check";
 import { CommonButton } from "@/common/button/CommonButton";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { observer } from "mobx-react";
 import styled from "styled-components";
-import { useSearchParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
 const PackageGrid = styled.div`
@@ -155,9 +152,10 @@ const SelectPackagePage = () => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [originalTotalPrice, setOriginalTotalPrice] = useState<number>(0);
 
+  const router = useRouter();
+
   const {
     userStore: { user, getCurrentUser },
-    announcementStore: { createPaymentSession },
     pricingStore: { getAnnouncementPackages, getPromotionPackages },
   } = useStore();
 
@@ -198,26 +196,21 @@ const SelectPackagePage = () => {
     setOriginalTotalPrice(originalPkg + originalPromo);
   }, [selectedPackage, selectedPromotion]);
 
-  const handlePay = async () => {
+  const handleContinue = () => {
     if (!selectedPackage || !announcementId) return;
-    setLoading(true);
-    try {
-      const res = await createPaymentSession({
-        orderId: announcementId,
-        packageId: selectedPackage.id,
-        promotionId: selectedPromotion?.id ?? null,
-        amount: totalPrice,
-        currency: selectedPackage.currency,
-        originalAmount: originalTotalPrice,
-        discountCode: selectedPackage.discountCode,
-        promotionDiscountCode: selectedPromotion?.discountCode ?? undefined,
-      });
-      if (res?.checkoutUrl) window.location.href = res.checkoutUrl;
-    } catch (err) {
-      console.error("Payment init error", err);
-    } finally {
-      setLoading(false);
-    }
+  
+    const params = new URLSearchParams({
+      packageId: selectedPackage.id,
+      promotionId: selectedPromotion?.id ?? "",
+      announcementId,
+      discountCode: selectedPackage.discountCode ?? "",
+      promotionDiscountCode: selectedPromotion?.discountCode ?? "",
+      amount: totalPrice.toString(),
+      originalAmount: originalTotalPrice.toString(),
+      currency: selectedPackage.currency,
+    });
+  
+    router.push(`/invoice-details?${params.toString()}`);
   };
 
   if (!user?.id) {
@@ -319,11 +312,12 @@ const SelectPackagePage = () => {
         </Typography>
 
         <PrimaryButton
-          text={loading ? "Processing..." : "Pay and Publish"}
-          onClick={handlePay}
+          text="Continue"
+          onClick={handleContinue}
           size="large"
           fullWidth
         />
+
       </Box>
     </Box>
   );
