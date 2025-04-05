@@ -1,8 +1,31 @@
 "use client";
 
-import { Box, Button, Card, CardContent, Chip, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+} from "@mui/material";
+import {
+  COLOR_BORDER_PRIMARY,
+  COLOR_CONTRAST,
+  COLOR_DARK,
+  COLOR_GREY,
+  COLOR_PRIMARY,
+  COLOR_RED_BUTTON,
+  COLOR_RED_BUTTON_HOVER,
+  COLOR_TEXT,
+  COLOR_WHITE,
+} from "@/constants/colors";
 import React, { useEffect, useState } from "react";
 
+import CheckIcon from "@mui/icons-material/Check";
+import { CommonButton } from "@/common/button/CommonButton";
+import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { observer } from "mobx-react";
 import styled from "styled-components";
 import { useSearchParams } from "next/navigation";
@@ -13,15 +36,26 @@ const PackageGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-top: 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StyledCard = styled(Card)<{ selected: boolean }>`
-  border: 2px solid ${({ selected }) => (selected ? "#007BFF" : "#e0e0e0")};
-  transition: border-color 0.3s;
+  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  box-shadow: ${({ selected }) => (selected ? `0 4px 12px rgba(25, 103, 210, 0.2)` : "none")};
+  transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   &:hover {
-    border-color: #007BFF;
+    border-color: ${COLOR_PRIMARY};
+    box-shadow: 0 4px 20px rgba(25, 103, 210, 0.15);
   }
 `;
 
@@ -31,41 +65,80 @@ const Badge = styled(Chip)`
   right: 10px;
 `;
 
+const mockFeaturesMap: Record<string, string[]> = {
+  ["free"]: [
+    "Basic listing",
+    "Visible for 3 days",
+    "No image uploads",
+  ],
+  ["7_days"]: [
+    "Up to 3 images",
+    "Visible for 7 days",
+    "Standard listing placement",
+  ],
+  ["15_days"]: [
+    "Up to 5 images",
+    "Visible for 15 days",
+    "Highlighted in listings",
+  ],
+  ["unlimited"]: [
+    "Unlimited visibility",
+    "Unlimited image uploads",
+    "Priority placement",
+    "Featured badge",
+  ],
+};
+
 const PriceWithDiscount = ({ item }: { item: any }) => (
   <>
-    <Typography variant="h6">{item.label}</Typography>
-    <Typography>
-      {item.discountedPrice} {item.currency}
-      {item.originalPrice !== item.discountedPrice && (
-        <>
-          <Typography
-            component="span"
-            ml={1}
-            sx={{ textDecoration: "line-through", color: "gray", fontSize: "0.9rem" }}
-          >
-            {item.originalPrice} {item.currency}
-          </Typography>
-          <Typography
-            component="span"
-            variant="caption"
-            ml={1}
-            color="green"
-            fontWeight="bold"
-          >
-            {item.discountCode && `(-${item.discountCode})`}
-          </Typography>
-        </>
-      )}
+    <Typography variant="h6" fontWeight={600} color="primary.dark">
+      {item.label}
     </Typography>
+    <Typography fontSize="1.2rem" fontWeight={700} mt={1} color="primary">
+      {item.discountedPrice} {item.currency}
+    </Typography>
+    {item.originalPrice !== item.discountedPrice && (
+      <Typography
+        fontSize="0.9rem"
+        sx={{
+          textDecoration: "line-through",
+          color: COLOR_RED_BUTTON,
+          fontWeight: 600,
+        }}
+      >
+        {item.originalPrice} {item.currency}
+      </Typography>
+    )}
     {item.durationDays && (
-      <Typography variant="body2" mt={1}>
+      <Typography variant="body2" mt={1} color={COLOR_TEXT}>
         Duration: {item.durationDays} days
       </Typography>
     )}
     {item.discountValidTo && (
-      <Typography variant="caption" color="text.secondary">
+      <Typography
+        variant="caption"
+        sx={{
+          color: COLOR_RED_BUTTON,
+          fontWeight: 600,
+        }}
+      >
         Discount valid until: {new Date(item.discountValidTo).toLocaleDateString()}
       </Typography>
+    )}
+    {item.description && (
+      <Typography variant="body2" mt={1} color={COLOR_TEXT}>
+        {item.description}
+      </Typography>
+    )}
+    {item.features && item.features.length > 0 && (
+      <List dense sx={{ mt: 1 }}>
+        {item.features.map((feature: string, idx: number) => (
+          <ListItem key={idx} disablePadding sx={{ display: "flex", alignItems: "center" }}>
+            <CheckIcon fontSize="small" sx={{ color: COLOR_PRIMARY, mr: 1 }} />
+            <ListItemText primary={feature} />
+          </ListItem>
+        ))}
+      </List>
     )}
   </>
 );
@@ -79,7 +152,6 @@ const SelectPackagePage = () => {
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [originalTotalPrice, setOriginalTotalPrice] = useState<number>(0);
 
@@ -89,37 +161,31 @@ const SelectPackagePage = () => {
     pricingStore: { getAnnouncementPackages, getPromotionPackages },
   } = useStore();
 
-  // 1. Load user on mount
   useEffect(() => {
-    const loadUser = async () => {
-      if (!user?.id) {
-        await getCurrentUser();
-      }
-    };
-    loadUser();
+    if (!user?.id) getCurrentUser();
   }, []);
-  
-  // This runs AFTER user is set
+
   useEffect(() => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
-  
       try {
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
           getAnnouncementPackages(user.id),
           getPromotionPackages(user.id),
         ]);
 
-        console.log("🎯 fetchedPackages", fetchedPackages);
-        console.log("🎯 fetchedPromotions", fetchedPromotions);
+        const withMockFeatures = (items: any[]) =>
+          items.map((item) => ({
+            ...item,
+            features: item.features?.length  ? item.features : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [],
+          }));
 
-        setPackages(fetchedPackages ?? []);
-        setPromotions(fetchedPromotions ?? []);
+        setPackages(withMockFeatures(fetchedPackages ?? []));
+        setPromotions(withMockFeatures(fetchedPromotions ?? []));
       } catch (err) {
         console.error("Failed to load pricing options", err);
       }
     };
-  
     fetchPricingData();
   }, [user?.id]);
 
@@ -128,16 +194,13 @@ const SelectPackagePage = () => {
     const promoPrice = Number(selectedPromotion?.discountedPrice) || 0;
     const originalPkg = Number(selectedPackage?.originalPrice) || 0;
     const originalPromo = Number(selectedPromotion?.originalPrice) || 0;
-  
     setTotalPrice(pkgPrice + promoPrice);
     setOriginalTotalPrice(originalPkg + originalPromo);
   }, [selectedPackage, selectedPromotion]);
-  
 
   const handlePay = async () => {
     if (!selectedPackage || !announcementId) return;
     setLoading(true);
-
     try {
       const res = await createPaymentSession({
         orderId: announcementId,
@@ -149,10 +212,7 @@ const SelectPackagePage = () => {
         discountCode: selectedPackage.discountCode,
         promotionDiscountCode: selectedPromotion?.discountCode ?? undefined,
       });
-
-      if (res?.checkoutUrl) {
-        window.location.href = res.checkoutUrl;
-      }
+      if (res?.checkoutUrl) window.location.href = res.checkoutUrl;
     } catch (err) {
       console.error("Payment init error", err);
     } finally {
@@ -170,7 +230,7 @@ const SelectPackagePage = () => {
 
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
-      <Typography variant="h5" mb={2}>
+      <Typography variant="h5" fontWeight={700} mb={2} color="primary">
         Choose your listing package
       </Typography>
 
@@ -183,9 +243,7 @@ const SelectPackagePage = () => {
           >
             {pkg.discountCode && (
               <Badge
-                label={`-${Math.round(
-                  ((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100
-                )}%`}
+                label={`-${Math.round(((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100)}%`}
                 color="success"
               />
             )}
@@ -198,7 +256,7 @@ const SelectPackagePage = () => {
 
       {promotions.length > 0 && (
         <>
-          <Typography variant="h5" mt={6} mb={2}>
+          <Typography variant="h5" fontWeight={700} mt={6} mb={2} color="primary">
             Add Promotion (Optional)
           </Typography>
           <PackageGrid>
@@ -210,9 +268,7 @@ const SelectPackagePage = () => {
               >
                 {promo.discountCode && (
                   <Badge
-                    label={`-${Math.round(
-                      ((promo.originalPrice - promo.discountedPrice) / promo.originalPrice) * 100
-                    )}%`}
+                    label={`-${Math.round(((promo.originalPrice - promo.discountedPrice) / promo.originalPrice) * 100)}%`}
                     color="success"
                   />
                 )}
@@ -225,38 +281,50 @@ const SelectPackagePage = () => {
 
           {selectedPromotion && (
             <Box mt={2} textAlign="center">
-              <Button variant="outlined" color="secondary" onClick={() => setSelectedPromotion(null)}>
-                Remove Promotion
-              </Button>
+              <CommonButton
+                text="Remove Promotion"
+                onClick={() => setSelectedPromotion(null)}
+                sx={{
+                  color: COLOR_RED_BUTTON,
+                  backgroundColor: COLOR_WHITE,
+                  border: `1px solid ${COLOR_RED_BUTTON}`,
+                  ":hover": {
+                    backgroundColor: COLOR_RED_BUTTON_HOVER,
+                    color: COLOR_WHITE,
+                  },
+                }}
+              />
             </Box>
           )}
         </>
       )}
 
-      <Box textAlign="center" mt={4}>
-        <Typography variant="h6" mb={1}>
+      <Box textAlign="center" mt={6}>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          mb={1}
+          sx={{ color: COLOR_PRIMARY, fontSize: "1.4rem" }}
+        >
           Total: {totalPrice} {selectedPackage?.currency}
           {originalTotalPrice > totalPrice && (
             <Typography
               component="span"
               ml={1}
-              sx={{ textDecoration: "line-through", color: "gray" }}
+              sx={{ textDecoration: "line-through", color: COLOR_RED_BUTTON, fontWeight: 600 }}
             >
               {originalTotalPrice} {selectedPackage?.currency}
             </Typography>
           )}
         </Typography>
 
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={!selectedPackage || loading}
+        <PrimaryButton
+          text={loading ? "Processing..." : "Pay and Publish"}
           onClick={handlePay}
-        >
-          {loading ? "Processing..." : "Pay and Publish"}
-        </Button>
+          size="large"
+          fullWidth
+        />
       </Box>
-
     </Box>
   );
 };
