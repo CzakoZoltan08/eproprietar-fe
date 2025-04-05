@@ -53,7 +53,7 @@ const InvoiceDetailsPage = () => {
     const promotionDiscountCode = searchParams.get("promotionDiscountCode");
     const amount = Number(searchParams.get("amount"));
     const originalAmount = Number(searchParams.get("originalAmount"));
-    const currency = searchParams.get("currency") || "RON";
+    const currency = (searchParams.get("currency") || "RON").toUpperCase();
 
     if (!packageId || !announcementId) return;
 

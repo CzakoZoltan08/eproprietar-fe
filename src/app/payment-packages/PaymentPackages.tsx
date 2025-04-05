@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   List,
   ListItem,
   ListItemText,
@@ -27,6 +28,9 @@ import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { observer } from "mobx-react";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
+
+const isValidUUID = (id: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 
 const PackageGrid = styled.div`
   display: grid;
@@ -159,6 +163,33 @@ const SelectPackagePage = () => {
     pricingStore: { getAnnouncementPackages, getPromotionPackages },
   } = useStore();
 
+  const tempAnnouncementId = searchParams.get("announcementId") || "";
+  const [realAnnouncementId, setRealAnnouncementId] = useState<string | null>(null);
+  const [isLoadingRealId, setIsLoadingRealId] = useState(true);
+
+  useEffect(() => {
+    const checkRealId = () => {
+      const storedId = localStorage.getItem("announcementRealId");
+      if (storedId && isValidUUID(storedId)) {
+        setRealAnnouncementId(storedId);
+        setIsLoadingRealId(false);
+        return true;
+      }
+      return false;
+    };
+
+    const found = checkRealId();
+    if (found) return;
+
+    const interval = setInterval(() => {
+      if (checkRealId()) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (!user?.id) getCurrentUser();
   }, []);
@@ -197,21 +228,32 @@ const SelectPackagePage = () => {
   }, [selectedPackage, selectedPromotion]);
 
   const handleContinue = () => {
-    if (!selectedPackage || !announcementId) return;
-  
+    if (!selectedPackage || !realAnnouncementId) return;
+
     const params = new URLSearchParams({
       packageId: selectedPackage.id,
       promotionId: selectedPromotion?.id ?? "",
-      announcementId,
+      announcementId: realAnnouncementId,
       discountCode: selectedPackage.discountCode ?? "",
       promotionDiscountCode: selectedPromotion?.discountCode ?? "",
       amount: totalPrice.toString(),
       originalAmount: originalTotalPrice.toString(),
-      currency: selectedPackage.currency,
+      currency: selectedPackage.currency?.toString().toUpperCase() ?? "RON",
     });
-  
+
     router.push(`/invoice-details?${params.toString()}`);
   };
+
+  if (isLoadingRealId || !realAnnouncementId) {
+    return (
+      <Box px={3} py={4} textAlign="center">
+        <CircularProgress />
+        <Typography variant="body2" mt={2}>
+          Finalizing your announcement in the background...
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!user?.id) {
     return (

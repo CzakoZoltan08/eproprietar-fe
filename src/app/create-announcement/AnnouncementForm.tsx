@@ -524,61 +524,69 @@ const AnnouncementFormContent = () => {
     try {
       const { thumbnail, ...data } = formData;
   
-      if (contactPhone !== user?.phoneNumber) {
-        if (user?.id) {
-          await updateUser(user.id, { phoneNumber: contactPhone });
+      const tempId = `temp-${Date.now()}`; // temporary ID for UI
+      const announcementDraft = {
+        ...data,
+        announcementType: data.announcementType.toLowerCase(),
+        price: Number(data.price),
+        rooms: Number(data.rooms),
+        baths: Number(data.baths),
+        numberOfKitchens: Number(data.numberOfKitchens),
+        floor: Number(data.floor),
+        surface: Number(data.surface),
+        status: "pending",
+        user: {
+          id: user?.id || "",
+          firebaseId: user?.firebaseId || ""
         }
-      }
+      };
   
-      let announcementId = "";
+      // Save data locally to reuse on failed payment or retry
+      localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId: tempId }));
   
-      if (isEdit) {
-        await updateAnnouncement(params.id as string, {
-          ...data,
-          announcementType: data.announcementType.toLowerCase(),
-          price: Number(data.price),
-          rooms: Number(data.rooms),
-          baths: Number(data.baths),
-          numberOfKitchens: Number(data.numberOfKitchens),
-          floor: Number(data.floor),
-          surface: Number(data.surface)
-        });
-        announcementId = params.id as string;
-        await uploadMedia(announcementId);
-      } else {
-        const newAnnouncement = await createAnnouncement({
-          ...data,
-          announcementType: data.announcementType.toLowerCase(),
-          price: Number(data.price),
-          rooms: Number(data.rooms),
-          baths: Number(data.baths),
-          numberOfKitchens: Number(data.numberOfKitchens),
-          floor: Number(data.floor),
-          surface: Number(data.surface),
-          status: "pending",
-          user: {
-            id: user?.id || "",
-            firebaseId: user?.firebaseId || ""
+      // Immediately redirect
+      window.location.href = `/payment-packages?announcementId=${tempId}`;
+  
+      // Background work after redirect
+      setTimeout(async () => {
+        try {
+          // 1. Update phone number if changed
+          if (contactPhone !== user?.phoneNumber && user?.id) {
+            await updateUser(user.id, { phoneNumber: contactPhone });
           }
-        }) as unknown as PropertyAnnouncementModel;
   
-        announcementId = newAnnouncement.id;
+          // 2. Actually create the announcement
+          const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
   
-        await uploadMedia(announcementId);
+          // 3. Store real ID
+          localStorage.setItem("announcementRealId", newAnnouncement.id);
   
-        localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId }));
+          // 4. Upload media in the background
+          await uploadMedia(newAnnouncement.id);
   
-        // ✅ NEW: Redirect to select-package page
-        window.location.href = `/payment-packages?announcementId=${announcementId}`;
-        return;
-      }
+          // 5. Update thumbnail if needed
+          if (formData.thumbnail) {
+            const formDataToSend = new FormData();
+            formDataToSend.append("file", formData.thumbnail);
+            formDataToSend.append("type", "image");
+  
+            const response = await createImageOrVideo(formDataToSend, user?.id || "", newAnnouncement.id);
+            if (response?.optimized_url) {
+              await updateAnnouncement(newAnnouncement.id, { imageUrl: response.optimized_url });
+            }
+          }
+        } catch (bgErr) {
+          console.error("Background announcement creation/upload failed", bgErr);
+        }
+      }, 100); // Slight delay to let the redirect happen smoothly
+  
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");
     } finally {
       setLoading(false);
     }
-  };  
+  };   
 
   return (
     <Container>
