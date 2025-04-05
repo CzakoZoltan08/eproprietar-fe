@@ -60,9 +60,14 @@ const StyledCard = styled(Card)<{ selected: boolean }>`
   }
 `;
 
-const Badge = styled(Chip)`
+const Badge = styled(Chip)<{ topOffset?: number }>`
   position: absolute;
-  top: 10px;
+  top: ${({ topOffset }) => topOffset ?? 10}px;
+  right: 10px;
+`;
+
+const BadgeOffset = styled(Badge)<{ offsetTop?: number }>`
+  top: ${({ offsetTop }) => offsetTop ?? 10}px;
   right: 10px;
 `;
 
@@ -280,8 +285,22 @@ const SelectPackagePage = () => {
               <Badge
                 label={`-${Math.round(((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100)}%`}
                 color="success"
+                topOffset={10}
               />
             )}
+
+            {pkg.packageType?.toLowerCase() === "unlimited" && (
+              <Badge
+                label="Popular"
+                topOffset={pkg.discountCode ? 50 : 10}
+                sx={{
+                  backgroundColor: COLOR_RED_BUTTON,
+                  color: COLOR_WHITE,
+                  fontWeight: 600,
+                }}
+              />
+            )}
+
             <CardContent>
               <PriceWithDiscount item={pkg} />
             </CardContent>
