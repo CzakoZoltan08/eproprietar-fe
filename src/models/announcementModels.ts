@@ -29,6 +29,7 @@ export interface PropertyAnnouncementModel {
   parking?: string;
   images?: { original: string; thumbnail: string }[];
   videos?: { original: string; format: string }[];
+  endDate?: string; // Add this line
 }
 
 export class CreateAnnouncementDto {

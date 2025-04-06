@@ -9,6 +9,8 @@ import {
 
 import AnnouncementListItem from "@/app/announcements/AnnouncementListItem";
 import { COLOR_TEXT } from "@/constants/colors";
+import EnsembleAnnouncementListItem from "./ensemble/EnsembleAnnouncementListItem";
+import EnsembleAnnouncementTileItem from "./ensemble/EnsembleAnnouncementTileItem";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
@@ -162,11 +164,28 @@ const AnnouncementList = ({
       >
         {title || filters.type || "Anunțuri"}
       </Typography>
-      {announcements.map((item, index) => (
-        <AnnouncementListItem key={`announcement-${index}`} item={item} />
-      ))}
+      {filters.providerType === "ensemble" ? (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gap: "24px",
+            marginBottom: "64px", // ✅ Add this line to push pagination down
+          }}
+        >
+          {announcements.map((item, index) => (
+            <EnsembleAnnouncementTileItem key={`ensemble-${index}`} item={item} />
+          ))}
+        </Box>
+      ) : (
+        <>
+          {announcements.map((item, index) => (
+            <AnnouncementListItem key={`announcement-${index}`} item={item} />
+          ))}
+        </>
+      )}
       {paginated && (
-        <Box component="span">
+        <Box component="span" sx={{ mt: 4 }}>
           <StyledPagination
             count={meta?.totalPages}
             page={page || 1}
