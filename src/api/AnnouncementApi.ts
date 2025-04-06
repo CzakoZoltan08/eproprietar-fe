@@ -203,6 +203,7 @@ export class AnnouncementApi {
       transactionType,
       userId,
       status,
+      providerType,
     } = filter;
 
     return {
@@ -230,6 +231,9 @@ export class AnnouncementApi {
         : undefined,
       [QueryKeys.FILTER_STATUS]: status
         ? `${FilterOperators.IN}:${status}`
+        : undefined,
+        [QueryKeys.FILTER_PROVIDER_TYPE]: providerType
+        ? `${FilterOperators.IN}:${providerType}`
         : undefined,
     };
   }

@@ -179,7 +179,7 @@ const Header = () => {
         </NavItem>
 
         {/* Ansambluri Rezidentiale (No submenu needed) */}
-        <Button onClick={() => router.push("/residential-announcement")} color="inherit">
+        <Button onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")} color="inherit">
           Ansambluri Rezidențiale
         </Button>
 

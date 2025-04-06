@@ -13,7 +13,15 @@ import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
-const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
+const AnnouncementList = ({
+  paginated = true,
+  defaultFilters = {},
+  title = "",
+}: {
+  paginated: boolean;
+  defaultFilters?: Record<string, string | number>;
+  title?: string;
+}) => {
   const {
     announcementStore: { fetchPaginatedAnnouncements, announcements, meta },
   } = useStore();
@@ -23,32 +31,70 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
   const [filters, setFilters] = useState<Record<string, string | number>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
+  console.log("Received defaultFilters:", defaultFilters);
+
   const initializeFilters = () => {
     const type = searchParams.get("type") || sessionStorage.getItem("type") || "";
+    const providerType = searchParams.get("providerType") || ""; // Ensure providerType is captured from URL
     const parseNumber = (value: string | null) => (value ? parseInt(value, 10) : 0);
-
+  
+    // Initialize filters conditionally based on query parameters
     const initialFilters: Record<string, string | number> = {
-      transactionType: searchParams.get("transactionType") || sessionStorage.getItem("transactionType") || "",
-      price: searchParams.get("price") || sessionStorage.getItem("price") || "",
-      minSurface: parseNumber(searchParams.get("minSurface") || sessionStorage.getItem("minSurface")),
-      maxSurface: parseNumber(searchParams.get("maxSurface") || sessionStorage.getItem("maxSurface")),
-      city: searchParams.get("city") || sessionStorage.getItem("city") || "",
-      type,
-      userId: searchParams.get("userId") || sessionStorage.getItem("userId") || "",
-      status: "active"
+      status: "active", // Default status is active
+      providerType, // Always include providerType from the URL
+      ...defaultFilters, // Ensure any passed defaultFilters are applied
     };
-
-    // Ensure `rooms` is included only when `type` is "apartament"
-    if (type === "apartament") {
-      initialFilters.rooms = searchParams.get("rooms") || sessionStorage.getItem("rooms") || "";
+  
+    // Add query parameters only if they exist in the URL
+    if (searchParams.get("transactionType")) {
+      initialFilters.transactionType = searchParams.get("transactionType") || "";
+    }
+  
+    if (searchParams.get("price")) {
+      initialFilters.price = `$lte:${searchParams.get("price")}`; // Apply price filter if present
+    }
+  
+    if (searchParams.get("minSurface") || searchParams.get("maxSurface")) {
+      initialFilters.surface = `$btw:${searchParams.get("minSurface")},${searchParams.get("maxSurface")}`;
+    }
+  
+    if (searchParams.get("city")) {
+      initialFilters.city = `$in:${searchParams.get("city")}`;
+    }
+  
+    if (searchParams.get("rooms")) {
+      initialFilters.rooms = `$eq:${searchParams.get("rooms")}`;
+    }
+  
+    if (searchParams.get("announcementType")) {
+      initialFilters.announcementType = `$in:${searchParams.get("announcementType")}`;
     }
 
+    if (type) {
+      initialFilters.type = type;
+    }
+  
+    if (providerType) {
+      initialFilters.providerType = providerType;
+    }
+  
     setPage(Number(sessionStorage.getItem("page")) || Number(searchParams.get("page")) || 1);
-    initialFilters.status = "active";
-    setFilters(initialFilters);
+  
+    // Remove sessionStorage values to avoid using old filters
+    Object.keys(defaultFilters).forEach((key) => {
+      sessionStorage.removeItem(key);
+    });
+  
+    // Set the filters with the correct merged state
+    setFilters({
+      ...initialFilters, // Only include filters set above
+      ...defaultFilters, // Ensure default filters are still applied
+    });
+  
+    console.log("Filters after merging:", { ...initialFilters, ...defaultFilters });
     setIsInitialized(true);
   };
-
+  
   // Run `initializeFilters` when URL search parameters change
   useEffect(() => {
     initializeFilters();
@@ -77,6 +123,8 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
       sessionStorage.setItem(key, value.toString());
     });
 
+    console.log("FETCHING WITH FILTERS:", filters);
+
     await fetchPaginatedAnnouncements({
       page: updatedPage || 1,
       limit: 8,
@@ -86,7 +134,7 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
 
   useEffect(() => {
     initializeFilters();
-  }, []);
+  }, []); // Initialize filters once
 
   useEffect(() => {
     if (isInitialized) {
@@ -112,7 +160,7 @@ const AnnouncementList = ({ paginated = true }: { paginated: boolean }) => {
         sx={{ fontWeight: 600, marginBottom: "32px" }}
         color={COLOR_TEXT}
       >
-        {filters.type || "Anunturi"}
+        {title || filters.type || "Anunțuri"}
       </Typography>
       {announcements.map((item, index) => (
         <AnnouncementListItem key={`announcement-${index}`} item={item} />

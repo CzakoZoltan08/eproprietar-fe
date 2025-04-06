@@ -10,4 +10,5 @@ export const QueryKeys = {
     FILTER_USER: "filter.user",
     FILTER_STATUS: "filter.status",
     SEARCH: "search",
+    FILTER_PROVIDER_TYPE: "filter.providerType",
 };
