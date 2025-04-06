@@ -40,7 +40,7 @@ const EnsembleAnnouncementListItem = ({ item }: { item: PropertyAnnouncementMode
         </Typography>
         <PrimaryButton
           text="Vezi detalii"
-          onClick={() => router.push(`${Endpoints.ANNOUNCEMENTS}/${item.id}`)}
+          onClick={() => router.push(`${Endpoints.ENSEMBLE_ANNOUNCEMENTS}/${item.id}`)}
         />
       </Box>
     </Box>

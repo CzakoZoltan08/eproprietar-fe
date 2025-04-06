@@ -15,7 +15,7 @@ const EnsembleAnnouncementTileItem = ({ item }: { item: PropertyAnnouncementMode
   const router = useRouter();
 
   const handleGoToDetails = () => {
-    router.push(`${Endpoints.ANNOUNCEMENTS}/${item.id}`);
+    router.push(`${Endpoints.ENSEMBLE_ANNOUNCEMENTS}/${item.id}`);
   };
 
   const formattedEndDate = item.endDate
