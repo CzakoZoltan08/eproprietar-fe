@@ -76,17 +76,6 @@ const ResidentialAnnouncementForm = () => {
   const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const failed = window.location.search.includes("failed");
-    if (failed) {
-      const savedData = sessionStorage.getItem("announcementData");
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        setFormData(parsed);
-      }
-    }
-  }, []);
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -168,22 +157,11 @@ const ResidentialAnnouncementForm = () => {
         user: { id: user.id, firebaseId: user.firebaseId },
       };
 
-      const tempId = Math.floor(Math.random() * 10000000); // use integer temporary ID
-      localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId: tempId }));
-
-      window.location.href = `/payment-packages?announcementId=${tempId}&providerType=ensemble`;
-
-      setTimeout(async () => {
-        try {
-          const newAnnouncement = await createAnnouncement(payload);
+      const newAnnouncement = await createAnnouncement(payload);
           localStorage.setItem("announcementRealId", newAnnouncement.id);
           await uploadMedia(newAnnouncement.id);
-          console.error("Background announcementRealId", newAnnouncement.id);
-        } catch (err) {
-          console.error("Background creation failed", err);
-        }
-      }, 100);
 
+      window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
     } catch (err: any) {
       console.error("Error creating announcement:", err);
       setError("Something went wrong. Please try again.");

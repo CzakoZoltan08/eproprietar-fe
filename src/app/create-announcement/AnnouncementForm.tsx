@@ -524,7 +524,6 @@ const AnnouncementFormContent = () => {
     try {
       const { thumbnail, ...data } = formData;
   
-      const tempId = `temp-${Date.now()}`; // temporary ID for UI
       const announcementDraft = {
         ...data,
         announcementType: data.announcementType.toLowerCase(),
@@ -541,42 +540,31 @@ const AnnouncementFormContent = () => {
         }
       };
   
-      // Save data locally to reuse on failed payment or retry
-      localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId: tempId }));
+      // 1. Update phone number if changed
+      if (contactPhone !== user?.phoneNumber && user?.id) {
+        await updateUser(user.id, { phoneNumber: contactPhone });
+      }
+
+      // 2. Actually create the announcement
+      const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+
+      // 4. Upload media in the background
+      await uploadMedia(newAnnouncement.id);
+
+      // 5. Update thumbnail if needed
+      if (formData.thumbnail) {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", formData.thumbnail);
+        formDataToSend.append("type", "image");
+
+        const response = await createImageOrVideo(formDataToSend, user?.id || "", newAnnouncement.id);
+        if (response?.optimized_url) {
+          await updateAnnouncement(newAnnouncement.id, { imageUrl: response.optimized_url });
+        }
+      }
   
       // Immediately redirect
-      window.location.href = `/payment-packages?announcementId=${tempId}`;
-  
-      // Background work after redirect
-      setTimeout(async () => {
-        try {
-          // 1. Update phone number if changed
-          if (contactPhone !== user?.phoneNumber && user?.id) {
-            await updateUser(user.id, { phoneNumber: contactPhone });
-          }
-  
-          // 2. Actually create the announcement
-          const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
-
-          // 4. Upload media in the background
-          await uploadMedia(newAnnouncement.id);
-  
-          // 5. Update thumbnail if needed
-          if (formData.thumbnail) {
-            const formDataToSend = new FormData();
-            formDataToSend.append("file", formData.thumbnail);
-            formDataToSend.append("type", "image");
-  
-            const response = await createImageOrVideo(formDataToSend, user?.id || "", newAnnouncement.id);
-            if (response?.optimized_url) {
-              await updateAnnouncement(newAnnouncement.id, { imageUrl: response.optimized_url });
-            }
-          }
-        } catch (bgErr) {
-          console.error("Background announcement creation/upload failed", bgErr);
-        }
-      }, 100); // Slight delay to let the redirect happen smoothly
-  
+      window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");

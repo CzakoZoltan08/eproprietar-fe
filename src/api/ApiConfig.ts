@@ -31,15 +31,15 @@ export class ApiConfig {
 
       return response.data;
     } catch (error) {
-      console.error("❌ API Error:", {
-        message: axios.isAxiosError(error) ? error.message : String(error),
-        url: `${this.api}${endpoint}`,
-        method,
-        data,
-        params,
-        response: axios.isAxiosError(error) ? error.response?.data : null,
-        status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      });
+      // console.error("❌ API Error:", {
+      //   message: axios.isAxiosError(error) ? error.message : String(error),
+      //   url: `${this.api}${endpoint}`,
+      //   method,
+      //   data,
+      //   params,
+      //   response: axios.isAxiosError(error) ? error.response?.data : null,
+      //   status: axios.isAxiosError(error) ? error.response?.status : undefined,
+      // });
       return null;
     }
   }

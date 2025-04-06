@@ -29,9 +29,6 @@ import { observer } from "mobx-react";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
 
-const isValidUUID = (id: string): boolean =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-
 const PackageGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -169,33 +166,6 @@ const SelectPackagePage = () => {
     pricingStore: { getAnnouncementPackages, getPromotionPackages },
   } = useStore();
 
-  const tempAnnouncementId = searchParams.get("announcementId") || "";
-  const [realAnnouncementId, setRealAnnouncementId] = useState<string | null>(null);
-  const [isLoadingRealId, setIsLoadingRealId] = useState(true);
-
-  useEffect(() => {
-    const checkRealId = () => {
-      const storedId = localStorage.getItem("announcementRealId");
-      if (storedId && isValidUUID(storedId)) {
-        setRealAnnouncementId(storedId);
-        setIsLoadingRealId(false);
-        return true;
-      }
-      return false;
-    };
-
-    const found = checkRealId();
-    if (found) return;
-
-    const interval = setInterval(() => {
-      if (checkRealId()) {
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   useEffect(() => {
     if (!user?.id) getCurrentUser();
   }, []);
@@ -235,12 +205,12 @@ const SelectPackagePage = () => {
   }, [selectedPackage, selectedPromotion]);
 
   const handleContinue = () => {
-    if (!selectedPackage || !realAnnouncementId) return;
+    if (!selectedPackage || !announcementId) return;
 
     const params = new URLSearchParams({
       packageId: selectedPackage.id,
       promotionId: selectedPromotion?.id ?? "",
-      announcementId: realAnnouncementId,
+      announcementId: announcementId,
       discountCode: selectedPackage.discountCode ?? "",
       promotionDiscountCode: selectedPromotion?.discountCode ?? "",
       amount: totalPrice.toString(),
@@ -251,7 +221,7 @@ const SelectPackagePage = () => {
     router.push(`/invoice-details?${params.toString()}`);
   };
 
-  if (isLoadingRealId || !realAnnouncementId) {
+  if (!announcementId) {
     return (
       <Box px={3} py={4} textAlign="center">
         <CircularProgress />
