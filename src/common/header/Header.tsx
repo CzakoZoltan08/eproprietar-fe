@@ -179,7 +179,7 @@ const Header = () => {
         </NavItem>
 
         {/* Ansambluri Rezidentiale (No submenu needed) */}
-        <Button onClick={() => navigateWithFilters("Vanzare", "ansambluri_rezidentiale")} color="inherit">
+        <Button onClick={() => router.push("/residential-announcement")} color="inherit">
           Ansambluri Rezidențiale
         </Button>
 

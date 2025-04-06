@@ -17,7 +17,9 @@ const PaymentStatusPage = () => {
   useEffect(() => {
     if (success && orderId) {
       // You can also fetch the announcement if needed
-      setAnnouncementUrl(`/announcements/${orderId}`);
+      const announcementType = searchParams.get("type") ?? "normal";
+      const basePath = announcementType === "ensemble" ? "ansambluri-rezidentiale" : "announcements";
+      setAnnouncementUrl(`/${basePath}/${orderId}`);
       setLoading(false);
     } else {
       setLoading(false);

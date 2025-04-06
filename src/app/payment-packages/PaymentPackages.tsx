@@ -60,14 +60,15 @@ const StyledCard = styled(Card)<{ selected: boolean }>`
   }
 `;
 
-const Badge = styled(Chip)<{ topOffset?: number }>`
+const Badge = styled(Chip)<{ $topOffset?: number }>`
   position: absolute;
-  top: ${({ topOffset }) => topOffset ?? 10}px;
+  top: ${({ $topOffset }) => $topOffset ?? 10}px;
   right: 10px;
 `;
 
-const BadgeOffset = styled(Badge)<{ offsetTop?: number }>`
-  top: ${({ offsetTop }) => offsetTop ?? 10}px;
+const BadgeOffset = styled(Chip)<{ $offsetTop?: number }>`
+  position: absolute;
+  top: ${({ $offsetTop }) => $offsetTop ?? 10}px;
   right: 10px;
 `;
 
@@ -203,8 +204,9 @@ const SelectPackagePage = () => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
       try {
+        const audience = searchParams.get("providerType") || "normal"; // default
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
-          getAnnouncementPackages(user.id),
+          getAnnouncementPackages(user.id, audience),
           getPromotionPackages(user.id),
         ]);
 
@@ -285,14 +287,14 @@ const SelectPackagePage = () => {
               <Badge
                 label={`-${Math.round(((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100)}%`}
                 color="success"
-                topOffset={10}
+                $topOffset={pkg.discountCode ? 50 : 10}
               />
             )}
 
             {pkg.packageType?.toLowerCase() === "unlimited" && (
               <Badge
                 label="Popular"
-                topOffset={pkg.discountCode ? 50 : 10}
+                $topOffset={pkg.discountCode ? 50 : 10}
                 sx={{
                   backgroundColor: COLOR_RED_BUTTON,
                   color: COLOR_WHITE,

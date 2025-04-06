@@ -160,7 +160,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const AnnouncementFormContent = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
-    announcementStore: { createPaymentSession, updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
+    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
   } = useStore();
 
   const [formData, setFormData] = useState({
@@ -557,10 +557,7 @@ const AnnouncementFormContent = () => {
   
           // 2. Actually create the announcement
           const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
-  
-          // 3. Store real ID
-          localStorage.setItem("announcementRealId", newAnnouncement.id);
-  
+
           // 4. Upload media in the background
           await uploadMedia(newAnnouncement.id);
   

@@ -15,9 +15,9 @@ export class PricingStore {
     autoBind(this);
   }
 
-  async getAnnouncementPackages(userId: string) {
+  async getAnnouncementPackages(userId: string, targetAudience: string = 'normal') {
     try {
-      const response = await this.pricingApi.getAnnouncementPackages(userId);
+      const response = await this.pricingApi.getAnnouncementPackages(userId, targetAudience);
       runInAction(() => {
         this.packages = response?.packages || [];
       });
