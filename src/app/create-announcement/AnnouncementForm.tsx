@@ -1,6 +1,6 @@
 "use client";
 
-import { CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, CircularProgress, LinearProgress, SelectChangeEvent, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -196,6 +196,9 @@ const AnnouncementFormContent = () => {
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]); // Store preview URLs for videos
   const [isDraggingVideos, setIsDraggingVideos] = useState(false);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
+  const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
 
   const pathname = usePathname();
   const params = useParams();
@@ -471,41 +474,59 @@ const AnnouncementFormContent = () => {
   };
 
   const uploadMedia = async (announcementId: string) => {
-    try {
-      for (const image of formData.images) {
+    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
+    const totalVideos = formData.videos.length;
+  
+    setImageUploadProgress({ uploaded: 0, total: totalImages });
+    setVideoUploadProgress({ uploaded: 0, total: totalVideos });
+  
+    const incrementImage = () =>
+      setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+  
+    const incrementVideo = () =>
+      setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+  
+    const imageUploads = formData.images.map((image) =>
+      (async () => {
         const formDataToSend = new FormData();
         formDataToSend.append("file", image);
         formDataToSend.append("type", "image");
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
-
-      if (formData.thumbnail && announcementId) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", formData.thumbnail);
-        formDataToSend.append("type", "image");
-
-        if (user?.id) {
-          const response = await createImageOrVideo(formDataToSend, user.id, announcementId);
-
-          if (response.optimized_url) {
-            const optimizedUrl = response.optimized_url; // Get the optimized image URL
   
-            // Step 4: Update the announcement with the optimized image URL
-            await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
-          }
+        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        incrementImage();
+      })()
+    );
+  
+    if (formData.thumbnail) {
+      const thumbUpload = (async () => {
+        const formDataToSend = new FormData();
+        if (formData.thumbnail) {
+          formDataToSend.append("file", formData.thumbnail);
         }
-      }
-
-      for (const video of formData.videos) {
+        formDataToSend.append("type", "image");
+  
+        const response = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        if (response?.optimized_url) {
+          await updateAnnouncement(announcementId, { imageUrl: response.optimized_url });
+        }
+        incrementImage();
+      })();
+      imageUploads.push(thumbUpload);
+    }
+  
+    const videoUploads = formData.videos.map((video) =>
+      (async () => {
         const formDataToSend = new FormData();
         formDataToSend.append("file", video);
         formDataToSend.append("type", "video");
+  
         await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
-    } catch (error) {
-      console.error("Error uploading media:", error);
-    }
-  };
+        incrementVideo();
+      })()
+    );
+  
+    await Promise.all([Promise.all(imageUploads), Promise.all(videoUploads)]);
+  };  
 
   const onSubmit = async () => {
     if (!formData.title || !formData.description || !formData.price || !formData.city) {
@@ -578,7 +599,42 @@ const AnnouncementFormContent = () => {
       {loading ? (
         <>
           <CircularProgress />
-          <Typography mt={2}>Creating your announcement. Please wait...</Typography>
+          {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
+            <>
+              <Typography mt={2}>
+                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+              </Typography>
+              {imageUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(imageUploadProgress.uploaded / imageUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              <Typography mt={2}>
+                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+              </Typography>
+              {videoUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(videoUploadProgress.uploaded / videoUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              {(imageUploadProgress.uploaded < imageUploadProgress.total ||
+                videoUploadProgress.uploaded < videoUploadProgress.total) && (
+                <Typography mt={2} fontStyle="italic">
+                  Finishing uploads, please wait...
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography mt={2}>Creating your announcement...</Typography>
+          )}
         </>
       ) : (
         <>

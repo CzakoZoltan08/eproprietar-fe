@@ -3,8 +3,15 @@
 import * as breakpoints from "@/constants/breakpoints";
 import * as palette from "@/constants/colors";
 
-import { Box, CircularProgress, TextField, Tooltip, Typography } from "@mui/material";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import {
+  Box,
+  CircularProgress,
+  LinearProgress,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import React, { ChangeEvent, useState } from "react";
 import { propertyTypes, serviceTypes } from "@/constants/annountementConstants";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
@@ -75,12 +82,18 @@ const ResidentialAnnouncementForm = () => {
   const [loading, setLoading] = useState(false);
   const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
   const [error, setError] = useState<string | null>(null);
+  const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
+  const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    const fieldError = generalValidation(residentialAnnouncementValidationSchema, { ...formData, [name]: value }, name);
+    const fieldError = generalValidation(
+      residentialAnnouncementValidationSchema,
+      { ...formData, [name]: value },
+      name
+    );
     setFormErrors((prev) => ({ ...prev, [name]: fieldError }));
   };
 
@@ -88,38 +101,73 @@ const ResidentialAnnouncementForm = () => {
     const isoDate = date ? date.toISOString() : "";
     setFormData((prev) => ({ ...prev, endDate: isoDate }));
 
-    const error = generalValidation(residentialAnnouncementValidationSchema, { ...formData, endDate: isoDate }, "endDate");
+    const error = generalValidation(
+      residentialAnnouncementValidationSchema,
+      { ...formData, endDate: isoDate },
+      "endDate"
+    );
     setFormErrors((prev) => ({ ...prev, endDate: error ? String(error) : "" }));
   };
 
   const uploadMedia = async (announcementId: string) => {
-    try {
-      for (const image of formData.images) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", image);
-        formDataToSend.append("type", "image");
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
+    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
+    const totalVideos = formData.videos.length;
 
-      if (formData.thumbnail) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", formData.thumbnail);
-        formDataToSend.append("type", "image");
-        const response = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-        if (response?.optimized_url) {
-          await updateAnnouncement(announcementId, { imageUrl: response.optimized_url });
+    setImageUploadProgress({ uploaded: 0, total: totalImages });
+    setVideoUploadProgress({ uploaded: 0, total: totalVideos });
+
+    const incrementImage = () =>
+      setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+
+    const incrementVideo = () =>
+      setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+
+    const imageUploads = formData.images.map((image) =>
+      (async () => {
+        const fd = new FormData();
+        fd.append("file", image);
+        fd.append("type", "image");
+
+        await createImageOrVideo(fd, user?.id || "", announcementId);
+        incrementImage();
+      })()
+    );
+
+    if (formData.thumbnail) {
+      const thumbUpload = (async () => {
+        const fd = new FormData();
+        if (formData.thumbnail) {
+          fd.append("file", formData.thumbnail);
         }
-      }
+        fd.append("type", "image");
 
-      for (const video of formData.videos) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", video);
-        formDataToSend.append("type", "video");
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
-    } catch (error) {
-      console.error("Error uploading media:", error);
+        const response = await createImageOrVideo(fd, user?.id || "", announcementId);
+        if (response?.optimized_url) {
+          await updateAnnouncement(announcementId, {
+            imageUrl: response.optimized_url,
+          });
+        }
+        incrementImage();
+      })();
+
+      imageUploads.push(thumbUpload);
     }
+
+    const videoUploads = formData.videos.map((video) =>
+      (async () => {
+        const fd = new FormData();
+        fd.append("file", video);
+        fd.append("type", "video");
+
+        await createImageOrVideo(fd, user?.id || "", announcementId);
+        incrementVideo();
+      })()
+    );
+
+    return Promise.all([
+      Promise.all(imageUploads),
+      Promise.all(videoUploads),
+    ]);
   };
 
   const handleSubmit = async () => {
@@ -158,8 +206,8 @@ const ResidentialAnnouncementForm = () => {
       };
 
       const newAnnouncement = await createAnnouncement(payload);
-          localStorage.setItem("announcementRealId", newAnnouncement.id);
-          await uploadMedia(newAnnouncement.id);
+      localStorage.setItem("announcementRealId", newAnnouncement.id);
+      await uploadMedia(newAnnouncement.id);
 
       window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
     } catch (err: any) {
@@ -175,7 +223,42 @@ const ResidentialAnnouncementForm = () => {
       {loading ? (
         <>
           <CircularProgress />
-          <Typography mt={2}>Creating your announcement...</Typography>
+          {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
+            <>
+              <Typography mt={2}>
+                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+              </Typography>
+              {imageUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(imageUploadProgress.uploaded / imageUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              <Typography mt={2}>
+                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+              </Typography>
+              {videoUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(videoUploadProgress.uploaded / videoUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              {(imageUploadProgress.uploaded < imageUploadProgress.total ||
+                videoUploadProgress.uploaded < videoUploadProgress.total) && (
+                <Typography mt={2} fontStyle="italic">
+                  Finishing uploads, please wait...
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography mt={2}>Creating your announcement...</Typography>
+          )}
         </>
       ) : (
         <>

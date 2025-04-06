@@ -7,29 +7,79 @@ import {
 import { ApiConfig } from "./ApiConfig";
 import { ContentTypes } from "@/constants/content-types.enum";
 import { Endpoints } from "@/constants/endpoints";
-import{ FilterOperators } from "@/constants/filter-operators.enum";
-import{ HttpMethods } from "@/constants/http-methods.enum";
-import{ QueryKeys } from "@/constants/query-keys";
+import { FilterOperators } from "@/constants/filter-operators.enum";
+import { HttpMethods } from "@/constants/http-methods.enum";
+import { QueryKeys } from "@/constants/query-keys";
 
 export class AnnouncementApi {
   constructor(private apiConfig: ApiConfig) {}
 
-  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null> {
-    return this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.ANNOUNCEMENTS, data);
+  private async retry<T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 3,
+    delayMs: number = 1000
+  ): Promise<T> {
+    let lastError;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxRetries) {
+          await new Promise((res) => setTimeout(res, delayMs));
+        }
+      }
+    }
+    throw lastError;
   }
 
-  async createImageOrVideo(fileData: FormData, userId: string, announcementId: string): Promise<any | null> {
-    return this.apiConfig.sendRequest(HttpMethods.POST, `${Endpoints.UPLOADS}/${userId}/${announcementId}`, fileData, undefined, ContentTypes.MULTIPART);
+  async createImageOrVideo(
+    fileData: FormData,
+    userId: string,
+    announcementId: string,
+    options?: {
+      fileName?: string;
+      onError?: (fileName: string, message: string) => void;
+      maxRetries?: number;
+    }
+  ): Promise<any | null> {
+    const fileName = options?.fileName || "file";
+
+    try {
+      return await this.retry(
+        () =>
+          this.apiConfig.sendRequest(
+            HttpMethods.POST,
+            `${Endpoints.UPLOADS}/${userId}/${announcementId}`,
+            fileData,
+            undefined,
+            ContentTypes.MULTIPART
+          ),
+        options?.maxRetries ?? 3
+      );
+    } catch (err: any) {
+      console.error(`Upload failed for ${fileName}:`, err);
+      options?.onError?.(fileName, "Upload failed after multiple attempts.");
+      return null;
+    }
+  }
+
+  async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null> {
+    return this.apiConfig.sendRequest(
+      HttpMethods.POST,
+      Endpoints.ANNOUNCEMENTS,
+      data
+    );
   }
 
   async updateAnnouncement(
     id: string,
-    data: Partial<CreateAnnouncementDto>,
+    data: Partial<CreateAnnouncementDto>
   ): Promise<PropertyAnnouncementModel> {
     const response = await this.apiConfig.sendRequest(
       HttpMethods.PATCH,
       `${Endpoints.ANNOUNCEMENTS}/${id}`,
-      data,
+      data
     );
 
     if (!response) {
@@ -40,17 +90,23 @@ export class AnnouncementApi {
   }
 
   async getAnnouncementById(id: string) {
-    return this.apiConfig.sendRequest(HttpMethods.GET, `${Endpoints.ANNOUNCEMENTS}/${id}`);
+    return this.apiConfig.sendRequest(
+      HttpMethods.GET,
+      `${Endpoints.ANNOUNCEMENTS}/${id}`
+    );
   }
 
   async deleteAnnouncementById(id: string) {
-    return this.apiConfig.sendRequest(HttpMethods.DELETE, `${Endpoints.ANNOUNCEMENTS}/${id}`);
+    return this.apiConfig.sendRequest(
+      HttpMethods.DELETE,
+      `${Endpoints.ANNOUNCEMENTS}/${id}`
+    );
   }
 
   async fetchSavedAnnouncements(userId: string) {
     return this.apiConfig.sendRequest(
       HttpMethods.GET,
-      `${Endpoints.FAVORITES}/${userId}`,
+      `${Endpoints.FAVORITES}/${userId}`
     );
   }
 
@@ -80,9 +136,9 @@ export class AnnouncementApi {
       orderId: paymentData.orderId,
       amount: Number(paymentData.amount),
       currency: paymentData.currency,
-      packageId: paymentData.packageId
+      packageId: paymentData.packageId,
     };
-    
+
     if (paymentData.discountCode) {
       payload.discountCode = paymentData.discountCode;
     }
@@ -98,8 +154,12 @@ export class AnnouncementApi {
     if (paymentData.promotionDiscountCode) {
       payload.promotionDiscountCode = paymentData.promotionDiscountCode;
     }
-    
-    return await this.apiConfig.sendRequest(HttpMethods.POST, Endpoints.PAYMENT_CREATE, payload);
+
+    return await this.apiConfig.sendRequest(
+      HttpMethods.POST,
+      Endpoints.PAYMENT_CREATE,
+      payload
+    );
   }
 
   private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {
@@ -108,25 +168,31 @@ export class AnnouncementApi {
       ...this.buildFilterParams(data?.filter),
       ...this.buildSearchParam(data?.search),
     };
-  
+
     const params = Object.entries(filters)
-      .filter(([_, value]) => value !== undefined) // Exclude undefined values
-      .map(([key, value]) => `${key}=${value}`) // Map key-value pairs to query strings
+      .filter(([_, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${value}`)
       .join("&");
-  
-    return `${Endpoints.PAGINATED_ANNOUNCEMENTS}${params ? `?${params}` : ""}`;
+
+    return `${Endpoints.PAGINATED_ANNOUNCEMENTS}${
+      params ? `?${params}` : ""
+    }`;
   }
-  
-  private buildPaginationParams(data?: FetchAnnouncementsModel): Record<string, string> {
+
+  private buildPaginationParams(
+    data?: FetchAnnouncementsModel
+  ): Record<string, string> {
     return {
       [QueryKeys.PAGE]: data?.page?.toString() || "",
       [QueryKeys.LIMIT]: data?.limit?.toString() || "",
     };
   }
-  
-  private buildFilterParams(filter?: FetchAnnouncementsModel["filter"]): Record<string, string | undefined> {
+
+  private buildFilterParams(
+    filter?: FetchAnnouncementsModel["filter"]
+  ): Record<string, string | undefined> {
     if (!filter) return {};
-  
+
     const {
       minSurface,
       maxSurface,
@@ -136,9 +202,9 @@ export class AnnouncementApi {
       type,
       transactionType,
       userId,
-      status
+      status,
     } = filter;
-  
+
     return {
       [QueryKeys.FILTER_SURFACE]: this.buildSurfaceFilter(
         typeof minSurface === "number" ? minSurface : undefined,
@@ -147,7 +213,9 @@ export class AnnouncementApi {
       [QueryKeys.FILTER_PRICE]: price
         ? `${FilterOperators.LESS_THAN_EQUAL}:${price}`
         : undefined,
-      [QueryKeys.FILTER_CITY]: city ? `${FilterOperators.IN}:${city}` : undefined,
+      [QueryKeys.FILTER_CITY]: city
+        ? `${FilterOperators.IN}:${city}`
+        : undefined,
       [QueryKeys.FILTER_ROOMS]: rooms
         ? `${FilterOperators.EQUAL}:${rooms}`
         : undefined,
@@ -160,13 +228,16 @@ export class AnnouncementApi {
       [QueryKeys.FILTER_USER]: userId
         ? `${FilterOperators.EQUAL}:${userId}`
         : undefined,
-        [QueryKeys.FILTER_STATUS]: status
+      [QueryKeys.FILTER_STATUS]: status
         ? `${FilterOperators.IN}:${status}`
         : undefined,
     };
   }
-  
-  private buildSurfaceFilter(minSurface?: number, maxSurface?: number): string | undefined {
+
+  private buildSurfaceFilter(
+    minSurface?: number,
+    maxSurface?: number
+  ): string | undefined {
     if (minSurface && maxSurface) {
       return `${FilterOperators.BETWEEN}:${minSurface},${maxSurface}`;
     }
@@ -178,8 +249,10 @@ export class AnnouncementApi {
     }
     return undefined;
   }
-  
-  private buildSearchParam(search?: string): Record<string, string | undefined> {
+
+  private buildSearchParam(
+    search?: string
+  ): Record<string, string | undefined> {
     return {
       [QueryKeys.SEARCH]: search?.length ? search : undefined,
     };
