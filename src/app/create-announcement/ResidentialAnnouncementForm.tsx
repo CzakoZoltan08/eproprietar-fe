@@ -221,6 +221,7 @@ const ResidentialAnnouncementForm = () => {
 
       const payload = {
         ...cleanFormData,
+        phoneContact: contactPhone,
         transactionType: serviceTypes[0],
         announcementType: formData.announcementType.toLowerCase(),
         providerType: "ensemble",
