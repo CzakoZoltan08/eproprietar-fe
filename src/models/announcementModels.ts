@@ -30,6 +30,9 @@ export interface PropertyAnnouncementModel {
   images?: { original: string; thumbnail: string }[];
   videos?: { original: string; format: string }[];
   endDate?: string; // Add this line
+  logoUrl?: string;
+  developerName?: string;
+  phoneContact?: string;
 }
 
 export class CreateAnnouncementDto {
@@ -52,6 +55,7 @@ export class CreateAnnouncementDto {
   user: { id: string; firebaseId: string } = { id: '', firebaseId: ''};
   imageUrl?: string;
   status: string = 'pending';
+  logoUrl?: string;
 }
 
 export interface FetchAnnouncementsModel {

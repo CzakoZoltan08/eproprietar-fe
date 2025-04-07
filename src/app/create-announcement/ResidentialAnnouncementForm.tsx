@@ -23,7 +23,6 @@ import { generalValidation } from "@/utils/generalValidation";
 import { observer } from "mobx-react";
 import { residentialAnnouncementValidationSchema } from "@/app/create-announcement/validationSchema";
 import styled from "styled-components";
-import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
 const Styled = {
@@ -67,6 +66,7 @@ const INITIAL_DATA = {
   stage: "",
   endDate: "",
   thumbnail: null as File | null,
+  logo: null as File | null,
   images: [] as File[],
   videos: [] as File[],
 };
@@ -76,9 +76,8 @@ const ResidentialAnnouncementForm = () => {
   const { user, updateUser } = userStore;
   const { createAnnouncement, updateAnnouncement, createImageOrVideo } = announcementStore;
 
-  const router = useRouter();
   const [formData, setFormData] = useState(INITIAL_DATA);
-  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA>({ ...INITIAL_DATA });
+  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({ ...INITIAL_DATA });
   const [loading, setLoading] = useState(false);
   const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +109,11 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const uploadMedia = async (announcementId: string) => {
-    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
+    const totalImages =
+      formData.images.length +
+      (formData.thumbnail ? 1 : 0) +
+      (formData.logo ? 1 : 0);
+
     const totalVideos = formData.videos.length;
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
@@ -153,6 +156,26 @@ const ResidentialAnnouncementForm = () => {
       imageUploads.push(thumbUpload);
     }
 
+    if (formData.logo) {
+      const logoUpload = (async () => {
+        const fd = new FormData();
+        if (formData.logo) {
+          fd.append("file", formData.logo);
+        }
+        fd.append("type", "image");
+
+        const response = await createImageOrVideo(fd, user?.id || "", announcementId);
+        if (response?.optimized_url) {
+          await updateAnnouncement(announcementId, {
+            logoUrl: response.optimized_url,
+          });
+        }
+        incrementImage();
+      })();
+
+      imageUploads.push(logoUpload);
+    }
+
     const videoUploads = formData.videos.map((video) =>
       (async () => {
         const fd = new FormData();
@@ -172,11 +195,14 @@ const ResidentialAnnouncementForm = () => {
 
   const handleSubmit = async () => {
     localStorage.removeItem("announcementRealId");
-    const { thumbnail, images, videos, ...cleanFormData } = formData;
-    const errors = generalValidation(residentialAnnouncementValidationSchema, cleanFormData);
+    const { thumbnail, logo, images, videos, ...cleanFormData } = formData;
+    const errors = generalValidation(residentialAnnouncementValidationSchema, {
+      ...cleanFormData,
+      contactPhone,
+    });
 
     if (errors && typeof errors === "object") {
-      setFormErrors(errors as typeof INITIAL_DATA);
+      setFormErrors(errors as typeof INITIAL_DATA & { contactPhone?: string });
       setError("Please correct the highlighted fields.");
       return;
     }
@@ -274,6 +300,25 @@ const ResidentialAnnouncementForm = () => {
               label="Tipul căutării"
               error={formErrors.announcementType}
             />
+            <TextField
+              label="Număr de telefon pentru contact"
+              name="contactPhone"
+              value={contactPhone}
+              onChange={(e) => {
+                const value = e.target.value;
+                setContactPhone(value);
+
+                const phoneError = generalValidation(
+                  residentialAnnouncementValidationSchema,
+                  { ...formData, contactPhone: value },
+                  "contactPhone"
+                );
+                setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : undefined }));
+              }}
+              error={!!formErrors.contactPhone}
+              helperText={formErrors.contactPhone}
+              fullWidth
+            />
             <AutocompleteCities
               onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
               label="Localizare (oraș/comună)"
@@ -331,6 +376,8 @@ const ResidentialAnnouncementForm = () => {
             <MediaUploader
               thumbnail={formData.thumbnail}
               setThumbnail={(file) => setFormData((prev) => ({ ...prev, thumbnail: file }))}
+              logo={formData.logo}
+              setLogo={(file) => setFormData((prev) => ({ ...prev, logo: file }))}
               images={formData.images}
               setImages={(files) => setFormData((prev) => ({ ...prev, images: files }))}
               videos={formData.videos}

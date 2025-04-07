@@ -61,6 +61,8 @@ const additionalAnnouncementFields = {
   }),
 };
 
+const phoneRegex = /^(\+4)?07\d{8}$/;
+
 const additionalResidentialFields = {
   stage: Joi.string().messages({
     "string.empty": "Stadiul trebuie selectat",
@@ -68,6 +70,12 @@ const additionalResidentialFields = {
   endDate: Joi.string().messages({
     "string.empty": "Data finalizarii este obligatorie",
   }),
+  contactPhone: Joi.string()
+    .pattern(phoneRegex)
+    .messages({
+      "string.empty": "Numărul de telefon este obligatoriu",
+      "string.pattern.base": "Numărul de telefon trebuie să fie valid (ex: 07XXXXXXXX sau +407XXXXXXXX)",
+    }),
 };
 
 export const announcementValidationSchema = Joi.object().keys({
