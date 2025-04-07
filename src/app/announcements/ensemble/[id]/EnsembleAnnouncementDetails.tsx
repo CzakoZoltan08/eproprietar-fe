@@ -9,9 +9,10 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { COLOR_RED_BUTTON, COLOR_TEXT } from "@/constants/colors";
 
-import Image from "next/image";
+import { AutoImageCarousel } from "@/common/autoImageCarousel/AutoImageCarousel";
+import { COLOR_TEXT } from "@/constants/colors";
+import { DeveloperContactCard } from "@/common/developerContactCard/DeveloperContactCard";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { observer } from "mobx-react";
 import { useEffect } from "react";
@@ -43,68 +44,102 @@ const EnsembleAnnouncementDetailsPage = () => {
   const announcement = currentAnnouncement;
 
   return (
-    <Box sx={{ padding: "32px" }}>
-      {/* Header */}
-      <Typography variant="h3" fontWeight={700} mb={2} color={COLOR_TEXT}>
-        {announcement.title}
-      </Typography>
+    <Box sx={{ px: 2, py: 4, maxWidth: "1300px", mx: "auto" }}>
 
-      {/* Main Image */}
-      <Box sx={{ width: "100%", height: 400, position: "relative", mb: 3 }}>
-        <Image
-          src={announcement.imageUrl || "/default.jpg"}
-          alt={announcement.title}
-          layout="fill"
-          objectFit="cover"
-          style={{ borderRadius: "16px" }}
-        />
-      </Box>
+  {/* Carousel */}
+<Box sx={{ mb: 0 }}>
+  <AutoImageCarousel
+    images={
+      announcement.images?.length
+        ? announcement.images.map((img) => ({ url: img.original }))
+        : [{ url: announcement.imageUrl || "/default.jpg" }]
+    }
+  />
+</Box>
 
-      {/* Info Grid */}
-      <Grid container spacing={4} mb={4}>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h5" fontWeight={600} mb={1}>Detalii proiect</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body1" mb={1}><strong>Oraș:</strong> {announcement.city}</Typography>
-            <Typography variant="body1" mb={1}><strong>Tip:</strong> {announcement.announcementType}</Typography>
-            <Typography variant="body1" mb={1}><strong>Camere:</strong> {announcement.rooms}</Typography>
-            <Typography variant="body1" mb={1}><strong>Suprafață:</strong> {announcement.surface} mp</Typography>
-            <Typography variant="body1" mb={1}><strong>Preț:</strong> {announcement.price} EUR</Typography>
-            {announcement.endDate && (
-              <Typography variant="body1" mb={1}><strong>Finalizare:</strong> {new Date(announcement.endDate).toLocaleDateString()}</Typography>
-            )}
-          </Paper>
-        </Grid>
+{/* Hero Title Section */}
+<Box
+  sx={{
+    textAlign: "center",
+    py: 4,
+    mb: 4,
+    background: "linear-gradient(to right, #f0f4ff, #ffffff)",
+    borderBottom: "1px solid #ddd",
+  }}
+>
+  <Typography
+    variant="h4"
+    fontWeight={700}
+    sx={{
+      color: COLOR_TEXT,
+      display: "inline-block",
+      borderBottom: "4px solid #448aff",
+      pb: 1,
+      px: 2,
+    }}
+  >
+    {announcement.title}
+  </Typography>
 
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h5" fontWeight={600} mb={2}>Descriere</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
-              {announcement.description || "Fără descriere disponibilă."}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+  <Typography
+    variant="subtitle1"
+    sx={{ mt: 1, color: "#555", fontWeight: 400 }}
+  >
+    {announcement.city}
+  </Typography>
+</Box>
 
-      {/* Contact Developer Section */}
-      <Box sx={{ textAlign: "center", mt: 6 }}>
-        <Typography variant="h5" fontWeight={600} mb={2} color={COLOR_TEXT}>
-          Contactați dezvoltatorul pentru mai multe detalii
+  {/* Grid: Left main + Right narrow developer card */}
+  <Grid container spacing={4} alignItems="flex-start">
+    {/* Left Column: 9/12 */}
+    <Grid item xs={12} md={9}>
+      {/* Project Details */}
+      <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+        <Typography variant="h5" fontWeight={600} mb={1}>Detalii proiect</Typography>
+        <Divider sx={{ mb: 2 }} />
+        <Typography variant="body1" mb={1}><strong>Oraș:</strong> {announcement.city}</Typography>
+        <Typography variant="body1" mb={1}><strong>Tip:</strong> {announcement.announcementType}</Typography>
+        <Typography variant="body1" mb={1}><strong>Camere:</strong> {announcement.rooms}</Typography>
+        <Typography variant="body1" mb={1}><strong>Suprafață:</strong> {announcement.surface} mp</Typography>
+        <Typography variant="body1" mb={1}><strong>Preț:</strong> {announcement.price} EUR</Typography>
+        {announcement.endDate && (
+          <Typography variant="body1" mb={1}><strong>Finalizare:</strong> {new Date(announcement.endDate).toLocaleDateString()}</Typography>
+        )}
+      </Paper>
+
+      {/* Description */}
+      <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+        <Typography variant="h5" fontWeight={600} mb={2}>Descriere</Typography>
+        <Divider sx={{ mb: 2 }} />
+        <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+          {announcement.description || "Fără descriere disponibilă."}
         </Typography>
-        <PrimaryButton
-          text="Trimite mesaj"
-          onClick={() => alert("Mesaj către dezvoltator")}
-        />
-      </Box>
+      </Paper>
+    </Grid>
 
-      {/* Tags / Chips */}
-      <Box sx={{ mt: 6, display: "flex", flexWrap: "wrap", gap: 1 }}>
-        {announcement.city && <Chip label={announcement.city} />}
-        {announcement.announcementType && <Chip label={announcement.announcementType} />}
-      </Box>
-    </Box>
+    {/* Right Column: 3/12 – aligned to far right */}
+    <Grid item xs={12} md={3}>
+      {announcement.logoUrl || announcement.phoneContact ? (
+        <Box sx={{ position: "sticky", top: 32 }}>
+          <DeveloperContactCard
+            name={announcement.developerName || "Dezvoltator"}
+            phone={announcement.phoneContact || "N/A"}
+            logoUrl={announcement.logoUrl || "/default-logo.png"}
+          />
+        </Box>
+      ) : null}
+    </Grid>
+  </Grid>
+
+
+  {/* Tags / Chips */}
+  <Box sx={{ mt: 6, display: "flex", flexWrap: "wrap", gap: 1 }}>
+    {announcement.city && <Chip label={announcement.city} />}
+    {announcement.announcementType && <Chip label={announcement.announcementType} />}
+  </Box>
+</Box>
+
+
   );
 };
 
