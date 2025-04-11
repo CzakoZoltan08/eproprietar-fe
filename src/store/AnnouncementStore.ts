@@ -158,6 +158,25 @@ export class AnnouncementStore {
     originalAmount?: number;
     discountCode?: string;
     promotionDiscountCode?: string;
+    invoiceDetails: {
+      name: string;
+      cif?: string;
+      regCom?: string;
+      address: string;
+      city: string;
+      country: string;
+      email: string;
+      isTaxPayer: boolean;
+    };
+    products: {
+      name: string;
+      quantity: number;
+      unitOfMeasure: string;
+      unitPrice: number;
+      currency: string;
+      isTaxIncluded: boolean;
+      vatPercent: number;
+    }[];
   }) {
     try {
       const response = await this.announcementApi.createPaymentSession(paymentData);

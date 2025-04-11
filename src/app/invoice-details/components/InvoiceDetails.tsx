@@ -57,59 +57,45 @@ const InvoiceDetailsPage = () => {
 
     if (!packageId || !announcementId) return;
 
-    const invoicePayload = {
-      seriesName: "FACTURA",
-      number: null,
-      issueDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0],
-      client: {
-        name: form.name,
-        cif: tab === 1 ? form.cif : null,
-        regCom: tab === 1 ? form.regCom : null,
-        address: form.address,
-        city: form.city,
-        country: form.country,
-        isTaxPayer: form.isTaxPayer,
-        email: form.email,
-      },
-      products: [
-        {
-          name: "Pachet promovare anunt", // You can make this dynamic
-          unitPrice: 120,
-          currency: "RON",
-          quantity: 1,
-          unitOfMeasure: "buc",
-          isTaxIncluded: true,
-          vatPercent: 0,
-        },
-      ],
-      currency: "RON",
-      language: "ro",
-      isDraft: false,
-      email: true,
+    const invoiceDetails = {
+      name: form.name,
+      cif: tab === 1 ? form.cif : undefined,
+      regCom: tab === 1 ? form.regCom : undefined,
+      address: form.address,
+      city: form.city,
+      country: form.country,
+      email: form.email,
+      isTaxPayer: false,
     };
+  
+    const products = [
+      {
+        name: "Pachet afisare anunt",
+        quantity: 1,
+        unitOfMeasure: "buc",
+        unitPrice: amount,
+        currency: currency,
+        isTaxIncluded: true,
+        vatPercent: 0, // Adjust if needed
+      },
+    ];
 
     try {
         setLoading(true);
     
-        // 1. Save invoice
-        // await fetch("/api/create-invoice", {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify(invoicePayload),
-        // });
-    
         // 2. Create Stripe session (moved from SelectPackagePage)
         const res = await createPaymentSession({
-            orderId: announcementId,
-            packageId,
-            promotionId: promotionId || undefined,
-            amount,
-            currency: currency,
-            originalAmount,
-            discountCode: discountCode || undefined,
-            promotionDiscountCode: promotionDiscountCode || undefined,
-          });
+          orderId: announcementId,
+          packageId,
+          promotionId: promotionId || undefined,
+          amount,
+          currency,
+          originalAmount,
+          discountCode: discountCode || undefined,
+          promotionDiscountCode: promotionDiscountCode || undefined,
+          invoiceDetails,
+          products,
+        });
     
         if (res?.checkoutUrl) {
           window.location.href = res.checkoutUrl;

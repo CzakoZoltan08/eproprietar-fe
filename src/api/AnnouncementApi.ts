@@ -131,12 +131,33 @@ export class AnnouncementApi {
     originalAmount?: number;
     discountCode?: string;
     promotionDiscountCode?: string;
+    invoiceDetails: {
+      name: string;
+      cif?: string;
+      regCom?: string;
+      address: string;
+      city: string;
+      country: string;
+      email: string;
+      isTaxPayer: boolean;
+    };
+    products: {
+      name: string;
+      quantity: number;
+      unitOfMeasure: string;
+      unitPrice: number;
+      currency: string;
+      isTaxIncluded: boolean;
+      vatPercent: number;
+    }[];
   }): Promise<{ checkoutUrl: string } | null> {
     const payload: any = {
       orderId: paymentData.orderId,
       amount: Number(paymentData.amount),
       currency: paymentData.currency,
       packageId: paymentData.packageId,
+      invoiceDetails: paymentData.invoiceDetails,
+      products: paymentData.products,
     };
 
     if (paymentData.discountCode) {
