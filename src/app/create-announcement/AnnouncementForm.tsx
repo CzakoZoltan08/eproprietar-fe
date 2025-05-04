@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CircularProgress, LinearProgress, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, CircularProgress, LinearProgress, Modal, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -22,8 +22,72 @@ import RadioButtonsGroup from "@/common/radio/RadioGroup";
 import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
 import { observer } from "mobx-react";
+import sketch1 from "../../assets/sketches/1 camera varianta 2.svg";
+import sketch10 from "../../assets/sketches/garsoniera.svg";
+import sketch11 from "../../assets/sketches/2.1camere.svg";
+import sketch12 from "../../assets/sketches/2.2 cam.svg";
+import sketch13 from "../../assets/sketches/2.4 cam.svg";
+import sketch14 from "../../assets/sketches/2.5 cam.svg";
+import sketch15 from "../../assets/sketches/2.6cam.svg";
+import sketch16 from "../../assets/sketches/2.7 cam.svg";
+import sketch17 from "../../assets/sketches/2.8cam.svg";
+import sketch18 from "../../assets/sketches/2.9cam.svg";
+import sketch19 from "../../assets/sketches/2camere.svg";
+import sketch2 from "../../assets/sketches/1 camera varianta 3.svg";
+import sketch20 from "../../assets/sketches/garsoniera 1.svg";
+import sketch21 from "../../assets/sketches/3.1cam.svg";
+import sketch22 from "../../assets/sketches/3.2cam.svg";
+import sketch23 from "../../assets/sketches/3.3cam.svg";
+import sketch24 from "../../assets/sketches/3.4CAM.svg";
+import sketch25 from "../../assets/sketches/3.5CAM.svg";
+import sketch26 from "../../assets/sketches/3.6CAM.svg";
+import sketch27 from "../../assets/sketches/3.7CAM.svg";
+import sketch28 from "../../assets/sketches/3.8CAM.svg";
+import sketch29 from "../../assets/sketches/4.1CAM.svg";
+import sketch3 from "../../assets/sketches/1 camera.svg";
+import sketch30 from "../../assets/sketches/4.2CAM.svg";
+import sketch31 from "../../assets/sketches/4cam.svg";
+import sketch4 from "../../assets/sketches/1.1cam.svg";
+import sketch5 from "../../assets/sketches/1.2cam.svg";
+import sketch6 from "../../assets/sketches/1.3cam.svg";
+import sketch7 from "../../assets/sketches/1.4cam.svg";
+import sketch8 from "../../assets/sketches/1cam.svg";
+import sketch9 from "../../assets/sketches/garsoniera 1.svg";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
+
+const PREDEFINED_SKETCHES = [
+  sketch1,
+  sketch2,
+  sketch3,
+  sketch4,
+  sketch5,
+  sketch6,
+  sketch7,
+  sketch8,
+  sketch9,
+  sketch10,
+  sketch11,
+  sketch12,
+  sketch13,
+  sketch14,
+  sketch15,
+  sketch16,
+  sketch17,
+  sketch18,
+  sketch19, 
+  sketch20,
+  sketch21,
+  sketch22,
+  sketch23,
+  sketch24,
+  sketch25,
+  sketch26,
+  sketch27,
+  sketch28,
+  sketch29,
+  sketch30,
+  sketch31];
 
 const Container = styled.div`
   display: flex;
@@ -92,6 +156,8 @@ const PreviewContainer = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
 `;
 
 const PreviewImage = styled.img`
@@ -107,6 +173,33 @@ const PreviewImage = styled.img`
   }
 `;
 
+const PreviewFile = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  max-width: 140px;
+  text-align: center;
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+const ModalContent = styled(Box)`
+  background: white;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  margin: 10vh auto;
+  border-radius: 8px;
+  outline: none;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
 const PreviewVideo = styled.video`
   width: 100%;
   max-width: 180px;
@@ -118,7 +211,7 @@ const PreviewVideo = styled.video`
   &:hover {
     opacity: 0.7;
   }
-`
+`;
 
 const ThumbnailContainer = styled.div`
   display: flex;
@@ -163,6 +256,12 @@ const AnnouncementFormContent = () => {
     announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
   } = useStore();
 
+  const sketchFileInputRef = useRef<HTMLInputElement>(null);
+  const [sketchPreview, setSketchPreview] = useState<string | null>(null);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+
   const [formData, setFormData] = useState({
     announcementType: "",
     providerType: "owner",
@@ -184,6 +283,7 @@ const AnnouncementFormContent = () => {
     thumbnail: null as File | null, // Thumbnail file
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
+    sketch: null as File | string | null,
   });
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
@@ -247,6 +347,7 @@ const AnnouncementFormContent = () => {
         thumbnail: null,
         images: [],
         videos: [],
+        sketch: null,
       });
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
@@ -473,6 +574,22 @@ const AnnouncementFormContent = () => {
     });
   };
 
+  const handleSketchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      setSketchPreview(preview);
+      setFormData((prev) => ({ ...prev, sketch: file }));
+      setOpenModal(false);
+    }
+  };
+
+  const handlePredefinedSketchClick = (src: string) => {
+    setSketchPreview(src);
+    setFormData((prev) => ({ ...prev, sketch: src }));
+    setOpenModal(false);
+  };
+
   const uploadMedia = async (announcementId: string) => {
     const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
     const totalVideos = formData.videos.length;
@@ -555,6 +672,7 @@ const AnnouncementFormContent = () => {
         floor: Number(data.floor),
         surface: Number(data.surface),
         status: "pending",
+        phoneContact: contactPhone, // Add phoneContact property
         user: {
           id: user?.id || "",
           firebaseId: user?.firebaseId || ""
@@ -833,6 +951,57 @@ const AnnouncementFormContent = () => {
                 style={{ display: "none" }}
                 ref={thumbnailFileInputRef}
               />
+            </ThumbnailContainer>
+
+            <ThumbnailContainer>
+              <Typography variant="h6">Apartment Sketch / Floor Plan</Typography>
+
+              <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
+                {sketchPreview ? (
+                  <ThumbnailPreviewImage src={sketchPreview} alt="Sketch Preview" />
+                ) : (
+                  <Typography sx={{ color: "#aaa", textAlign: "center" }}>
+                    Click to upload or select
+                  </Typography>
+                )}
+              </ThumbnailPreviewWrapper>
+
+              <Modal open={openModal} onClose={() => setOpenModal(false)}>
+                <ModalContent>
+                  <Tabs value={tabIndex} onChange={(_, newIndex) => setTabIndex(newIndex)}>
+                    <Tab label="Upload" />
+                    <Tab label="Choose Sample" />
+                  </Tabs>
+
+                  {tabIndex === 0 && (
+                    <Box mt={2}>
+                      <input
+                        type="file"
+                        accept=".png,.jpg,.jpeg"
+                        onChange={handleSketchChange}
+                        ref={sketchFileInputRef}
+                      />
+                    </Box>
+                  )}
+
+                  {tabIndex === 1 && (
+                    <PreviewContainer>
+                      {PREDEFINED_SKETCHES.map((src, index) => (
+                        <PreviewFile key={index} onClick={() => handlePredefinedSketchClick(src.src)}>
+                          <Typography variant="body2">Sketch {index + 1}</Typography>
+                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Sketch ${index + 1}`} />
+                        </PreviewFile>
+                      ))}
+                    </PreviewContainer>
+                  )}
+                </ModalContent>
+              </Modal>
+
+              {formData.sketch instanceof File && (
+                <Typography variant="caption" sx={{ mt: 1 }}>
+                  {(formData.sketch as File).name}
+                </Typography>
+              )}
             </ThumbnailContainer>
 
             <Typography variant="h6">Add Images</Typography>

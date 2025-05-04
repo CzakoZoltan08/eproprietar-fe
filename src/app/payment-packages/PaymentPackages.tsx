@@ -91,6 +91,9 @@ const mockFeaturesMap: Record<string, string[]> = {
     "Priority placement",
     "Featured badge",
   ],
+  "3_months": ["Visible for 3 months", "Up to 10 images", "Boosted placement"],
+  "6_months": ["Visible for 6 months", "Up to 15 images", "Priority placement"],
+  "12_months": ["Visible for 12 months", "Unlimited images", "Top placement", "Premium badge"],
 };
 
 const PriceWithDiscount = ({ item }: { item: any }) => (
@@ -181,10 +184,18 @@ const SelectPackagePage = () => {
         ]);
 
         const withMockFeatures = (items: any[]) =>
-          items.map((item) => ({
-            ...item,
-            features: item.features?.length  ? item.features : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [],
-          }));
+          items.map((item) => {
+            const features = item.features?.length
+              ? item.features
+              : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
+        
+            console.log("Mapped item:", item.packageType, "→", features);
+        
+            return {
+              ...item,
+              features,
+            };
+          });        
 
         setPackages(withMockFeatures(fetchedPackages ?? []));
         setPromotions(withMockFeatures(fetchedPromotions ?? []));
@@ -261,7 +272,7 @@ const SelectPackagePage = () => {
               />
             )}
 
-            {pkg.packageType?.toLowerCase() === "unlimited" && (
+            {["unlimited", "12_months", "promote_30_days"].includes(pkg.packageType?.toLowerCase?.()) && (
               <Badge
                 label="Popular"
                 $topOffset={pkg.discountCode ? 50 : 10}
