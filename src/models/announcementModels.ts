@@ -57,6 +57,7 @@ export class CreateAnnouncementDto {
   status: string = 'pending';
   logoUrl?: string;
   phoneContact: string | undefined;
+  sketchUrl?: string;
 }
 
 export interface FetchAnnouncementsModel {

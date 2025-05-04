@@ -630,6 +630,33 @@ const AnnouncementFormContent = () => {
       })();
       imageUploads.push(thumbUpload);
     }
+
+    if (formData.sketch) {
+      const sketchUpload = (async () => {
+        const formDataToSend = new FormData();
+        
+        if (formData.sketch instanceof File) {
+          formDataToSend.append("file", formData.sketch);
+        } else if (typeof formData.sketch === "string") {
+          const response = await fetch(formData.sketch);
+          const blob = await response.blob();
+          const fileName = `sketch-${Date.now()}.jpg`;
+          const file = new File([blob], fileName, { type: blob.type });
+          formDataToSend.append("file", file);
+        }
+    
+        formDataToSend.append("type", "image");
+    
+        const uploadResponse = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        if (uploadResponse?.optimized_url) {
+          await updateAnnouncement(announcementId, { sketchUrl: uploadResponse.optimized_url });
+        }
+    
+        incrementImage();
+      })();
+    
+      imageUploads.push(sketchUpload);
+    }
   
     const videoUploads = formData.videos.map((video) =>
       (async () => {
@@ -655,12 +682,22 @@ const AnnouncementFormContent = () => {
       setError("Contact phone number is required.");
       return;
     }
+
+    if (!formData.sketch) {
+      setError("You must select or upload a sketch image.");
+      return;
+    }
+  
+    if (!formData.thumbnail) {
+      setError("You must upload a thumbnail image.");
+      return;
+    }
   
     setLoading(true);
     setError("");
   
     try {
-      const { thumbnail, ...data } = formData;
+      const { thumbnail, sketch, ...data } = formData;
   
       const announcementDraft = {
         ...data,
@@ -690,18 +727,6 @@ const AnnouncementFormContent = () => {
       // 4. Upload media in the background
       await uploadMedia(newAnnouncement.id);
 
-      // 5. Update thumbnail if needed
-      if (formData.thumbnail) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", formData.thumbnail);
-        formDataToSend.append("type", "image");
-
-        const response = await createImageOrVideo(formDataToSend, user?.id || "", newAnnouncement.id);
-        if (response?.optimized_url) {
-          await updateAnnouncement(newAnnouncement.id, { imageUrl: response.optimized_url });
-        }
-      }
-  
       // Immediately redirect
       window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
     } catch (error) {
