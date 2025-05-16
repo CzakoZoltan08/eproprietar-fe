@@ -6,9 +6,13 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Grid,
   List,
   ListItem,
   ListItemText,
+  Tab,
+  Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
@@ -63,34 +67,11 @@ const Badge = styled(Chip)<{ $topOffset?: number }>`
   right: 10px;
 `;
 
-const BadgeOffset = styled(Chip)<{ $offsetTop?: number }>`
-  position: absolute;
-  top: ${({ $offsetTop }) => $offsetTop ?? 10}px;
-  right: 10px;
-`;
-
 const mockFeaturesMap: Record<string, string[]> = {
-  ["free"]: [
-    "Basic listing",
-    "Visible for 3 days",
-    "No image uploads",
-  ],
-  ["7_days"]: [
-    "Up to 3 images",
-    "Visible for 7 days",
-    "Standard listing placement",
-  ],
-  ["15_days"]: [
-    "Up to 5 images",
-    "Visible for 15 days",
-    "Highlighted in listings",
-  ],
-  ["unlimited"]: [
-    "Unlimited visibility",
-    "Unlimited image uploads",
-    "Priority placement",
-    "Featured badge",
-  ],
+  ["free"]: ["Basic listing", "Visible for 3 days", "No image uploads"],
+  ["7_days"]: ["Up to 3 images", "Visible for 7 days", "Standard listing placement"],
+  ["15_days"]: ["Up to 5 images", "Visible for 15 days", "Highlighted in listings"],
+  ["unlimited"]: ["Unlimited visibility", "Unlimited image uploads", "Priority placement", "Featured badge"],
   "3_months": ["Visible for 3 months", "Up to 10 images", "Boosted placement"],
   "6_months": ["Visible for 6 months", "Up to 15 images", "Priority placement"],
   "12_months": ["Visible for 12 months", "Unlimited images", "Top placement", "Premium badge"],
@@ -105,14 +86,7 @@ const PriceWithDiscount = ({ item }: { item: any }) => (
       {item.discountedPrice} {item.currency}
     </Typography>
     {item.originalPrice !== item.discountedPrice && (
-      <Typography
-        fontSize="0.9rem"
-        sx={{
-          textDecoration: "line-through",
-          color: COLOR_RED_BUTTON,
-          fontWeight: 600,
-        }}
-      >
+      <Typography fontSize="0.9rem" sx={{ textDecoration: "line-through", color: COLOR_RED_BUTTON, fontWeight: 600 }}>
         {item.originalPrice} {item.currency}
       </Typography>
     )}
@@ -122,13 +96,7 @@ const PriceWithDiscount = ({ item }: { item: any }) => (
       </Typography>
     )}
     {item.discountValidTo && (
-      <Typography
-        variant="caption"
-        sx={{
-          color: COLOR_RED_BUTTON,
-          fontWeight: 600,
-        }}
-      >
+      <Typography variant="caption" sx={{ color: COLOR_RED_BUTTON, fontWeight: 600 }}>
         Discount valid until: {new Date(item.discountValidTo).toLocaleDateString()}
       </Typography>
     )}
@@ -158,6 +126,17 @@ const SelectPackagePage = () => {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
+  const [tab, setTab] = useState(0);
+  const [form, setForm] = useState({
+    name: "",
+    cif: "",
+    regCom: "",
+    address: "",
+    city: "",
+    country: "Romania",
+    email: "",
+    isTaxPayer: false,
+  });
   const [loading, setLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [originalTotalPrice, setOriginalTotalPrice] = useState<number>(0);
@@ -167,6 +146,7 @@ const SelectPackagePage = () => {
   const {
     userStore: { user, getCurrentUser },
     pricingStore: { getAnnouncementPackages, getPromotionPackages },
+    announcementStore: { createPaymentSession },
   } = useStore();
 
   useEffect(() => {
@@ -177,7 +157,7 @@ const SelectPackagePage = () => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
       try {
-        const audience = searchParams.get("providerType") || "normal"; // default
+        const audience = searchParams.get("providerType") || "normal";
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
           getAnnouncementPackages(user.id, audience),
           getPromotionPackages(user.id),
@@ -185,17 +165,9 @@ const SelectPackagePage = () => {
 
         const withMockFeatures = (items: any[]) =>
           items.map((item) => {
-            const features = item.features?.length
-              ? item.features
-              : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
-        
-            console.log("Mapped item:", item.packageType, "→", features);
-        
-            return {
-              ...item,
-              features,
-            };
-          });        
+            const features = item.features?.length ? item.features : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
+            return { ...item, features };
+          });
 
         setPackages(withMockFeatures(fetchedPackages ?? []));
         setPromotions(withMockFeatures(fetchedPromotions ?? []));
@@ -215,21 +187,62 @@ const SelectPackagePage = () => {
     setOriginalTotalPrice(originalPkg + originalPromo);
   }, [selectedPackage, selectedPromotion]);
 
-  const handleContinue = () => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
     if (!selectedPackage || !announcementId) return;
 
-    const params = new URLSearchParams({
-      packageId: selectedPackage.id,
-      promotionId: selectedPromotion?.id ?? "",
-      announcementId: announcementId,
-      discountCode: selectedPackage.discountCode ?? "",
-      promotionDiscountCode: selectedPromotion?.discountCode ?? "",
-      amount: totalPrice.toString(),
-      originalAmount: originalTotalPrice.toString(),
-      currency: selectedPackage.currency?.toString().toUpperCase() ?? "RON",
-    });
+    const invoiceDetails = {
+      name: form.name,
+      cif: tab === 1 ? form.cif : undefined,
+      regCom: tab === 1 ? form.regCom : undefined,
+      address: form.address,
+      city: form.city,
+      country: form.country,
+      email: form.email,
+      isTaxPayer: false,
+    };
 
-    router.push(`/invoice-details?${params.toString()}`);
+    const products = [
+      {
+        name: "Pachet afisare anunt",
+        quantity: 1,
+        unitOfMeasure: "buc",
+        unitPrice: totalPrice,
+        currency: selectedPackage.currency?.toUpperCase() ?? "RON",
+        isTaxIncluded: true,
+        vatPercent: 0,
+      },
+    ];
+
+    try {
+      setLoading(true);
+      const res = await createPaymentSession({
+        orderId: announcementId,
+        packageId: selectedPackage.id,
+        promotionId: selectedPromotion?.id ?? undefined,
+        amount: totalPrice,
+        originalAmount: originalTotalPrice,
+        currency: selectedPackage.currency?.toUpperCase() ?? "RON",
+        discountCode: selectedPackage.discountCode ?? undefined,
+        promotionDiscountCode: selectedPromotion?.discountCode ?? undefined,
+        invoiceDetails,
+        products,
+      });
+
+      if (res?.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+      } else {
+        console.error("Missing checkoutUrl");
+      }
+    } catch (err) {
+      console.error("Submission failed", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!announcementId) {
@@ -243,14 +256,6 @@ const SelectPackagePage = () => {
     );
   }
 
-  if (!user?.id) {
-    return (
-      <Box px={3} py={4}>
-        <Typography>Loading user data...</Typography>
-      </Box>
-    );
-  }
-
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
       <Typography variant="h5" fontWeight={700} mb={2} color="primary">
@@ -259,31 +264,7 @@ const SelectPackagePage = () => {
 
       <PackageGrid>
         {packages.map((pkg) => (
-          <StyledCard
-            key={pkg.id}
-            selected={selectedPackage?.id === pkg.id}
-            onClick={() => setSelectedPackage(pkg)}
-          >
-            {pkg.discountCode && (
-              <Badge
-                label={`-${Math.round(((pkg.originalPrice - pkg.discountedPrice) / pkg.originalPrice) * 100)}%`}
-                color="success"
-                $topOffset={pkg.discountCode ? 50 : 10}
-              />
-            )}
-
-            {["unlimited", "12_months", "promote_30_days"].includes(pkg.packageType?.toLowerCase?.()) && (
-              <Badge
-                label="Popular"
-                $topOffset={pkg.discountCode ? 50 : 10}
-                sx={{
-                  backgroundColor: COLOR_RED_BUTTON,
-                  color: COLOR_WHITE,
-                  fontWeight: 600,
-                }}
-              />
-            )}
-
+          <StyledCard key={pkg.id} selected={selectedPackage?.id === pkg.id} onClick={() => setSelectedPackage(pkg)}>
             <CardContent>
               <PriceWithDiscount item={pkg} />
             </CardContent>
@@ -298,71 +279,69 @@ const SelectPackagePage = () => {
           </Typography>
           <PackageGrid>
             {promotions.map((promo) => (
-              <StyledCard
-                key={promo.id}
-                selected={selectedPromotion?.id === promo.id}
-                onClick={() => setSelectedPromotion(promo)}
-              >
-                {promo.discountCode && (
-                  <Badge
-                    label={`-${Math.round(((promo.originalPrice - promo.discountedPrice) / promo.originalPrice) * 100)}%`}
-                    color="success"
-                  />
-                )}
+              <StyledCard key={promo.id} selected={selectedPromotion?.id === promo.id} onClick={() => setSelectedPromotion(promo)}>
                 <CardContent>
                   <PriceWithDiscount item={promo} />
                 </CardContent>
               </StyledCard>
             ))}
           </PackageGrid>
-
-          {selectedPromotion && (
-            <Box mt={2} textAlign="center">
-              <CommonButton
-                text="Remove Promotion"
-                onClick={() => setSelectedPromotion(null)}
-                sx={{
-                  color: COLOR_RED_BUTTON,
-                  backgroundColor: COLOR_WHITE,
-                  border: `1px solid ${COLOR_RED_BUTTON}`,
-                  ":hover": {
-                    backgroundColor: COLOR_RED_BUTTON_HOVER,
-                    color: COLOR_WHITE,
-                  },
-                }}
-              />
-            </Box>
-          )}
         </>
       )}
 
-      <Box textAlign="center" mt={6}>
-        <Typography
-          variant="h6"
-          fontWeight={700}
-          mb={1}
-          sx={{ color: COLOR_PRIMARY, fontSize: "1.4rem" }}
-        >
-          Total: {totalPrice} {selectedPackage?.currency}
-          {originalTotalPrice > totalPrice && (
-            <Typography
-              component="span"
-              ml={1}
-              sx={{ textDecoration: "line-through", color: COLOR_RED_BUTTON, fontWeight: 600 }}
-            >
-              {originalTotalPrice} {selectedPackage?.currency}
+      {selectedPackage && (
+        <>
+          <Box mt={6}>
+            <Typography variant="h5" fontWeight={700} mb={2} color="primary">
+              Fill in your invoicing details
             </Typography>
-          )}
-        </Typography>
+            <Tabs value={tab} onChange={(_, newVal) => setTab(newVal)} indicatorColor="primary" textColor="primary" sx={{ mb: 3 }}>
+              <Tab label="Individual" />
+              <Tab label="Company" />
+            </Tabs>
 
-        <PrimaryButton
-          text="Continue"
-          onClick={handleContinue}
-          size="large"
-          fullWidth
-        />
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Full Name" name="name" onChange={handleChange} value={form.name} />
+              </Grid>
+              {tab === 1 && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="CIF" name="cif" onChange={handleChange} value={form.cif} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="RegCom" name="regCom" onChange={handleChange} value={form.regCom} />
+                  </Grid>
+                </>
+              )}
+              <Grid item xs={12}>
+                <TextField fullWidth label="Address" name="address" onChange={handleChange} value={form.address} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="City" name="city" onChange={handleChange} value={form.city} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Country" name="country" onChange={handleChange} value={form.country} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Email" name="email" onChange={handleChange} value={form.email} />
+              </Grid>
+            </Grid>
 
-      </Box>
+            <Box textAlign="center" mt={4}>
+              <CommonButton
+                text={loading ? "Processing..." : "Continue to Payment"}
+                onClick={handleSubmit}
+                sx={{
+                  backgroundColor: COLOR_PRIMARY,
+                  color: "white",
+                  ":hover": { backgroundColor: COLOR_RED_BUTTON },
+                }}
+              />
+            </Box>
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
