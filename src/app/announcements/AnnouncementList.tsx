@@ -7,7 +7,6 @@ import {
 
 import AnnouncementListItem from "@/app/announcements/AnnouncementListItem";
 import { COLOR_TEXT } from "@/constants/colors";
-import EnsembleAnnouncementListItem from "./ensemble/EnsembleAnnouncementListItem";
 import EnsembleAnnouncementTileItem from "./ensemble/EnsembleAnnouncementTileItem";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
@@ -17,39 +16,44 @@ const AnnouncementList = ({
   paginated = true,
   defaultFilters = {},
   title = "",
+  source = "paginated", // NEW
 }: {
   paginated: boolean;
   defaultFilters?: Record<string, string | number>;
   title?: string;
+  source?: "paginated" | "saved" | "mine";
 }) => {
   const {
-    announcementStore: { fetchPaginatedAnnouncements, announcements, meta },
+    announcementStore: {
+      fetchPaginatedAnnouncements,
+      fetchSavedAnnouncements,
+      announcements,
+      meta,
+    },
+    userStore: { user },
   } = useStore();
   const searchParams = useSearchParams();
 
-  const [page, setPage] = useState<number | null>(null); // Initialize as null
+  const [page, setPage] = useState<number | null>(null);
   const [filters, setFilters] = useState<Record<string, string | number>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
   const initializeFilters = () => {
     const type = searchParams.get("type") || sessionStorage.getItem("type") || "";
-    const providerType = searchParams.get("providerType") || ""; // Ensure providerType is captured from URL
-    const parseNumber = (value: string | null) => (value ? parseInt(value, 10) : 0);
+    const providerType = searchParams.get("providerType") || "";
 
-    // Initialize filters conditionally based on query parameters
     const initialFilters: Record<string, string | number> = {
-      status: "active", // Default status is active
-      providerType, // Always include providerType from the URL
-      ...defaultFilters, // Ensure any passed defaultFilters are applied
+      status: "active",
+      providerType,
+      ...defaultFilters,
     };
 
-    // Add query parameters only if they exist in the URL
     if (searchParams.get("transactionType")) {
       initialFilters.transactionType = searchParams.get("transactionType") || "";
     }
 
     if (searchParams.get("price")) {
-      initialFilters.price = `$lte:${searchParams.get("price")}`; // Apply price filter if present
+      initialFilters.price = `$lte:${searchParams.get("price")}`;
     }
 
     if (searchParams.get("minSurface") || searchParams.get("maxSurface")) {
@@ -68,75 +72,46 @@ const AnnouncementList = ({
       initialFilters.announcementType = `$in:${searchParams.get("announcementType")}`;
     }
 
-    if (type) {
-      initialFilters.type = type;
-    }
-
-    if (providerType) {
-      initialFilters.providerType = providerType;
-    }
+    if (type) initialFilters.type = type;
+    if (providerType) initialFilters.providerType = providerType;
 
     setPage(Number(sessionStorage.getItem("page")) || Number(searchParams.get("page")) || 1);
 
-    // Remove sessionStorage values to avoid using old filters
     Object.keys(defaultFilters).forEach((key) => {
       sessionStorage.removeItem(key);
     });
 
-    // Set the filters with the correct merged state
     setFilters({
-      ...initialFilters, // Only include filters set above
-      ...defaultFilters, // Ensure default filters are still applied
+      ...initialFilters,
+      ...defaultFilters,
     });
+
     setIsInitialized(true);
   };
 
-  // Run `initializeFilters` when URL search parameters change
   useEffect(() => {
     initializeFilters();
-  }, [searchParams.toString()]); // Depend on searchParams to detect changes
-
-  // Fetch announcements when filters or page changes
-  useEffect(() => {
-    if (isInitialized) {
-      fetchPaginatedAnnouncements({
-        page: page || 1,
-        limit: 8,
-        filter: filters,
-      });
-    }
-  }, [filters, page, isInitialized]);
-
-  const fetchData = async (newPage?: number) => {
-    if (!isInitialized) return;
-
-    const updatedPage = newPage || page;
-    if (updatedPage !== null) {
-      sessionStorage.setItem("page", updatedPage.toString());
-    }
-
-    Object.entries(filters).forEach(([key, value]) => {
-      sessionStorage.setItem(key, value.toString());
-    });
-
-    console.log("FETCHING WITH FILTERS:", filters);
-
-    await fetchPaginatedAnnouncements({
-      page: updatedPage || 1,
-      limit: 8,
-      filter: filters, // Filters include parsed numbers for minSurface and maxSurface
-    });
-  };
+  }, [searchParams.toString()]);
 
   useEffect(() => {
-    initializeFilters();
-  }, []); // Initialize filters once
+    if (!isInitialized || (source === "saved" && !user?.id)) return;
 
-  useEffect(() => {
-    if (isInitialized) {
-      fetchData();
-    }
-  }, [filters, page, isInitialized]);
+    const fetch = async () => {
+      if (source === "saved") {
+        if (user?.id) {
+          await fetchSavedAnnouncements(user.id);
+        }
+      } else {
+        await fetchPaginatedAnnouncements({
+          page: page || 1,
+          limit: 8,
+          filter: filters,
+        });
+      }
+    };
+
+    fetch();
+  }, [filters, page, isInitialized, source, user?.id]);
 
   const handleChangePage = async (
     event: React.ChangeEvent<unknown>,
@@ -147,12 +122,12 @@ const AnnouncementList = ({
 
   useEffect(() => {
     if (filters) {
-      setPage(1); // Reset page to 1 when filters change
+      setPage(1);
     }
-  }, [filters]); // Reset page on filter changes
+  }, [filters]);
 
   if (!isInitialized) {
-    return null; // Render nothing until initialization is complete
+    return null;
   }
 
   return (
@@ -170,7 +145,7 @@ const AnnouncementList = ({
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
             gap: "24px",
-            marginBottom: "64px", // ✅ Add this line to push pagination down
+            marginBottom: "64px",
           }}
         >
           {announcements.map((item, index) => (
@@ -184,10 +159,10 @@ const AnnouncementList = ({
           ))}
         </>
       )}
-      {paginated && (
+      {paginated && announcements.length > 0 && meta?.totalPages > 1 && (
         <Box component="span" sx={{ mt: 4 }}>
           <StyledPagination
-            count={meta?.totalPages}
+            count={meta.totalPages}
             page={page || 1}
             onChange={handleChangePage}
             defaultPage={1}
