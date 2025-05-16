@@ -7,6 +7,7 @@ export interface PropertyAnnouncementModel {
   transactionType: string;
   title: string;
   city: string;
+  county: string;
   street?: string;
   price: number;
   rooms: number;

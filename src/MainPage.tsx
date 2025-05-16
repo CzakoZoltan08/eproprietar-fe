@@ -12,6 +12,7 @@ import { roomOptions, transactionTypeOptions, typeOptions } from "./constants/an
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "./common/autocomplete/AutocompleteCities";
+import AutocompleteCounties from "./common/autocomplete/AutocompleteCounties";
 import { DEFAULT_FILTERS } from "./constants/filters";
 import { DROPDOWN_RANGES } from "./constants/dropdown";
 import { Endpoints } from "./constants/endpoints";
@@ -148,11 +149,20 @@ export const Main = () => {
         width: isDesktop ? "100%" : "90%",
       }}
     >
-      <AutocompleteCities
-        onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
-        label={MESSAGES.SEARCH_CITY_LABEL}
-        customWidth={citiesAutcompleteWidth}
-      />
+      {filters.TYPE === "Cabane/Case la tara" ? (
+        <AutocompleteCounties
+          onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+          label={MESSAGES.SEARCH_COUNTY_LABEL}
+          customWidth={citiesAutcompleteWidth}
+        />
+      ) : (
+        <AutocompleteCities
+          onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+          label={MESSAGES.SEARCH_CITY_LABEL}
+          customWidth={citiesAutcompleteWidth}
+        />
+      )}
+
       <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
         <SelectDropdown
           name="type"

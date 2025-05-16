@@ -1,5 +1,6 @@
 export const MESSAGES = {
     SEARCH_CITY_LABEL: "Caută după localitate",
+    SEARCH_COUNTY_LABEL: "Caută după județ",
     SEARCH_TYPE_LABEL: "Tipul căutarii",
     SEARCH_ROOMS_LABEL: "Nr. camere",
     SEARCH_MIN_SURFACE_LABEL: "Suprafața min",

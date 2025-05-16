@@ -15,6 +15,7 @@ import {
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
+import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
@@ -271,6 +272,7 @@ const AnnouncementFormContent = () => {
     price: "",
     surface: "",
     city: "",
+    county: "",
     street: "",
     rooms: "",
     baths: "",
@@ -335,6 +337,7 @@ const AnnouncementFormContent = () => {
         price: currentAnnouncement.price?.toString() || "",
         surface: currentAnnouncement.surface?.toString() || "",
         city: currentAnnouncement.city || "",
+        county: currentAnnouncement.county || "",
         street: currentAnnouncement.street || "",
         rooms: currentAnnouncement.rooms?.toString() || "",
         baths: currentAnnouncement.baths?.toString() || "",
@@ -673,7 +676,7 @@ const AnnouncementFormContent = () => {
   };  
 
   const onSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.price || !formData.city) {
+    if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
       setError("Please fill in all required fields.");
       return;
     }
@@ -816,6 +819,14 @@ const AnnouncementFormContent = () => {
               customWidth="100%"
               value={formData.city}
               onChange={(event, value) => setFormData({ ...formData, city: value || "" })}
+            />
+
+            {/* City */}
+            <AutocompleteCounties
+              label="County"
+              customWidth="100%"
+              value={formData.county}
+              onChange={(event, value) => setFormData({ ...formData, county: value || "" })}
             />
 
             {/* Street */}
