@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Currency } from "@/constants/currencies.enum";
+import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Endpoints } from "@/constants/endpoints";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -40,37 +41,44 @@ const DEFAULT_IMAGE_URL =
 const IMAGE_WIDTH = 250;
 const IMAGE_HEIGHT = 200;
 const BUTTON_TEXT = "Vezi anunțul";
-const FAV_ICON_POSITION = { top: "12px", right: "12px" };
+const ICON_POSITION = { top: "12px", right: "12px" };
 
 // Styled Components
+const IconButtonWrapper = styled.div`
+  position: absolute;
+  top: ${ICON_POSITION.top};
+  right: ${ICON_POSITION.right};
+  display: flex;
+  gap: 12px;
+  z-index: 2;
+`;
+
 const StyledFavoriteIcon = styled(FavoriteIcon)`
   cursor: pointer;
-  position: absolute;
-  top: ${FAV_ICON_POSITION.top};
-  right: ${FAV_ICON_POSITION.right};
   color: ${COLOR_RED_BUTTON};
 `;
 
 const StyledFavoriteBorderIcon = styled(FavoriteBorderIcon)`
   cursor: pointer;
-  position: absolute;
-  top: ${FAV_ICON_POSITION.top};
-  right: ${FAV_ICON_POSITION.right};
   color: ${COLOR_TEXT_LIGHT};
 `;
 
 const StyledEditIcon = styled(EditIcon)`
   cursor: pointer;
-  position: absolute;
-  top: ${FAV_ICON_POSITION.top};
-  right: ${FAV_ICON_POSITION.right};
   color: ${COLOR_TEXT_LIGHT};
+`;
+
+const StyledDeleteIcon = styled(DeleteIcon)`
+  cursor: pointer;
+  color: ${COLOR_RED_BUTTON};
 `;
 
 const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => {
   const {
     userStore: { user, getCurrentUser, updateUser },
+    announcementStore,
   } = useStore();
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -100,10 +108,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   );
 
   const handleFavourite = async () => {
-    if (!user?.id) {
-      console.log("User not found");
-      return;
-    }
+    if (!user?.id) return;
 
     let newFavsArray = user?.favourites || [];
     if (isFavorized) {
@@ -120,17 +125,34 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
     router.push(`${Endpoints.EDIT_ANNOUNCEMENTS}/${item.id}`);
   }, [router, item.id]);
 
+  const handleDelete = async () => {
+    if (confirm("Ești sigur că vrei să ștergi acest anunț?")) {
+      await announcementStore.deleteAnnouncement(item.id);
+
+      await announcementStore.fetchPaginatedAnnouncements({
+        page: 1,
+        limit: 8,
+        filter: { userId: user?.id ?? "" },
+      });
+    }
+  };
+
   return (
-    <AnnouncementCard display="flex">
-      {user?.id !== item.user?.id ? (
-        isFavorized ? (
-          <StyledFavoriteIcon onClick={handleFavourite} />
+    <AnnouncementCard display="flex" position="relative">
+      <IconButtonWrapper>
+        {user?.id !== item.user?.id ? (
+          isFavorized ? (
+            <StyledFavoriteIcon onClick={handleFavourite} />
+          ) : (
+            <StyledFavoriteBorderIcon onClick={handleFavourite} />
+          )
         ) : (
-          <StyledFavoriteBorderIcon onClick={handleFavourite} />
-        )
-      ) : (
-        <StyledEditIcon onClick={goToEdit} />
-      )}
+          <>
+            <StyledEditIcon onClick={goToEdit} />
+            <StyledDeleteIcon onClick={handleDelete} />
+          </>
+        )}
+      </IconButtonWrapper>
 
       <ImageContainer>
         <Image
@@ -158,7 +180,10 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
           <Price>
             {item.price} EUR
             <br />
-            <PriceMP>{calculatePricePerSquareMeter(item.price, item.surface)} {Currency.EUR}/{Unit.SQUARE_METER}</PriceMP>
+            <PriceMP>
+              {calculatePricePerSquareMeter(item.price, item.surface)}{" "}
+              {Currency.EUR}/{Unit.SQUARE_METER}
+            </PriceMP>
           </Price>
         </Flex>
         <Description>{item.description}</Description>

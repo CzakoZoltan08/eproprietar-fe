@@ -37,7 +37,7 @@ const MyAnnouncementsWrapper = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <AnnouncementList paginated={false} />
+      <AnnouncementList paginated={true} />
     </Suspense>
   );
 };

@@ -54,7 +54,7 @@ const SavedAnnouncementsWrapper = () => {
       {loading ? (
         <CircularProgress sx={{ margin: "0 auto" }} size={42} />
       ) : (
-        <AnnouncementList paginated={false} />
+        <AnnouncementList paginated={true} />
       )}
     </Suspense>
   );

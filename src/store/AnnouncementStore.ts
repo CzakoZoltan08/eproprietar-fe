@@ -64,7 +64,12 @@ export class AnnouncementStore {
   async deleteAnnouncement(id: string) {
     const updated = await this.announcementApi.deleteAnnouncementById(id);
 
-    this.setCurrentAnnouncement(updated);
+    runInAction(() => {
+      this.announcements = this.announcements.filter((a) => a.id !== id);
+      if (this.currentAnnouncement?.id === id) {
+        this.currentAnnouncement = null;
+      }
+    });
   }
 
   async getAnnouncementById(id: string) {
