@@ -3,6 +3,7 @@ import Joi from "joi";
 const sharedMessages = {
   emptyField: "Campul este obligatoriu",
   emptyCity: "Orasul trebuie selectat",
+  emptyCounty: "Judetul trebuie selectat",
   emptyCover: "error:emptyCover",
 };
 
@@ -24,6 +25,9 @@ const sharedFields = {
   }),
   city: Joi.string().messages({
     "string.empty": sharedMessages.emptyCity,
+  }),
+  county: Joi.string().messages({
+    "string.empty": sharedMessages.emptyCounty,
   }),
   street: Joi.string().optional(),
 };
