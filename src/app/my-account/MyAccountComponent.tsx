@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { ChangeEvent, useState } from "react";
 
 import { COLOR_TEXT } from "@/constants/colors";
@@ -16,7 +16,7 @@ const LABELS = {
 
 const MyAccountComponent = () => {
   const {
-    userStore: { user },
+    userStore: { user, deleteCurrentUser },
   } = useStore();
 
   const [formData, setFormData] = useState({
@@ -34,6 +34,22 @@ const MyAccountComponent = () => {
       ...prevData,
       [name]: value,
     }));
+  };
+
+  const handleUnregister = async () => {
+    if (!user?.id) return;
+
+    const confirmed = window.confirm("Are you sure you want to delete your account?");
+    if (!confirmed) return;
+
+    try {
+      await deleteCurrentUser(user.id);
+      alert("Account deleted successfully.");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      alert("Something went wrong while deleting your account.");
+    }
   };
 
   return (
@@ -56,6 +72,12 @@ const MyAccountComponent = () => {
             onChange={onChange}
             helperText={formErrors.phone}
           />
+        </Box>
+
+        <Box className={styles.section}>
+          <Button color="error" variant="contained" onClick={handleUnregister}>
+            Delete My Account
+          </Button>
         </Box>
       </Box>
     </Box>

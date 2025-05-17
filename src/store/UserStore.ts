@@ -49,4 +49,15 @@ export class UserStore {
     const updatedUser = await this.userApi.updateUser(id, data);
     this.setCurrentUser(updatedUser);
   }
+
+  async deleteCurrentUser(id: string) {
+    await this.userApi.deleteUser(id);
+    runInAction(() => {
+      this.user = null;
+    });
+
+    // Optional: Sign out from Firebase
+    const auth = getAuth();
+    await auth.signOut();
+  }
 }
