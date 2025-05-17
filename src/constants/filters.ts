@@ -1,5 +1,6 @@
 export const DEFAULT_FILTERS = {
     CITY: "",
+    COUNTY: "",
     TYPE: "Apartamente",
     ROOMS: 1,
     TRANSACTION_TYPE: "Vânzare",

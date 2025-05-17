@@ -1,10 +1,13 @@
+import { Layout } from "@/common/layout/Layout";
 import PaymentPackages from "./PaymentPackages";
 import { Suspense } from "react";
 
-export default function PaymentPackagesPage() {
+export default function Announcements() {
   return (
-    <Suspense fallback={<div>Loading packages...</div>}>
-      <PaymentPackages />
-    </Suspense>
+    <Layout paddingContainer>
+      <Suspense fallback={<div>Loading...</div>}>
+        <PaymentPackages />
+      </Suspense>
+    </Layout>
   );
 }

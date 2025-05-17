@@ -1,6 +1,6 @@
 "use client";
 
-import { CircularProgress, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, CircularProgress, LinearProgress, Modal, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -15,6 +15,7 @@ import {
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
+import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
@@ -22,8 +23,72 @@ import RadioButtonsGroup from "@/common/radio/RadioGroup";
 import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
 import { observer } from "mobx-react";
+import sketch1 from "../../assets/sketches/1 camera varianta 2.svg";
+import sketch10 from "../../assets/sketches/garsoniera.svg";
+import sketch11 from "../../assets/sketches/2.1camere.svg";
+import sketch12 from "../../assets/sketches/2.2 cam.svg";
+import sketch13 from "../../assets/sketches/2.4 cam.svg";
+import sketch14 from "../../assets/sketches/2.5 cam.svg";
+import sketch15 from "../../assets/sketches/2.6cam.svg";
+import sketch16 from "../../assets/sketches/2.7 cam.svg";
+import sketch17 from "../../assets/sketches/2.8cam.svg";
+import sketch18 from "../../assets/sketches/2.9cam.svg";
+import sketch19 from "../../assets/sketches/2camere.svg";
+import sketch2 from "../../assets/sketches/1 camera varianta 3.svg";
+import sketch20 from "../../assets/sketches/garsoniera 1.svg";
+import sketch21 from "../../assets/sketches/3.1cam.svg";
+import sketch22 from "../../assets/sketches/3.2cam.svg";
+import sketch23 from "../../assets/sketches/3.3cam.svg";
+import sketch24 from "../../assets/sketches/3.4CAM.svg";
+import sketch25 from "../../assets/sketches/3.5CAM.svg";
+import sketch26 from "../../assets/sketches/3.6CAM.svg";
+import sketch27 from "../../assets/sketches/3.7CAM.svg";
+import sketch28 from "../../assets/sketches/3.8CAM.svg";
+import sketch29 from "../../assets/sketches/4.1CAM.svg";
+import sketch3 from "../../assets/sketches/1 camera.svg";
+import sketch30 from "../../assets/sketches/4.2CAM.svg";
+import sketch31 from "../../assets/sketches/4cam.svg";
+import sketch4 from "../../assets/sketches/1.1cam.svg";
+import sketch5 from "../../assets/sketches/1.2cam.svg";
+import sketch6 from "../../assets/sketches/1.3cam.svg";
+import sketch7 from "../../assets/sketches/1.4cam.svg";
+import sketch8 from "../../assets/sketches/1cam.svg";
+import sketch9 from "../../assets/sketches/garsoniera 1.svg";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
+
+const PREDEFINED_SKETCHES = [
+  sketch1,
+  sketch2,
+  sketch3,
+  sketch4,
+  sketch5,
+  sketch6,
+  sketch7,
+  sketch8,
+  sketch9,
+  sketch10,
+  sketch11,
+  sketch12,
+  sketch13,
+  sketch14,
+  sketch15,
+  sketch16,
+  sketch17,
+  sketch18,
+  sketch19, 
+  sketch20,
+  sketch21,
+  sketch22,
+  sketch23,
+  sketch24,
+  sketch25,
+  sketch26,
+  sketch27,
+  sketch28,
+  sketch29,
+  sketch30,
+  sketch31];
 
 const Container = styled.div`
   display: flex;
@@ -92,6 +157,8 @@ const PreviewContainer = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
 `;
 
 const PreviewImage = styled.img`
@@ -107,6 +174,33 @@ const PreviewImage = styled.img`
   }
 `;
 
+const PreviewFile = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  max-width: 140px;
+  text-align: center;
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+const ModalContent = styled(Box)`
+  background: white;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  margin: 10vh auto;
+  border-radius: 8px;
+  outline: none;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
 const PreviewVideo = styled.video`
   width: 100%;
   max-width: 180px;
@@ -118,7 +212,7 @@ const PreviewVideo = styled.video`
   &:hover {
     opacity: 0.7;
   }
-`
+`;
 
 const ThumbnailContainer = styled.div`
   display: flex;
@@ -160,8 +254,14 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const AnnouncementFormContent = () => {
   const {
     userStore: { user, getCurrentUser, updateUser },
-    announcementStore: { createPaymentSession, updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
+    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
   } = useStore();
+
+  const sketchFileInputRef = useRef<HTMLInputElement>(null);
+  const [sketchPreview, setSketchPreview] = useState<string | null>(null);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const [formData, setFormData] = useState({
     announcementType: "",
@@ -172,6 +272,7 @@ const AnnouncementFormContent = () => {
     price: "",
     surface: "",
     city: "",
+    county: "",
     street: "",
     rooms: "",
     baths: "",
@@ -184,6 +285,7 @@ const AnnouncementFormContent = () => {
     thumbnail: null as File | null, // Thumbnail file
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
+    sketch: null as File | string | null,
   });
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
@@ -196,6 +298,9 @@ const AnnouncementFormContent = () => {
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]); // Store preview URLs for videos
   const [isDraggingVideos, setIsDraggingVideos] = useState(false);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
+  const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
 
   const pathname = usePathname();
   const params = useParams();
@@ -232,6 +337,7 @@ const AnnouncementFormContent = () => {
         price: currentAnnouncement.price?.toString() || "",
         surface: currentAnnouncement.surface?.toString() || "",
         city: currentAnnouncement.city || "",
+        county: currentAnnouncement.county || "",
         street: currentAnnouncement.street || "",
         rooms: currentAnnouncement.rooms?.toString() || "",
         baths: currentAnnouncement.baths?.toString() || "",
@@ -244,6 +350,7 @@ const AnnouncementFormContent = () => {
         thumbnail: null,
         images: [],
         videos: [],
+        sketch: null,
       });
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
@@ -470,45 +577,106 @@ const AnnouncementFormContent = () => {
     });
   };
 
-  const uploadMedia = async (announcementId: string) => {
-    try {
-      for (const image of formData.images) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", image);
-        formDataToSend.append("type", "image");
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
-
-      if (formData.thumbnail && announcementId) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", formData.thumbnail);
-        formDataToSend.append("type", "image");
-
-        if (user?.id) {
-          const response = await createImageOrVideo(formDataToSend, user.id, announcementId);
-
-          if (response.optimized_url) {
-            const optimizedUrl = response.optimized_url; // Get the optimized image URL
-  
-            // Step 4: Update the announcement with the optimized image URL
-            await updateAnnouncement(announcementId, { imageUrl: optimizedUrl });
-          }
-        }
-      }
-
-      for (const video of formData.videos) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", video);
-        formDataToSend.append("type", "video");
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
-      }
-    } catch (error) {
-      console.error("Error uploading media:", error);
+  const handleSketchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      setSketchPreview(preview);
+      setFormData((prev) => ({ ...prev, sketch: file }));
+      setOpenModal(false);
     }
   };
 
+  const handlePredefinedSketchClick = (src: string) => {
+    setSketchPreview(src);
+    setFormData((prev) => ({ ...prev, sketch: src }));
+    setOpenModal(false);
+  };
+
+  const uploadMedia = async (announcementId: string) => {
+    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
+    const totalVideos = formData.videos.length;
+  
+    setImageUploadProgress({ uploaded: 0, total: totalImages });
+    setVideoUploadProgress({ uploaded: 0, total: totalVideos });
+  
+    const incrementImage = () =>
+      setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+  
+    const incrementVideo = () =>
+      setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
+  
+    const imageUploads = formData.images.map((image) =>
+      (async () => {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", image);
+        formDataToSend.append("type", "image");
+  
+        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        incrementImage();
+      })()
+    );
+  
+    if (formData.thumbnail) {
+      const thumbUpload = (async () => {
+        const formDataToSend = new FormData();
+        if (formData.thumbnail) {
+          formDataToSend.append("file", formData.thumbnail);
+        }
+        formDataToSend.append("type", "image");
+  
+        const response = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        if (response?.optimized_url) {
+          await updateAnnouncement(announcementId, { imageUrl: response.optimized_url });
+        }
+        incrementImage();
+      })();
+      imageUploads.push(thumbUpload);
+    }
+
+    if (formData.sketch) {
+      const sketchUpload = (async () => {
+        const formDataToSend = new FormData();
+        
+        if (formData.sketch instanceof File) {
+          formDataToSend.append("file", formData.sketch);
+        } else if (typeof formData.sketch === "string") {
+          const response = await fetch(formData.sketch);
+          const blob = await response.blob();
+          const fileName = `sketch-${Date.now()}.jpg`;
+          const file = new File([blob], fileName, { type: blob.type });
+          formDataToSend.append("file", file);
+        }
+    
+        formDataToSend.append("type", "image");
+    
+        const uploadResponse = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        if (uploadResponse?.optimized_url) {
+          await updateAnnouncement(announcementId, { sketchUrl: uploadResponse.optimized_url });
+        }
+    
+        incrementImage();
+      })();
+    
+      imageUploads.push(sketchUpload);
+    }
+  
+    const videoUploads = formData.videos.map((video) =>
+      (async () => {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", video);
+        formDataToSend.append("type", "video");
+  
+        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        incrementVideo();
+      })()
+    );
+  
+    await Promise.all([Promise.all(imageUploads), Promise.all(videoUploads)]);
+  };  
+
   const onSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.price || !formData.city) {
+    if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
       setError("Please fill in all required fields.");
       return;
     }
@@ -517,75 +685,102 @@ const AnnouncementFormContent = () => {
       setError("Contact phone number is required.");
       return;
     }
+
+    if (!formData.sketch) {
+      setError("You must select or upload a sketch image.");
+      return;
+    }
+  
+    if (!formData.thumbnail) {
+      setError("You must upload a thumbnail image.");
+      return;
+    }
   
     setLoading(true);
     setError("");
   
     try {
-      const { thumbnail, ...data } = formData;
+      const { thumbnail, sketch, ...data } = formData;
   
-      if (contactPhone !== user?.phoneNumber) {
-        if (user?.id) {
-          await updateUser(user.id, { phoneNumber: contactPhone });
+      const announcementDraft = {
+        ...data,
+        announcementType: data.announcementType.toLowerCase(),
+        price: Number(data.price),
+        rooms: Number(data.rooms),
+        baths: Number(data.baths),
+        numberOfKitchens: Number(data.numberOfKitchens),
+        floor: Number(data.floor),
+        surface: Number(data.surface),
+        status: "pending",
+        phoneContact: contactPhone, // Add phoneContact property
+        user: {
+          id: user?.id || "",
+          firebaseId: user?.firebaseId || ""
         }
+      };
+  
+      // 1. Update phone number if changed
+      if (contactPhone !== user?.phoneNumber && user?.id) {
+        await updateUser(user.id, { phoneNumber: contactPhone });
       }
-  
-      let announcementId = "";
-  
-      if (isEdit) {
-        await updateAnnouncement(params.id as string, {
-          ...data,
-          announcementType: data.announcementType.toLowerCase(),
-          price: Number(data.price),
-          rooms: Number(data.rooms),
-          baths: Number(data.baths),
-          numberOfKitchens: Number(data.numberOfKitchens),
-          floor: Number(data.floor),
-          surface: Number(data.surface)
-        });
-        announcementId = params.id as string;
-        await uploadMedia(announcementId);
-      } else {
-        const newAnnouncement = await createAnnouncement({
-          ...data,
-          announcementType: data.announcementType.toLowerCase(),
-          price: Number(data.price),
-          rooms: Number(data.rooms),
-          baths: Number(data.baths),
-          numberOfKitchens: Number(data.numberOfKitchens),
-          floor: Number(data.floor),
-          surface: Number(data.surface),
-          status: "pending",
-          user: {
-            id: user?.id || "",
-            firebaseId: user?.firebaseId || ""
-          }
-        }) as unknown as PropertyAnnouncementModel;
-  
-        announcementId = newAnnouncement.id;
-  
-        await uploadMedia(announcementId);
-  
-        localStorage.setItem("announcementData", JSON.stringify({ ...formData, announcementId }));
-  
-        // ✅ NEW: Redirect to select-package page
-        window.location.href = `/payment-packages?announcementId=${announcementId}`;
-        return;
-      }
+
+      // 2. Actually create the announcement
+      const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+
+      // 4. Upload media in the background
+      await uploadMedia(newAnnouncement.id);
+
+      // Immediately redirect
+      window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");
     } finally {
       setLoading(false);
     }
-  };  
+  };   
 
   return (
     <Container>
       {loading ? (
         <>
           <CircularProgress />
-          <Typography mt={2}>Creating your announcement. Please wait...</Typography>
+          {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
+            <>
+              <Typography mt={2}>
+                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+              </Typography>
+              {imageUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(imageUploadProgress.uploaded / imageUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              <Typography mt={2}>
+                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+              </Typography>
+              {videoUploadProgress.total > 0 && (
+                <Box width="100%" mt={1}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(videoUploadProgress.uploaded / videoUploadProgress.total) * 100}
+                  />
+                </Box>
+              )}
+
+              {(imageUploadProgress.uploaded < imageUploadProgress.total ||
+                videoUploadProgress.uploaded < videoUploadProgress.total) && (
+                <Typography mt={2} fontStyle="italic">
+                  Finishing uploads, please wait...
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography mt={2}>Creating your announcement...</Typography>
+          )}
         </>
       ) : (
         <>
@@ -624,6 +819,14 @@ const AnnouncementFormContent = () => {
               customWidth="100%"
               value={formData.city}
               onChange={(event, value) => setFormData({ ...formData, city: value || "" })}
+            />
+
+            {/* City */}
+            <AutocompleteCounties
+              label="County"
+              customWidth="100%"
+              value={formData.county}
+              onChange={(event, value) => setFormData({ ...formData, county: value || "" })}
             />
 
             {/* Street */}
@@ -784,6 +987,57 @@ const AnnouncementFormContent = () => {
                 style={{ display: "none" }}
                 ref={thumbnailFileInputRef}
               />
+            </ThumbnailContainer>
+
+            <ThumbnailContainer>
+              <Typography variant="h6">Apartment Sketch / Floor Plan</Typography>
+
+              <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
+                {sketchPreview ? (
+                  <ThumbnailPreviewImage src={sketchPreview} alt="Sketch Preview" />
+                ) : (
+                  <Typography sx={{ color: "#aaa", textAlign: "center" }}>
+                    Click to upload or select
+                  </Typography>
+                )}
+              </ThumbnailPreviewWrapper>
+
+              <Modal open={openModal} onClose={() => setOpenModal(false)}>
+                <ModalContent>
+                  <Tabs value={tabIndex} onChange={(_, newIndex) => setTabIndex(newIndex)}>
+                    <Tab label="Upload" />
+                    <Tab label="Choose Sample" />
+                  </Tabs>
+
+                  {tabIndex === 0 && (
+                    <Box mt={2}>
+                      <input
+                        type="file"
+                        accept=".png,.jpg,.jpeg"
+                        onChange={handleSketchChange}
+                        ref={sketchFileInputRef}
+                      />
+                    </Box>
+                  )}
+
+                  {tabIndex === 1 && (
+                    <PreviewContainer>
+                      {PREDEFINED_SKETCHES.map((src, index) => (
+                        <PreviewFile key={index} onClick={() => handlePredefinedSketchClick(src.src)}>
+                          <Typography variant="body2">Sketch {index + 1}</Typography>
+                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Sketch ${index + 1}`} />
+                        </PreviewFile>
+                      ))}
+                    </PreviewContainer>
+                  )}
+                </ModalContent>
+              </Modal>
+
+              {formData.sketch instanceof File && (
+                <Typography variant="caption" sx={{ mt: 1 }}>
+                  {(formData.sketch as File).name}
+                </Typography>
+              )}
             </ThumbnailContainer>
 
             <Typography variant="h6">Add Images</Typography>

@@ -12,6 +12,7 @@ import { roomOptions, transactionTypeOptions, typeOptions } from "./constants/an
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "./common/autocomplete/AutocompleteCities";
+import AutocompleteCounties from "./common/autocomplete/AutocompleteCounties";
 import { DEFAULT_FILTERS } from "./constants/filters";
 import { DROPDOWN_RANGES } from "./constants/dropdown";
 import { Endpoints } from "./constants/endpoints";
@@ -100,18 +101,26 @@ export const Main = () => {
 
     const queryParams = new URLSearchParams(searchParams.toString());
 
+    const isCabaneType = filters.TYPE === "Cabane/Case la tara";
+    const isApartmentType = filters.TYPE === "Apartamente";
+
+    const dynamicFilters: Record<string, any> = {
+      rooms: filters.ROOMS,
+      price: filters.PRICE,
+      minSurface: filters.MIN_SURFACE,
+      maxSurface: filters.MAX_SURFACE,
+      transactionType: filters.TRANSACTION_TYPE,
+      type: filters.TYPE,
+      status: filters.STATUS,
+      ...(isCabaneType
+        ? { county: filters.COUNTY }
+        : { city: filters.CITY }),
+    };
+
     await fetchPaginatedAnnouncements({
       page: 1,
       limit: 8,
-      filter: {
-        rooms: filters.ROOMS,
-        price: filters.PRICE,
-        minSurface: filters.MIN_SURFACE,
-        maxSurface: filters.MAX_SURFACE,
-        transactionType: filters.TRANSACTION_TYPE,
-        type: filters.TYPE,
-        status: "active",
-      },
+      filter: dynamicFilters,
     });
 
     [
@@ -119,11 +128,13 @@ export const Main = () => {
       ["price", filters.PRICE],
       ["minSurface", filters.MIN_SURFACE],
       ["maxSurface", filters.MAX_SURFACE],
-      ["city", filters.CITY],
-      ["rooms", filters.ROOMS],
+      isCabaneType
+        ? ["county", filters.COUNTY]
+        : ["city", filters.CITY],
+      ...(isApartmentType ? [] : [["rooms", filters.ROOMS]]),
       ["transactionType", selectedTransactionType?.id],
       ["type", selectedType?.id],
-      ["status", "active"],
+      ["status", filters.STATUS],
     ].forEach(([key, value]) =>
       handleQueryParams(queryParams, key!.toString(), value)
     );
@@ -148,11 +159,20 @@ export const Main = () => {
         width: isDesktop ? "100%" : "90%",
       }}
     >
-      <AutocompleteCities
-        onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
-        label={MESSAGES.SEARCH_CITY_LABEL}
-        customWidth={citiesAutcompleteWidth}
-      />
+      {filters.TYPE === "Cabane/Case la tara" ? (
+        <AutocompleteCounties
+          onChange={(event, value) => setFilters({ ...filters, COUNTY: value?.toString() ?? "" })}
+          label={MESSAGES.SEARCH_COUNTY_LABEL}
+          customWidth={citiesAutcompleteWidth}
+        />
+      ) : (
+        <AutocompleteCities
+          onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+          label={MESSAGES.SEARCH_CITY_LABEL}
+          customWidth={citiesAutcompleteWidth}
+        />
+      )}
+
       <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
         <SelectDropdown
           name="type"

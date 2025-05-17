@@ -64,7 +64,12 @@ export class AnnouncementStore {
   async deleteAnnouncement(id: string) {
     const updated = await this.announcementApi.deleteAnnouncementById(id);
 
-    this.setCurrentAnnouncement(updated);
+    runInAction(() => {
+      this.announcements = this.announcements.filter((a) => a.id !== id);
+      if (this.currentAnnouncement?.id === id) {
+        this.currentAnnouncement = null;
+      }
+    });
   }
 
   async getAnnouncementById(id: string) {
@@ -158,6 +163,25 @@ export class AnnouncementStore {
     originalAmount?: number;
     discountCode?: string;
     promotionDiscountCode?: string;
+    invoiceDetails: {
+      name: string;
+      cif?: string;
+      regCom?: string;
+      address: string;
+      city: string;
+      country: string;
+      email: string;
+      isTaxPayer: boolean;
+    };
+    products: {
+      name: string;
+      quantity: number;
+      unitOfMeasure: string;
+      unitPrice: number;
+      currency: string;
+      isTaxIncluded: boolean;
+      vatPercent: number;
+    }[];
   }) {
     try {
       const response = await this.announcementApi.createPaymentSession(paymentData);

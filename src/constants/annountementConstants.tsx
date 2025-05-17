@@ -5,7 +5,7 @@ export const typeOptions = [
   },
   {
     id: "casa",
-    value: "Case/Vile",
+    value: "Cabane/Case la tara",
   },
   {
     id: "teren",
@@ -14,15 +14,7 @@ export const typeOptions = [
   {
     id: "spatii_comerciale",
     value: "Spații comerciale",
-  },
-  {
-    id: "pensiuni_hoteluri",
-    value: "Pensiuni / Hoteluri",
-  },
-  {
-    id: "casa_tara",
-    value: "Cabane",
-  },
+  }
 ];
 
 export const transactionTypeOptions = [

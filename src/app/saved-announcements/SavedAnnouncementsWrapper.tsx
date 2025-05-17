@@ -12,7 +12,6 @@ import { useStore } from "@/hooks/useStore";
 const SavedAnnouncementsWrapper = () => {
   const {
     userStore: { user, getCurrentUser },
-    announcementStore: { fetchSavedAnnouncements },
   } = useStore();
 
   const [loading, setLoading] = useState(true);
@@ -38,23 +37,17 @@ const SavedAnnouncementsWrapper = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    (async () => {
-      setLoading(true);
-      await fetchSavedAnnouncements(user.id!.toString());
-
-      const updatedParams = updateQueryParams("title", "Anunturi salvate");
-      router.push(`${Endpoints.SAVED_ANNOUNCEMENTS}?${updatedParams}`);
-
-      setLoading(false);
-    })();
-  }, [user?.id, fetchSavedAnnouncements, router]);
+    const updatedParams = updateQueryParams("title", "Anunturi salvate");
+    router.push(`${Endpoints.SAVED_ANNOUNCEMENTS}?${updatedParams}`);
+    setLoading(false);
+  }, [user?.id, router]);
 
   return (
     <Suspense fallback={<CircularProgress size={42} sx={{ margin: "0 auto" }} />}>
       {loading ? (
         <CircularProgress sx={{ margin: "0 auto" }} size={42} />
       ) : (
-        <AnnouncementList paginated={false} />
+        <AnnouncementList paginated={true} source="saved" />
       )}
     </Suspense>
   );

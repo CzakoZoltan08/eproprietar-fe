@@ -7,6 +7,7 @@ export interface PropertyAnnouncementModel {
   transactionType: string;
   title: string;
   city: string;
+  county: string;
   street?: string;
   price: number;
   rooms: number;
@@ -29,6 +30,10 @@ export interface PropertyAnnouncementModel {
   parking?: string;
   images?: { original: string; thumbnail: string }[];
   videos?: { original: string; format: string }[];
+  endDate?: string; // Add this line
+  logoUrl?: string;
+  developerName?: string;
+  phoneContact?: string;
 }
 
 export class CreateAnnouncementDto {
@@ -51,6 +56,9 @@ export class CreateAnnouncementDto {
   user: { id: string; firebaseId: string } = { id: '', firebaseId: ''};
   imageUrl?: string;
   status: string = 'pending';
+  logoUrl?: string;
+  phoneContact: string | undefined;
+  sketchUrl?: string;
 }
 
 export interface FetchAnnouncementsModel {
