@@ -101,18 +101,26 @@ export const Main = () => {
 
     const queryParams = new URLSearchParams(searchParams.toString());
 
+    const isCabaneType = filters.TYPE === "Cabane/Case la tara";
+    const isApartmentType = filters.TYPE === "Apartamente";
+
+    const dynamicFilters: Record<string, any> = {
+      rooms: filters.ROOMS,
+      price: filters.PRICE,
+      minSurface: filters.MIN_SURFACE,
+      maxSurface: filters.MAX_SURFACE,
+      transactionType: filters.TRANSACTION_TYPE,
+      type: filters.TYPE,
+      status: filters.STATUS,
+      ...(isCabaneType
+        ? { county: filters.COUNTY }
+        : { city: filters.CITY }),
+    };
+
     await fetchPaginatedAnnouncements({
       page: 1,
       limit: 8,
-      filter: {
-        rooms: filters.ROOMS,
-        price: filters.PRICE,
-        minSurface: filters.MIN_SURFACE,
-        maxSurface: filters.MAX_SURFACE,
-        transactionType: filters.TRANSACTION_TYPE,
-        type: filters.TYPE,
-        status: "active",
-      },
+      filter: dynamicFilters,
     });
 
     [
@@ -120,11 +128,13 @@ export const Main = () => {
       ["price", filters.PRICE],
       ["minSurface", filters.MIN_SURFACE],
       ["maxSurface", filters.MAX_SURFACE],
-      ["city", filters.CITY],
-      ["rooms", filters.ROOMS],
+      isCabaneType
+        ? ["county", filters.COUNTY]
+        : ["city", filters.CITY],
+      ...(isApartmentType ? [] : [["rooms", filters.ROOMS]]),
       ["transactionType", selectedTransactionType?.id],
       ["type", selectedType?.id],
-      ["status", "active"],
+      ["status", filters.STATUS],
     ].forEach(([key, value]) =>
       handleQueryParams(queryParams, key!.toString(), value)
     );
@@ -151,7 +161,7 @@ export const Main = () => {
     >
       {filters.TYPE === "Cabane/Case la tara" ? (
         <AutocompleteCounties
-          onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+          onChange={(event, value) => setFilters({ ...filters, COUNTY: value?.toString() ?? "" })}
           label={MESSAGES.SEARCH_COUNTY_LABEL}
           customWidth={citiesAutcompleteWidth}
         />

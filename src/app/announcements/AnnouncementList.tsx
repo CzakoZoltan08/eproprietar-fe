@@ -64,6 +64,10 @@ const AnnouncementList = ({
       initialFilters.city = `$in:${searchParams.get("city")}`;
     }
 
+    if (searchParams.get("county")) {
+      initialFilters.county = `$in:${searchParams.get("county")}`;
+    }
+
     if (searchParams.get("rooms")) {
       initialFilters.rooms = `$eq:${searchParams.get("rooms")}`;
     }

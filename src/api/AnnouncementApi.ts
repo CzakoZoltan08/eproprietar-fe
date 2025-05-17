@@ -219,6 +219,7 @@ export class AnnouncementApi {
       maxSurface,
       price,
       city,
+      county,
       rooms,
       type,
       transactionType,
@@ -237,6 +238,9 @@ export class AnnouncementApi {
         : undefined,
       [QueryKeys.FILTER_CITY]: city
         ? `${FilterOperators.IN}:${city}`
+        : undefined,
+      [QueryKeys.FILTER_COUNTY]: county
+        ? `${FilterOperators.IN}:${county}`
         : undefined,
       [QueryKeys.FILTER_ROOMS]: rooms
         ? `${FilterOperators.EQUAL}:${rooms}`
