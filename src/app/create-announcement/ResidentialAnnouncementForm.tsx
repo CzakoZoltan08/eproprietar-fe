@@ -11,10 +11,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import { propertyTypes, serviceTypes } from "@/constants/annountementConstants";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
+import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
 import MediaUploader from "@/common/media/MediaUploader";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import PrimaryDatePicker from "@/common/datepicker/PrimaryDatePicker";
@@ -61,6 +62,7 @@ const INITIAL_DATA = {
   announcementType: "",
   title: "",
   city: "",
+  county: "",
   street: "",
   description: "",
   stage: "",
@@ -83,6 +85,15 @@ const ResidentialAnnouncementForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
   const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      city: "Abrud",
+      county: "Alba",
+      announcementType: "Apartament"
+    }));
+  }, []);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -319,6 +330,18 @@ const ResidentialAnnouncementForm = () => {
               error={!!formErrors.contactPhone}
               helperText={formErrors.contactPhone}
               fullWidth
+            />
+            {/* County */}
+            <AutocompleteCounties
+              label="County"
+              customWidth="100%"
+              value={formData.county}
+              onChange={(event, value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  county: value || "",
+                }));
+              }}
             />
             <AutocompleteCities
               onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}

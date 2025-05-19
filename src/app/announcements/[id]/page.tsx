@@ -101,7 +101,65 @@ const ArrowButton = styled.button<{ $left?: boolean }>`
   }
 `;
 
+const GalleryContainerImage = styled.div`
+  width: 100%;
+  max-width: 800px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  position: relative;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    height: auto; /* Allows it to scale dynamically */
+  }
+
+  @media (max-width: 480px) {
+    max-width: 100vw; /* Ensures no horizontal scrolling */
+    padding: 0 8px;
+    overflow-x: hidden;
+  }
+`;
+
+const CustomSliderImage = styled(Slider)`
+  position: static;
+
+  .slick-slide > div {
+    height: 100%; /* 🛠 Make sure slick slide wrapper fills height */
+  }
+
+  .slick-dots {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slick-dots li {
+    margin: 0 5px;
+  }
+
+  .slick-list {
+    overflow: hidden; /* Hides the cloned ones from being visible outside */
+  }
+
+  .slick-dots li button:before {
+    font-size: 12px;
+    color: white;
+    opacity: 0.75;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .slick-dots li.slick-active button:before {
+    opacity: 1;
+    color: white;
+  }
+`;
+
 const CustomSlider = styled(Slider)`
+  position: static; /* Allows for absolute positioning of arrows */
+
   .slick-dots {
     position: absolute;
     bottom: 10px; /* Ensures consistent position */
@@ -164,16 +222,16 @@ const ResponsiveBox = styled(Box)`
 // 🔹 Ensure images fill the space properly
 const ImageContainer = styled.div`
   width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
 `;
 
 const Image = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 `;
 
 interface Image {
@@ -183,8 +241,9 @@ interface Image {
 
 const ImageGalleryWrapper = styled.div`
   width: 100%;
-  max-width: 100%; /* Ensures it doesn’t exceed parent */
-  overflow: hidden; /* Prevents unexpected overflows */
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 `;
 
 const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
@@ -204,13 +263,13 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
 
   return (
     <ImageGalleryWrapper>
-      <CustomSlider {...settings}>
+      <CustomSliderImage {...settings}>
         {images.map((image, index) => (
           <ImageContainer key={index}>
             <Image src={image.original} alt={`Image ${index}`} />
           </ImageContainer>
         ))}
-      </CustomSlider>
+      </CustomSliderImage>
     </ImageGalleryWrapper>
   );
 };
@@ -286,6 +345,7 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   const [duration, setDuration] = useState<number[]>(Array(videos.length).fill(0));
   const [currentTime, setCurrentTime] = useState<number[]>(Array(videos.length).fill(0));
   const [isPlaying, setIsPlaying] = useState<boolean[]>(Array(videos.length).fill(false));
+  const [mediaReady, setMediaReady] = useState(false);
 
   useEffect(() => {
     videoRefs.current = videoRefs.current.slice(0, videos.length);
@@ -423,27 +483,88 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
 
 const AnnouncementDetailPage: React.FC = () => {
   const {
-    announcementStore: { getAnnouncementById, currentAnnouncement, fetchAnnouncementImages },
+    announcementStore: { getAnnouncementById, setCurrentAnnouncement, currentAnnouncement, fetchAnnouncementImages },
   } = useStore();
   const params = useParams();
   const { id } = params;
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
+  const [announcement, setAnnouncement] = useState<typeof currentAnnouncement | null>(null);
+  const [images, setImages] = useState<Image[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    // Clear previous content immediately
+    setAnnouncement(null);
+    setImages([]);
+    setVideos([]);
+
+    // Fetch and wait
+    const announcementId = Array.isArray(id) ? id[0] : id;
+    getAnnouncementById(announcementId).then(() => {
+      const fetched = currentAnnouncement;
+      if (fetched?.id && fetched?.user?.id) {
+        fetchAnnouncementImages(fetched.user.id, fetched.id).then(() => {
+          setAnnouncement({ ...fetched });
+          setImages(fetched.images ?? []);
+          setVideos(fetched.videos ?? []);
+        });
+      }
+    });
+ }, [id]);
+
+  useEffect(() => {
+    if (currentAnnouncement?.id && currentAnnouncement.images) {
+      setAnnouncement(currentAnnouncement);
+    } else {
+      setAnnouncement(null); // Reset to avoid showing stale content
+    }
+  }, [currentAnnouncement?.id, currentAnnouncement?.images]);
+
+
   // Fetch Announcement Data
   useEffect(() => {
     if (id) {
+      // reset before loading new announcement
+      setCurrentAnnouncement({
+        id: "",
+        title: "",
+        description: "",
+        images: [],
+        videos: [],
+        user: {
+          email: null,
+          firstName: null,
+          lastName: null,
+          firebaseId: null,
+          role: ""
+        },
+        announcementType: "",
+        providerType: "",
+        transactionType: "",
+        city: "",
+        county: "",
+        price: 0,
+        rooms: 0,
+        surface: 0,
+        currency: "",
+        floor: 0
+      }); // 👈 reset
       getAnnouncementById(Array.isArray(id) ? id[0] : id);
     }
   }, [id, getAnnouncementById]);
 
+
   useEffect(() => {
-    if (currentAnnouncement?.id && currentAnnouncement?.user?.id) {
-      fetchAnnouncementImages(currentAnnouncement.user.id, currentAnnouncement.id);
+    if (announcement?.id && announcement?.user?.id) {
+      fetchAnnouncementImages(announcement.user.id, announcement.id);
     }
-  }, [currentAnnouncement?.id, currentAnnouncement?.user?.id, fetchAnnouncementImages]);
+  }, [announcement?.id, announcement?.user?.id, fetchAnnouncementImages]);
 
   // Render Loading Spinner
-  if (!currentAnnouncement?.id) {
+  if (!announcement?.id || !announcement.images) {
     return (
       <Layout paddingContainer>
         <CircularProgress />
@@ -451,33 +572,25 @@ const AnnouncementDetailPage: React.FC = () => {
     );
   }
 
-  // Prepare images for the gallery
-  const images = currentAnnouncement.images?.map((image) => ({
-    original: image.original,
-    thumbnail: image.thumbnail,
-  })) ?? [];
-
-  const videos = currentAnnouncement.videos ?? [];
-
   // Common Layout
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", alignItems: "center" }}>
         <ResponsiveBox>
-          <GalleryContainer>
+          <GalleryContainerImage>
             {images.length > 0 ? (
-              <ImageGallery images={images} />
+              <ImageGallery key={announcement.id} images={images} />
             ) : (
               <Box>No images available</Box>
             )}
-          </GalleryContainer>
+          </GalleryContainerImage>
         </ResponsiveBox>
   
         {/* ✅ Responsive Video Gallery Section */}
         <ResponsiveBox>
           {videos.length > 0 && (
             <GalleryContainer>
-              <VideoGallery videos={videos} />
+              <VideoGallery key={announcement.id} videos={videos} />
             </GalleryContainer>
           )}
         </ResponsiveBox>

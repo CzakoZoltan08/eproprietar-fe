@@ -287,6 +287,9 @@ const AnnouncementFormContent = () => {
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
   });
+
+  const isApartment = formData.announcementType === "Apartament";
+
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
   const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
@@ -313,6 +316,15 @@ const AnnouncementFormContent = () => {
       getCurrentUser();
     }
   }, [user]);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      announcementType: prev.announcementType || propertyTypes[0],
+      transactionType: prev.transactionType || serviceTypes[0],
+    }));
+  }, []);
+
 
   // Prefill data if redirected from failed payment
   useEffect(() => {
@@ -355,7 +367,9 @@ const AnnouncementFormContent = () => {
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
       }
-      if (currentAnnouncement?.user?.phoneNumber) {
+
+      // Only set contactPhone if it's not already set
+      if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
         setContactPhone(currentAnnouncement.user.phoneNumber);
       }
     }
@@ -813,20 +827,27 @@ const AnnouncementFormContent = () => {
               />
             </RadioGroupContainer>
           
+            {/* County */}
+            <AutocompleteCounties
+              label="County"
+              customWidth="100%"
+              value={formData.county}
+              onChange={(event, value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  county: value || "",
+                }));
+              }}
+            />
+
             {/* City */}
             <AutocompleteCities
               label="City"
               customWidth="100%"
               value={formData.city}
-              onChange={(event, value) => setFormData({ ...formData, city: value || "" })}
-            />
-
-            {/* City */}
-            <AutocompleteCounties
-              label="County"
-              customWidth="100%"
-              value={formData.county}
-              onChange={(event, value) => setFormData({ ...formData, county: value || "" })}
+              onChange={(e, value) =>
+                setFormData((prev) => ({ ...prev, city: value || "" }))
+              }
             />
 
             {/* Street */}
@@ -894,77 +915,81 @@ const AnnouncementFormContent = () => {
               sx={{ marginBottom: "16px" }}
             />
 
-            {/* Number of Rooms */}
-            <SelectDropdown
-              label="Number of Rooms"
-              options={roomOptions}
-              name="rooms"
-              value={formData.rooms}
-              handleChange={handleSelectChange}
-            />
+            {isApartment && (
+              <>
+                {/* Number of Rooms */}
+                <SelectDropdown
+                  label="Number of Rooms"
+                  options={roomOptions}
+                  name="rooms"
+                  value={formData.rooms}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Number of Baths */}
-            <SelectDropdown
-              label="Number of Baths"
-              options={roomOptions}
-              name="baths"
-              value={formData.baths}
-              handleChange={handleSelectChange}
-            />
+                {/* Number of Baths */}
+                <SelectDropdown
+                  label="Number of Baths"
+                  options={roomOptions}
+                  name="baths"
+                  value={formData.baths}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Number of Kitchens */}
-            <SelectDropdown
-              label="Number of Kitchens"
-              options={roomOptions}
-              name="numberOfKitchens"
-              value={formData.numberOfKitchens}
-              handleChange={handleSelectChange}
-            />
+                {/* Number of Kitchens */}
+                <SelectDropdown
+                  label="Number of Kitchens"
+                  options={roomOptions}
+                  name="numberOfKitchens"
+                  value={formData.numberOfKitchens}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Partitioning */}
-            <SelectDropdown
-              label="Partitioning"
-              options={apartamentPartitionings}
-              name="partitioning"
-              value={formData.partitioning}
-              handleChange={handleSelectChange}
-            />
+                {/* Partitioning */}
+                <SelectDropdown
+                  label="Partitioning"
+                  options={apartamentPartitionings}
+                  name="partitioning"
+                  value={formData.partitioning}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Comfort Level */}
-            <SelectDropdown
-              label="Comfort Level"
-              options={comfortLevels}
-              name="comfortLevel"
-              value={formData.comfortLevel}
-              handleChange={handleSelectChange}
-            />
+                {/* Comfort Level */}
+                <SelectDropdown
+                  label="Comfort Level"
+                  options={comfortLevels}
+                  name="comfortLevel"
+                  value={formData.comfortLevel}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Floor */}
-            <SelectDropdown
-              label="Floor"
-              options={apartmentFloors}
-              name="floor"
-              value={formData.floor}
-              handleChange={handleSelectChange}
-            />
+                {/* Floor */}
+                <SelectDropdown
+                  label="Floor"
+                  options={apartmentFloors}
+                  name="floor"
+                  value={formData.floor}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Balcony */}
-            <SelectDropdown
-              label="Balcony"
-              options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
-              name="balcony"
-              value={formData.balcony}
-              handleChange={handleSelectChange}
-            />
+                {/* Balcony */}
+                <SelectDropdown
+                  label="Balcony"
+                  options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
+                  name="balcony"
+                  value={formData.balcony}
+                  handleChange={handleSelectChange}
+                />
 
-            {/* Parking */}
-            <SelectDropdown
-              label="Parking"
-              options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
-              name="parking"
-              value={formData.parking}
-              handleChange={handleSelectChange}
-            />
+                {/* Parking */}
+                <SelectDropdown
+                  label="Parking"
+                  options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
+                  name="parking"
+                  value={formData.parking}
+                  handleChange={handleSelectChange}
+                />
+              </>
+            )}
 
             {/* Thumbnail Upload */}
             <ThumbnailContainer>
