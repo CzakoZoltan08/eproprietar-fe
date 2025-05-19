@@ -827,16 +827,6 @@ const AnnouncementFormContent = () => {
               />
             </RadioGroupContainer>
           
-            {/* City */}
-            <AutocompleteCities
-              label="City"
-              customWidth="100%"
-              value={formData.city}
-              onChange={(e, value) =>
-                setFormData((prev) => ({ ...prev, city: value || "" }))
-              }
-            />
-
             {/* County */}
             <AutocompleteCounties
               label="County"
@@ -848,6 +838,16 @@ const AnnouncementFormContent = () => {
                   county: value || "",
                 }));
               }}
+            />
+
+            {/* City */}
+            <AutocompleteCities
+              label="City"
+              customWidth="100%"
+              value={formData.city}
+              onChange={(e, value) =>
+                setFormData((prev) => ({ ...prev, city: value || "" }))
+              }
             />
 
             {/* Street */}

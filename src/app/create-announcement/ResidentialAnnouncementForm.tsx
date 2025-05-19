@@ -331,13 +331,6 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.contactPhone}
               fullWidth
             />
-            <AutocompleteCities
-              onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
-              label="Localizare (oraș/comună)"
-              customWidth="100%"
-              error={formErrors.city}
-              value={formData.city}
-            />
             {/* County */}
             <AutocompleteCounties
               label="County"
@@ -349,6 +342,13 @@ const ResidentialAnnouncementForm = () => {
                   county: value || "",
                 }));
               }}
+            />
+            <AutocompleteCities
+              onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
+              label="Localizare (oraș/comună)"
+              customWidth="100%"
+              error={formErrors.city}
+              value={formData.city}
             />
             <TextField
               label="Detalii localizare (stradă)"

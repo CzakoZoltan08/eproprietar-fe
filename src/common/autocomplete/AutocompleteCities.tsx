@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import AutocompleteDisabledOptions from "./Autocomplete";
-import { cities } from "../../constants/citiesRomania";
+import { ListboxComponent } from "./VirtualizedListbox"; // Custom virtualized dropdown
+import { debounce } from "lodash";
+import { uniqueCities } from "../../constants/uniqueCities"; // Preprocessed unique names
 
 const AutocompleteCities = ({
   onChange,
@@ -19,41 +21,59 @@ const AutocompleteCities = ({
   value?: string;
 }) => {
   const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Generate unique city names
-    const citiesName = cities.map((city) => city.nume);
-    const uniqueCities = Array.from(new Set(citiesName));
-    setCityOptions(uniqueCities);
+  // Debounced filter function
+  const debouncedFilter = useMemo(
+    () =>
+      debounce((input: string) => {
+        const filtered = uniqueCities.filter((city) =>
+          city.toLowerCase().includes(input.toLowerCase())
+        );
+        setCityOptions(filtered);
+      }, 300),
+    []
+  );
 
-    // Initialize the default city
-    if (!value && uniqueCities.length > 0) {
-      const initialCity = uniqueCities[0];
-      setSelectedCity(initialCity);
-      onChange(null, initialCity); // Notify parent about the default value
-    }
-  }, []); // Run only on component mount
-
+  // Filter when input changes
   useEffect(() => {
-    // Sync with the parent-provided value
+    debouncedFilter(inputValue);
+  }, [inputValue, debouncedFilter]);
+
+  // // Initial setup on mount
+  // useEffect(() => {
+  //   setCityOptions(uniqueCities);
+  //   if (!value && uniqueCities.length > 0) {
+  //     const defaultCity = uniqueCities[0];
+  //     setSelectedCity(defaultCity);
+  //     onChange(null, defaultCity);
+  //   }
+  // }, []);
+
+  // Sync with parent value
+  useEffect(() => {
     if (value) {
       setSelectedCity(value);
     }
-  }, [value]); // Listen for changes in the `value` prop
+  }, [value]);
 
   return (
     <AutocompleteDisabledOptions
       options={cityOptions}
       onChange={(event, newValue) => {
-        setSelectedCity(newValue); // Update local state
-        onChange(event, newValue); // Notify parent component
+        setSelectedCity(newValue);
+        onChange(event, newValue);
+      }}
+      onInputChange={(event: any, newInputValue: React.SetStateAction<string>) => {
+        setInputValue(newInputValue);
       }}
       label={label}
       customWidth={customWidth}
       backgroundColor={backgroundColor}
       error={error}
       value={selectedCity || ""}
+      ListboxComponent={ListboxComponent}
     />
   );
 };

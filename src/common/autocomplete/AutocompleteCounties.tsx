@@ -25,11 +25,11 @@ const AutocompleteCounties = ({
     const uniqueCounties = Array.from(new Set(counties));
     setCountyOptions(uniqueCounties);
 
-    if (!value && uniqueCounties.length > 0) {
-      const initialCounty = uniqueCounties[0];
-      setSelectedCounty(initialCounty);
-      onChange(null, initialCounty);
-    }
+    // if (!value && uniqueCounties.length > 0) {
+    //   const initialCounty = uniqueCounties[0];
+    //   setSelectedCounty(initialCounty);
+    //   onChange(null, initialCounty);
+    // }
   }, []);
 
   useEffect(() => {

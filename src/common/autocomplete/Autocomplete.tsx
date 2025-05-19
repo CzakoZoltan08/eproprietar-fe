@@ -7,9 +7,9 @@ import HelperText from "@/common/error/HelperText";
 import React from "react";
 import styled from "styled-components";
 
-// Styled wrapper for the Autocomplete
 const StyledAutocomplete = styled(Autocomplete).withConfig({
-  shouldForwardProp: (prop) => prop !== "customWidth" && prop !== "backgroundColor",
+  shouldForwardProp: (prop) =>
+    prop !== "customWidth" && prop !== "backgroundColor",
 })<{
   customWidth?: string;
   backgroundColor?: string;
@@ -35,30 +35,39 @@ const StyledAutocomplete = styled(Autocomplete).withConfig({
   }
 `;
 
-const AutocompleteDisabledOptions = ({
-  options,
-  onChange,
-  label,
-  customWidth,
-  backgroundColor,
-  error,
-  value,
-}: {
+type AutocompleteDisabledOptionsProps = {
   options: string[];
   onChange: (event: any, value: any) => void;
+  onInputChange?: (event: React.SyntheticEvent, value: string) => void; // ✅ NEW
   label: string;
   value: string;
   customWidth?: string;
   backgroundColor?: string;
   error?: string;
-}) => (
+  ListboxComponent?: React.JSXElementConstructor<React.HTMLAttributes<HTMLElement>>; // ✅ FIXED TYPE
+};
+
+const AutocompleteDisabledOptions = ({
+  options,
+  onChange,
+  onInputChange,
+  label,
+  value,
+  customWidth,
+  backgroundColor,
+  error,
+  ListboxComponent,
+}: AutocompleteDisabledOptionsProps) => (
   <>
     <StyledAutocomplete
       id="autocomplete"
       options={options}
-      customWidth={customWidth} // This is now safely handled by styled-components
-      backgroundColor={backgroundColor} // This too
       value={value}
+      onChange={onChange}
+      onInputChange={onInputChange} // ✅ Pass it down
+      ListboxComponent={ListboxComponent} // ✅ Pass it down
+      customWidth={customWidth}
+      backgroundColor={backgroundColor}
       renderInput={(params: AutocompleteRenderInputParams) => (
         <TextField
           {...params}
@@ -67,7 +76,6 @@ const AutocompleteDisabledOptions = ({
           InputProps={{ ...params.InputProps, disableUnderline: true }}
         />
       )}
-      onChange={onChange}
     />
     {error && <HelperText>{error}</HelperText>}
   </>
