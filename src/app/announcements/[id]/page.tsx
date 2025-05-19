@@ -102,6 +102,8 @@ const ArrowButton = styled.button<{ $left?: boolean }>`
 `;
 
 const CustomSlider = styled(Slider)`
+  position: static; /* Allows for absolute positioning of arrows */
+
   .slick-dots {
     position: absolute;
     bottom: 10px; /* Ensures consistent position */
