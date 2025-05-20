@@ -48,6 +48,10 @@ const AnnouncementList = ({
       ...defaultFilters,
     };
 
+    if (searchParams.get("userId")) {
+      initialFilters.userId = searchParams.get("userId")!;
+    }
+
     if (searchParams.get("transactionType")) {
       initialFilters.transactionType = searchParams.get("transactionType") || "";
     }
@@ -79,7 +83,7 @@ const AnnouncementList = ({
     if (type) initialFilters.type = type;
     if (providerType) initialFilters.providerType = providerType;
 
-    setPage(Number(sessionStorage.getItem("page")) || Number(searchParams.get("page")) || 1);
+    setPage(1); // always start at page 1 when filters/source change
 
     Object.keys(defaultFilters).forEach((key) => {
       sessionStorage.removeItem(key);
@@ -108,7 +112,7 @@ const AnnouncementList = ({
       } else {
         await fetchPaginatedAnnouncements({
           page: page || 1,
-          limit: 8,
+          limit: 12,
           filter: filters,
         });
       }
@@ -129,6 +133,14 @@ const AnnouncementList = ({
       setPage(1);
     }
   }, [filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [source]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [user?.id]);
 
   if (!isInitialized) {
     return null;
@@ -163,7 +175,7 @@ const AnnouncementList = ({
           ))}
         </>
       )}
-      {paginated && announcements.length > 0 && meta?.totalPages > 1 && (
+      {paginated && source === "paginated" && announcements.length > 0 && meta?.totalPages > 1 && (
         <Box component="span" sx={{ mt: 4 }}>
           <StyledPagination
             count={meta.totalPages}
