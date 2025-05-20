@@ -82,10 +82,14 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   const pathname = usePathname();
   const router = useRouter();
 
-  const [isFavorized, setIsFavorized] = useState<boolean>(
-    !!user?.favourites?.includes(item.id)
-  );
+  const [isFavorized, setIsFavorized] = useState<boolean>(false);
   const [favsSet, setFavsSet] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (user?.favourites && item?.id) {
+      setIsFavorized(user.favourites.includes(item.id));
+    }
+  }, [user?.favourites, item?.id]);
 
   useEffect(() => {
     if (!user?.id) {

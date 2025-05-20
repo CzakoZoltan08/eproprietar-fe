@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AnnouncementList from "@/app/announcements/AnnouncementList";
@@ -14,43 +14,42 @@ const SavedAnnouncementsWrapper = () => {
     userStore: { user, getCurrentUser },
   } = useStore();
 
-  const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const updateQueryParams = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    return params.toString();
-  };
-
   useEffect(() => {
-    if (!user?.id) {
-      getCurrentUser();
-    }
-  }, [user, getCurrentUser]);
+    const init = async () => {
+      let resolvedUser = user;
 
-  useEffect(() => {
-    if (!user?.id) return;
+      // Load user if missing
+      if (!resolvedUser?.id) {
+        await getCurrentUser();
+        resolvedUser = user;
+      }
 
-    const updatedParams = updateQueryParams("title", "Anunturi salvate");
-    router.push(`${Endpoints.SAVED_ANNOUNCEMENTS}?${updatedParams}`);
-    setLoading(false);
-  }, [user?.id, router]);
+      if (!resolvedUser?.id) {
+        console.warn("User not found; cannot load favorites.");
+        return;
+      }
 
-  return (
-    <Suspense fallback={<CircularProgress size={42} sx={{ margin: "0 auto" }} />}>
-      {loading ? (
-        <CircularProgress sx={{ margin: "0 auto" }} size={42} />
-      ) : (
-        <AnnouncementList paginated={true} source="saved" />
-      )}
-    </Suspense>
-  );
+      // Update query string
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("userId", resolvedUser.id);
+      params.set("title", "Anunturi salvate");
+
+      router.replace(`${Endpoints.SAVED_ANNOUNCEMENTS}?${params.toString()}`);
+      setIsReady(true);
+    };
+
+    init();
+  }, []);
+
+  if (!isReady) {
+    return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
+  }
+
+  return <AnnouncementList paginated={true} source="saved" />;
 };
 
 export default observer(SavedAnnouncementsWrapper);
