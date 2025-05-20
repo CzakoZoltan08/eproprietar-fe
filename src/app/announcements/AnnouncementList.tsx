@@ -14,6 +14,14 @@ import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
+// 🧹 Utility to sanitize filters
+const sanitizeFilters = (filters: Record<string, any>) =>
+  Object.fromEntries(
+    Object.entries(filters).filter(
+      ([_, val]) => val !== undefined && val !== null && val !== ""
+    )
+  );
+
 const AnnouncementList = ({
   paginated = true,
   defaultFilters = {},
@@ -41,35 +49,32 @@ const AnnouncementList = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Guard against missing user for saved or mine
+  // ✅ Block "saved" and "mine" if user is missing
   if ((source === "mine" || source === "saved") && !user?.id) {
     return null;
   }
 
   const initializeFilters = () => {
     const type = searchParams.get("type") || sessionStorage.getItem("type") || "";
-    const providerType = searchParams.get("providerType") || "";
+    const providerType = searchParams.get("providerType");
 
     const initialFilters: Record<string, string | number> = {
       status: "active",
-      providerType,
       ...defaultFilters,
     };
 
-    if (searchParams.get("userId")) {
-      initialFilters.userId = searchParams.get("userId")!;
-    }
-
     if (searchParams.get("transactionType")) {
-      initialFilters.transactionType = searchParams.get("transactionType") || "";
+      initialFilters.transactionType = searchParams.get("transactionType")!;
     }
 
     if (searchParams.get("price")) {
       initialFilters.price = `$lte:${searchParams.get("price")}`;
     }
 
-    if (searchParams.get("minSurface") || searchParams.get("maxSurface")) {
-      initialFilters.surface = `$btw:${searchParams.get("minSurface")},${searchParams.get("maxSurface")}`;
+    const minSurface = searchParams.get("minSurface");
+    const maxSurface = searchParams.get("maxSurface");
+    if (minSurface || maxSurface) {
+      initialFilters.surface = `$btw:${minSurface || 0},${maxSurface || 999999}`;
     }
 
     if (searchParams.get("city")) {
@@ -88,8 +93,19 @@ const AnnouncementList = ({
       initialFilters.announcementType = `$in:${searchParams.get("announcementType")}`;
     }
 
-    if (type) initialFilters.type = type;
-    if (providerType) initialFilters.providerType = providerType;
+    if (providerType) {
+      initialFilters.providerType = providerType;
+    }
+
+    if (type) {
+      initialFilters.type = type;
+    }
+
+    // ✅ Only use userId for saved/mine, not paginated search
+    const userIdParam = searchParams.get("userId");
+    if (userIdParam && (source === "saved" || source === "mine")) {
+      initialFilters.userId = userIdParam;
+    }
 
     setPage(1);
     Object.keys(defaultFilters).forEach((key) => sessionStorage.removeItem(key));
@@ -99,6 +115,7 @@ const AnnouncementList = ({
 
   useEffect(() => {
     initializeFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
   useEffect(() => {
@@ -106,8 +123,10 @@ const AnnouncementList = ({
 
     const fetch = async () => {
       setIsLoading(true);
-      // Clear the previous list immediately to avoid flicker
       announcements.splice(0, announcements.length);
+
+      const sanitizedFilters = sanitizeFilters(filters);
+      console.log("🔍 Fetching announcements with filters:", sanitizedFilters);
 
       if (source === "saved") {
         if (user && user.id) {
@@ -117,7 +136,7 @@ const AnnouncementList = ({
         await fetchPaginatedAnnouncements({
           page: page || 1,
           limit: 12,
-          filter: filters,
+          filter: sanitizedFilters,
         });
       }
 

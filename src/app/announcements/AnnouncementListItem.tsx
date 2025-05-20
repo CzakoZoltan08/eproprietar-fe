@@ -83,14 +83,11 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   const [isFavorized, setIsFavorized] = useState<boolean>(false);
   const [favsSet, setFavsSet] = useState<boolean>(false);
 
-  // 🛡 Defensive guard: don't try to render or run effects without user
-  if (!user) return null;
-
   useEffect(() => {
-    if (Array.isArray(user.favourites) && item?.id) {
+    if (user && Array.isArray(user.favourites) && item?.id) {
       setIsFavorized(user.favourites.includes(item.id));
     }
-  }, [user.favourites, item?.id]);
+  }, [user?.favourites, item?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -173,7 +170,6 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
           <Subtitle>
             {item.rooms && (
               <>
-                {item.rooms}
                 <span>{formatRooms(item.rooms)}&nbsp;</span>
               </>
             )}
