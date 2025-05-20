@@ -18,45 +18,32 @@ const SavedAnnouncementsWrapper = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Load current user if missing
   useEffect(() => {
-    const init = async () => {
-      try {
-        let resolvedUser = user;
+    if (!user?.id) {
+      getCurrentUser();
+    }
+  }, [user, getCurrentUser]);
 
-        // Load user if missing
-        if (!resolvedUser?.id) {
-          await getCurrentUser();
-          resolvedUser = user;
-        }
+  // After user is available, update the URL or mark as ready
+  useEffect(() => {
+    if (!user?.id) return;
 
-        if (!resolvedUser?.id) {
-          console.warn("User not found; cannot load favorites.");
-          return;
-        }
+    const currentUserId = searchParams.get("userId");
+    const currentTitle = searchParams.get("title");
 
-        const currentUserId = searchParams.get("userId");
-        const currentTitle = searchParams.get("title");
+    if (currentUserId === user.id && currentTitle === "Anunturi salvate") {
+      setIsReady(true);
+      return;
+    }
 
-        // Prevent redirect loop if already correct
-        if (currentUserId === resolvedUser.id && currentTitle === "Anunturi salvate") {
-          setIsReady(true);
-          return;
-        }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("userId", String(user.id));
+    params.set("title", "Anunturi salvate");
 
-        // Update query string
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("userId", String(resolvedUser.id));
-        params.set("title", "Anunturi salvate");
-
-        router.replace(`${Endpoints.SAVED_ANNOUNCEMENTS}?${params.toString()}`);
-        setIsReady(true);
-      } catch (error) {
-        console.error("Error initializing SavedAnnouncementsWrapper:", error);
-      }
-    };
-
-    init();
-  }, [searchParams, router, user, getCurrentUser]);
+    router.replace(`${Endpoints.SAVED_ANNOUNCEMENTS}?${params.toString()}`);
+    setIsReady(true);
+  }, [user?.id, searchParams, router]);
 
   if (!isReady) {
     return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
