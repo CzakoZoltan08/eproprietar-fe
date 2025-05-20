@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AnnouncementList from "@/app/announcements/AnnouncementList";
@@ -14,37 +14,35 @@ const MyAnnouncementsWrapper = () => {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  function updateQueryParams(params: URLSearchParams, key: string, value: string | null) {
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    return params;
-  }
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
 
-    const currentUserId = searchParams.get("userId");
-    if (currentUserId === user.id) return; // avoid infinite redirect loop
-
     const params = new URLSearchParams(searchParams.toString());
-    updateQueryParams(params, "page", "1");
-    updateQueryParams(params, "userId", user.id);
-    updateQueryParams(params, "title", "Anunturile mele");
 
-    router.push(`/my-announcements?${params.toString()}`);
+    const alreadySet =
+      params.get("userId") === user.id &&
+      params.get("title") === "Anunturile mele";
+
+    if (alreadySet) {
+      setShouldRender(true);
+      return;
+    }
+
+    params.set("page", "1");
+    params.set("userId", user.id);
+    params.set("title", "Anunturile mele");
+
+    router.replace(`/my-announcements?${params.toString()}`);
   }, [user, searchParams, router]);
 
-  // Block rendering until user is known
-  if (!user?.id) {
-    return <div>Loading...</div>; // or `null`
+  if (!user?.id || !shouldRender) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading announcements...</div>}>
       <AnnouncementList paginated={true} source="mine" />
     </Suspense>
   );
