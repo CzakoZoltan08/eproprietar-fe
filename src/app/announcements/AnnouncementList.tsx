@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   StyledPagination,
@@ -34,13 +34,14 @@ const AnnouncementList = ({
     },
     userStore: { user },
   } = useStore();
-  const searchParams = useSearchParams();
 
+  const searchParams = useSearchParams();
   const [page, setPage] = useState<number | null>(null);
   const [filters, setFilters] = useState<Record<string, string | number>>({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 🛡 Guard against null user for saved/mine sources
+  // Guard against missing user for saved or mine
   if ((source === "mine" || source === "saved") && !user?.id) {
     return null;
   }
@@ -104,6 +105,10 @@ const AnnouncementList = ({
     if (!isInitialized || (source === "saved" && !user?.id)) return;
 
     const fetch = async () => {
+      setIsLoading(true);
+      // Clear the previous list immediately to avoid flicker
+      announcements.splice(0, announcements.length);
+
       if (source === "saved") {
         if (user && user.id) {
           await fetchSavedAnnouncements(user.id);
@@ -115,24 +120,19 @@ const AnnouncementList = ({
           filter: filters,
         });
       }
+
+      setIsLoading(false);
     };
 
     fetch();
   }, [filters, page, isInitialized, source, user?.id]);
 
-  const handleChangePage = async (
-    event: React.ChangeEvent<unknown>,
-    newPage: number
-  ) => {
-    setPage(newPage);
-  };
-
   useEffect(() => {
     setPage(1);
   }, [filters, source, user?.id]);
 
-  if (!isInitialized) {
-    return null;
+  if (!isInitialized || isLoading) {
+    return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
   }
 
   return (
@@ -171,7 +171,7 @@ const AnnouncementList = ({
           <StyledPagination
             count={meta.totalPages}
             page={page || 1}
-            onChange={handleChangePage}
+            onChange={(event, newPage) => setPage(newPage)}
             defaultPage={1}
             color="primary"
             size="large"
