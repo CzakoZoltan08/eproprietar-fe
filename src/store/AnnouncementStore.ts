@@ -52,8 +52,8 @@ export class AnnouncementStore {
     return await this.announcementApi.createAnnouncement(data);
   }
 
-  async createImageOrVideo(data: FormData, userId: string, announcementId: string): Promise<any | null> {
-    return await this.announcementApi.createImageOrVideo(data, userId, announcementId);
+  async createImageOrVideo(data: FormData, announcementId: string): Promise<any | null> {
+    return await this.announcementApi.createImageOrVideo(data, announcementId);
   }
 
   async updateAnnouncement(id: string, data: Partial<CreateAnnouncementDto>) {
@@ -80,7 +80,7 @@ export class AnnouncementStore {
   
     // Fetch images separately
     if (announcement?.user?.id) {
-      this.fetchAnnouncementImages(announcement.user.id, announcement.id);
+      this.fetchAnnouncementImages(announcement.id);
     }
   }
   
@@ -120,9 +120,9 @@ export class AnnouncementStore {
     this.setAnnouncements(resp);
   }
 
-  async fetchAnnouncementImages(userId: string, announcementId: string) {
+  async fetchAnnouncementImages(announcementId: string) {
     try {
-      const response = await this.announcementApi.getAnnouncementImages(userId, announcementId);
+      const response = await this.announcementApi.getAnnouncementImages(announcementId);
       
       // ✅ Filter only image resources
       const images = response?.resources
