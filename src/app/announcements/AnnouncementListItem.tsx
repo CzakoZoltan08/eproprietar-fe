@@ -41,13 +41,11 @@ const DEFAULT_IMAGE_URL =
 const IMAGE_WIDTH = 250;
 const IMAGE_HEIGHT = 200;
 const BUTTON_TEXT = "Vezi anunțul";
-const ICON_POSITION = { top: "12px", right: "12px" };
 
-// Styled Components
 const IconButtonWrapper = styled.div`
   position: absolute;
-  top: ${ICON_POSITION.top};
-  right: ${ICON_POSITION.right};
+  top: 12px;
+  right: 12px;
   display: flex;
   gap: 12px;
   z-index: 2;
@@ -79,17 +77,20 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
     announcementStore,
   } = useStore();
 
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [isFavorized, setIsFavorized] = useState<boolean>(false);
   const [favsSet, setFavsSet] = useState<boolean>(false);
 
+  // 🛡 Defensive guard: don't try to render or run effects without user
+  if (!user) return null;
+
   useEffect(() => {
-    if (user?.favourites && item?.id) {
+    if (Array.isArray(user.favourites) && item?.id) {
       setIsFavorized(user.favourites.includes(item.id));
     }
-  }, [user?.favourites, item?.id]);
+  }, [user.favourites, item?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -98,11 +99,11 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   }, [user, getCurrentUser]);
 
   useEffect(() => {
-    if (user && user.id && !favsSet) {
+    if (user && user.id && !favsSet && item?.id) {
       setIsFavorized(!!user?.favourites?.includes(item.id));
       setFavsSet(true);
     }
-  }, [user, favsSet, item.id]);
+  }, [user, favsSet, item?.id]);
 
   const goToItem = useCallback(
     (id: string) => {
@@ -114,7 +115,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   const handleFavourite = async () => {
     if (!user?.id) return;
 
-    let newFavsArray = user?.favourites || [];
+    let newFavsArray = user.favourites || [];
     if (isFavorized) {
       newFavsArray = newFavsArray.filter((fav) => fav !== item.id);
     } else {
@@ -132,7 +133,6 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   const handleDelete = async () => {
     if (confirm("Ești sigur că vrei să ștergi acest anunț?")) {
       await announcementStore.deleteAnnouncement(item.id);
-
       await announcementStore.fetchPaginatedAnnouncements({
         page: 1,
         limit: 8,
