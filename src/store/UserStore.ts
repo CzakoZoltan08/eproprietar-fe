@@ -39,7 +39,7 @@ export class UserStore {
     });
   }
   
-  setCurrentUser(currentUser: UserModel) {
+  setCurrentUser(currentUser: UserModel | null) {
     runInAction(() => {
       this.user = currentUser;
     });

@@ -42,6 +42,7 @@ const AuthButton = () => {
 
   const onLogout = async () => {
     await logout();
+    setIsAuth(false);
     goToHome();
   };
 
