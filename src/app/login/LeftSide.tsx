@@ -150,10 +150,6 @@ const LeftSide = () => {
       const userByEmail = await userApi.getUserByEmail(user.email || "");
       if (!userByEmail) throw new Error("User not found in the system.");
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem(StorageKeys.token, token);
-      }
-
       userStore.setCurrentUser(userByEmail);
       setIsLoading(false);
       router.replace("/");
@@ -161,9 +157,6 @@ const LeftSide = () => {
       console.error("Login failed:", error);
       setIsLoading(false);
       setRequestError("Email or password is incorrect!");
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(StorageKeys.token);
-      }
     }
   };
 

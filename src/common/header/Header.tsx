@@ -11,6 +11,7 @@ import Image from "next/image";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import logo from "../../assets/logo-white.svg";
 import styled from "styled-components";
+import { useStore } from "@/hooks/useStore";
 
 const Wrapper = styled.div`
   height: 90px;

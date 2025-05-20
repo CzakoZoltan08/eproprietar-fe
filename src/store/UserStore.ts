@@ -45,6 +45,10 @@ export class UserStore {
     });
   }
 
+  get isLoggedIn(): boolean {
+    return !!this.user;
+  }
+
   async updateUser(id: string, data: Partial<UserModel>) {
     const updatedUser = await this.userApi.updateUser(id, data);
     this.setCurrentUser(updatedUser);

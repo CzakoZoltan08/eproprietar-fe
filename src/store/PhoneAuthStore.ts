@@ -45,11 +45,6 @@ export class PhoneAuthStore {
   async verifyPhoneOtp(confirmationResult: any, verificationCode: string) {
       try {
         const userCredential = await confirmationResult.confirm(verificationCode);
-        const token = await userCredential.user.getIdToken();
-  
-        if (token && typeof window !== "undefined") {
-          localStorage.setItem(StorageKeys.token, token);
-        }
   
         const user = {
           email: userCredential.user.email || null,

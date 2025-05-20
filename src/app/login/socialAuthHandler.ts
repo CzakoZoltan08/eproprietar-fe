@@ -10,12 +10,6 @@ export const handleSocialAuth = async (
 ) => {
   try {
     const result = await signInWithPopup(auth, provider);
-    const token = await result.user?.getIdToken();
-
-    // Store token temporarily to use in user API calls
-    if (token && typeof window !== "undefined") {
-      localStorage.setItem(StorageKeys.token, token);
-    }
 
     // Ensure that email is not empty
     const email = result.user.email?.trim();
@@ -42,7 +36,6 @@ export const handleSocialAuth = async (
     // Ensure user was successfully created or retrieved
     if (!userByEmail) {
       // Remove token since user could not be created/retrieved
-      localStorage.removeItem(StorageKeys.token);
       throw new Error("Login failed: User could not be created or retrieved.");
     }
 
@@ -51,11 +44,6 @@ export const handleSocialAuth = async (
 
   } catch (error) {
     console.error(`${authProviderName} login failed:`, error);
-
-    // Remove token from localStorage if login flow fails
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(StorageKeys.token);
-    }
 
     throw error;
   }

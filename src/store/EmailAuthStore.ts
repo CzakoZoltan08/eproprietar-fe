@@ -28,10 +28,6 @@ export class EmailAuthStore {
       await updateProfile(user, { displayName: `${firstName} ${lastName}` });
       const token = await user.getIdToken();
 
-      if (token && typeof window !== "undefined") {
-        localStorage.setItem(StorageKeys.token, token);
-      }
-
       const userModel = {
         email: user.email || "",
         firstName,
@@ -43,7 +39,6 @@ export class EmailAuthStore {
 
       const createdUser = await this.userApi.createUser(userModel);
       if (!createdUser) {
-        localStorage.removeItem(StorageKeys.token); // Remove token if user creation fails
         throw new Error("User creation failed. Please try again.");
       }
 
@@ -74,16 +69,10 @@ export class EmailAuthStore {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const token = await user.getIdToken();
-
-      if (token && typeof window !== "undefined") {
-        localStorage.setItem(StorageKeys.token, token);
-      }
 
       const userByEmail = await this.userApi.getUserByEmail(user.email || "");
       if (!userByEmail) {
         // User must exist in the backend to proceed
-        localStorage.removeItem(StorageKeys.token); // Remove token if user is not found
         throw new Error("User not found in our system. Please register.");
       }
 
@@ -92,10 +81,6 @@ export class EmailAuthStore {
       });
 
     } catch (error: any) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(StorageKeys.token); // Ensure token is removed on error
-      }
-
       console.error("Login error:", error);
       let errorMessage = "";
 

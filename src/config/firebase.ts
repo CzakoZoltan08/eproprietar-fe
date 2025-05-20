@@ -1,4 +1,4 @@
-import { Auth, GoogleAuthProvider, getAuth } from "firebase/auth";
+import { Auth, GoogleAuthProvider, browserLocalPersistence, getAuth, setPersistence } from "firebase/auth";
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 
 // Firebase config from environment variables
@@ -18,3 +18,5 @@ const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : get
 // Firebase services initialization
 export const auth: Auth = getAuth(app);
 export const googleAuth = new GoogleAuthProvider();
+
+await setPersistence(auth, browserLocalPersistence);
