@@ -36,6 +36,7 @@ function getDropdownValuesNumberRange(start: number, end: number, step: number) 
 export const Main = () => {
   const {
     announcementStore: { fetchPaginatedAnnouncements },
+    userStore : { getCurrentUser, user }
   } = useStore();
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -55,6 +56,12 @@ export const Main = () => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) {
+      getCurrentUser();
+    }
+  }, [user?.id, getCurrentUser]);
 
   useEffect(() => {
     setPriceOptions(
