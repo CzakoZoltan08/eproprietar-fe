@@ -42,7 +42,7 @@ const AuthButton = () => {
 
   const onLogout = async () => {
     await logout();
-    goToLogin();
+    goToHome();
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -55,6 +55,10 @@ const AuthButton = () => {
 
   const goToLogin = () => {
     router.push("/login");
+  };
+
+  const goToHome = () => {
+    router.push("/");
   };
 
   const handleClose = () => {
