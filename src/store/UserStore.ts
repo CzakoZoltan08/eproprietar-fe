@@ -39,10 +39,14 @@ export class UserStore {
     });
   }
   
-  setCurrentUser(currentUser: UserModel) {
+  setCurrentUser(currentUser: UserModel | null) {
     runInAction(() => {
       this.user = currentUser;
     });
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.user;
   }
 
   async updateUser(id: string, data: Partial<UserModel>) {

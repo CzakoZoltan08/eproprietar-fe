@@ -1,8 +1,4 @@
-import { sendPasswordResetEmail } from "firebase/auth";
 import { makeAutoObservable, runInAction } from "mobx";
-import {
-  signOut,
-} from "firebase/auth";
 
 import { AuthApi } from "@/api/AuthApi";
 import { StorageKeys } from "@/constants/storageKeys";
@@ -10,6 +6,10 @@ import { UserApi } from "@/api/UserApi";
 import { UserStore } from "@/store/UserStore";
 import { auth } from "@/config/firebase";
 import autoBind from "auto-bind";
+import { sendPasswordResetEmail } from "firebase/auth";
+import {
+  signOut,
+} from "firebase/auth";
 
 export class AuthStore {
   authApi: AuthApi;
@@ -52,12 +52,26 @@ export class AuthStore {
   }
 
   async logout() {
-    signOut(auth).then(() => console.log("User signed out!"));
-
     if (typeof window !== "undefined") {
       localStorage.clear();
     }
+
+    // Trigger MobX change BEFORE async work
+    this.userStore.setCurrentUser(null);
+    
+    runInAction(() => {
+      this.accessToken = null;
+    });
+
+    try {
+      await signOut(auth);
+      console.log("User signed out!");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   }
+
+
 
   async resetPassword(email: string) {
     const userByEmail = await this.userApi.getUserByEmail(email);

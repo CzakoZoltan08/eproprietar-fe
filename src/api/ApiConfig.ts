@@ -2,7 +2,7 @@ import axios, { Method } from "axios";
 
 import { ContentTypes } from "@/constants/content-types.enum";
 import { Headers } from "@/constants/headers.enum";
-import { StorageKeys } from "@/constants/storageKeys";
+import { auth } from "@/config/firebase";
 
 export class ApiConfig {
   constructor(private readonly api: string) {}
@@ -16,30 +16,32 @@ export class ApiConfig {
   ): Promise<T | null> {
     if (typeof window === "undefined") return null;
 
+    let token: string | null = null;
+
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        token = await user.getIdToken();
+      } catch (e) {
+        console.warn("⚠️ Could not get Firebase token:", e);
+      }
+    }
+
     try {
-      const accessToken = localStorage.getItem(StorageKeys.token);
       const response = await axios<T>({
         method,
         url: `${this.api}${endpoint}`,
         data,
         params,
         headers: {
-          [Headers.AUTHORIZATION]: `Bearer ${accessToken}`,
+          ...(token ? { [Headers.AUTHORIZATION]: `Bearer ${token}` } : {}),
           [Headers.CONTENT_TYPE]: contentType,
         },
       });
 
       return response.data;
     } catch (error) {
-      // console.error("❌ API Error:", {
-      //   message: axios.isAxiosError(error) ? error.message : String(error),
-      //   url: `${this.api}${endpoint}`,
-      //   method,
-      //   data,
-      //   params,
-      //   response: axios.isAxiosError(error) ? error.response?.data : null,
-      //   status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      // });
+      this.logError(error);
       return null;
     }
   }

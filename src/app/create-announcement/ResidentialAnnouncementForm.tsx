@@ -205,7 +205,6 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const handleSubmit = async () => {
-    localStorage.removeItem("announcementRealId");
     const { thumbnail, logo, images, videos, ...cleanFormData } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
