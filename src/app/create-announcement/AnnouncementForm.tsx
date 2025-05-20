@@ -340,10 +340,19 @@ const AnnouncementFormContent = () => {
   // Load current announcement for editing
   useEffect(() => {
     if (isEdit && currentAnnouncement) {
+      const normalizedType = propertyTypes.find(
+        (type) =>
+          type.toLowerCase() === currentAnnouncement.announcementType?.toLowerCase()
+      );
+
       setFormData({
-        announcementType: currentAnnouncement.announcementType || "",
-        providerType: formData.providerType, // Add providerType here
-        transactionType: currentAnnouncement.transactionType || "",
+        announcementType: normalizedType || propertyTypes[0],
+        providerType: formData.providerType,
+        transactionType:
+          serviceTypes.find(
+            (type) =>
+              type.toLowerCase() === currentAnnouncement.transactionType?.toLowerCase()
+          ) || serviceTypes[0],
         title: currentAnnouncement.title || "",
         description: currentAnnouncement.description || "",
         price: currentAnnouncement.price?.toString() || "",
@@ -364,11 +373,11 @@ const AnnouncementFormContent = () => {
         videos: [],
         sketch: null,
       });
+
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
       }
 
-      // Only set contactPhone if it's not already set
       if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
         setContactPhone(currentAnnouncement.user.phoneNumber);
       }
