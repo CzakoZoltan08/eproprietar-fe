@@ -28,6 +28,7 @@ interface PrimaryButtonProps {
   size?: Size;
   fullWidth?: boolean;
   sx?: SxProps;
+  disabled?: boolean; // <-- Add this line
 }
 
 const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(

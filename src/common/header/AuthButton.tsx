@@ -25,6 +25,7 @@ const StyledMenu = styled(Menu)`
   }
 `;
 
+
 const AuthButton = () => {
   const {
     authStore: { logout },
@@ -33,6 +34,7 @@ const AuthButton = () => {
   const [isAuth, setIsAuth] = React.useState<boolean | null>(null);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
 
   React.useEffect(() => {
     // Runs only on the client
@@ -41,6 +43,7 @@ const AuthButton = () => {
   }, []);
 
   const onLogout = async () => {
+    handleClose();
     await logout();
     setIsAuth(false);
     goToHome();

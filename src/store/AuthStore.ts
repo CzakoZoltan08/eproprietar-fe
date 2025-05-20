@@ -58,6 +58,7 @@ export class AuthStore {
 
     // Trigger MobX change BEFORE async work
     this.userStore.setCurrentUser(null);
+    
     runInAction(() => {
       this.accessToken = null;
     });

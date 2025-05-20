@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
 import { Box, Typography } from "@mui/material";
+
 import { InputField } from "@/common/input/InputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
+import React from "react";
 import { useRouter } from "next/navigation";
 
 const styles = {
@@ -44,12 +45,14 @@ const LoginForm = ({
   requestError,
   onChange,
   onSubmit,
+  isLoading = false, // <-- added with default
 }: {
   formData: { email: string; password: string };
   formErrors: { email: string; password: string };
   requestError: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
+  isLoading?: boolean; // <-- make it optional
 }) => {
   const router = useRouter();
 
@@ -78,7 +81,12 @@ const LoginForm = ({
           />
 
           <Box mt={2}>
-            <PrimaryButton onClick={onSubmit} text="Log in" size="large" />
+            <PrimaryButton
+              onClick={onSubmit}
+              text={isLoading ? "Logging in..." : "Log in"}
+              size="large"
+              disabled={isLoading} // <-- disable during loading
+            />
           </Box>
           {requestError && <span style={styles.errorText}>{requestError}</span>}
         </Box>

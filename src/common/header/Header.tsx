@@ -2,7 +2,8 @@ import * as breakpoints from "../../constants/breakpoints";
 import * as colors from "../../constants/colors";
 
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import AuthButton from "./AuthButton";
 import { Button } from "@mui/material";
@@ -10,7 +11,6 @@ import Image from "next/image";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import logo from "../../assets/logo-white.svg";
 import styled from "styled-components";
-import { useRouter } from "next/navigation";
 
 const Wrapper = styled.div`
   height: 90px;
@@ -119,9 +119,14 @@ const DropdownMenu = styled.div`
 
 const Header = () => {
   const router = useRouter();
+  const pathname = usePathname();
 
   // Menu state
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOpenMenu(null);
+  }, [pathname]);
 
   const handleMouseEnter = (menu: string) => setOpenMenu(menu);
   const handleMouseLeave = () => setOpenMenu(null);
