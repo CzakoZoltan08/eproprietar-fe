@@ -1,3 +1,5 @@
+"use client";
+
 import { Box, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
@@ -16,7 +18,7 @@ const AnnouncementList = ({
   paginated = true,
   defaultFilters = {},
   title = "",
-  source = "paginated", // NEW
+  source = "paginated",
 }: {
   paginated: boolean;
   defaultFilters?: Record<string, string | number>;
@@ -38,8 +40,8 @@ const AnnouncementList = ({
   const [filters, setFilters] = useState<Record<string, string | number>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ✅ guard for user-dependent lists
-  if (source === "mine" && !user?.id) {
+  // 🛡 Guard against null user for saved/mine sources
+  if ((source === "mine" || source === "saved") && !user?.id) {
     return null;
   }
 
@@ -88,17 +90,9 @@ const AnnouncementList = ({
     if (type) initialFilters.type = type;
     if (providerType) initialFilters.providerType = providerType;
 
-    setPage(1); // always start at page 1 when filters/source change
-
-    Object.keys(defaultFilters).forEach((key) => {
-      sessionStorage.removeItem(key);
-    });
-
-    setFilters({
-      ...initialFilters,
-      ...defaultFilters,
-    });
-
+    setPage(1);
+    Object.keys(defaultFilters).forEach((key) => sessionStorage.removeItem(key));
+    setFilters({ ...initialFilters, ...defaultFilters });
     setIsInitialized(true);
   };
 
@@ -111,7 +105,7 @@ const AnnouncementList = ({
 
     const fetch = async () => {
       if (source === "saved") {
-        if (user?.id) {
+        if (user && user.id) {
           await fetchSavedAnnouncements(user.id);
         }
       } else {
@@ -134,18 +128,8 @@ const AnnouncementList = ({
   };
 
   useEffect(() => {
-    if (filters) {
-      setPage(1);
-    }
-  }, [filters]);
-
-  useEffect(() => {
     setPage(1);
-  }, [source]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [user?.id]);
+  }, [filters, source, user?.id]);
 
   if (!isInitialized) {
     return null;
@@ -160,6 +144,7 @@ const AnnouncementList = ({
       >
         {title || filters.type || "Anunțuri"}
       </Typography>
+
       {filters.providerType === "ensemble" ? (
         <Box
           sx={{
@@ -180,6 +165,7 @@ const AnnouncementList = ({
           ))}
         </>
       )}
+
       {paginated && source === "paginated" && announcements.length > 0 && meta?.totalPages > 1 && (
         <Box component="span" sx={{ mt: 4 }}>
           <StyledPagination
