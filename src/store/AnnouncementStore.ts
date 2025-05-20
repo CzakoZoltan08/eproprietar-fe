@@ -43,9 +43,10 @@ export class AnnouncementStore {
 
   setAnnouncements(announcements: PropertyAnnouncementModel[]) {
     runInAction(() => {
-      this.announcements = announcements;
+      this.announcements.splice(0, this.announcements.length, ...announcements);
     });
   }
+
 
   async createAnnouncement(data: CreateAnnouncementDto): Promise<any | null> {
     return await this.announcementApi.createAnnouncement(data);

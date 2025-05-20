@@ -100,7 +100,7 @@ export const Main = () => {
     return params;
   };
 
-  const onSearch = async () => {
+  const onSearch = () => {
     const selectedType = typeOptions.find((it) => it.value === filters.TYPE);
     const selectedTransactionType = transactionTypeOptions.find(
       (it) => it.value === filters.TRANSACTION_TYPE
@@ -110,25 +110,6 @@ export const Main = () => {
 
     const isCabaneType = filters.TYPE === "Cabane/Case la tara";
     const isApartmentType = filters.TYPE === "Apartamente";
-
-    const dynamicFilters: Record<string, any> = {
-      rooms: filters.ROOMS,
-      price: filters.PRICE,
-      minSurface: filters.MIN_SURFACE,
-      maxSurface: filters.MAX_SURFACE,
-      transactionType: filters.TRANSACTION_TYPE,
-      type: filters.TYPE,
-      status: filters.STATUS,
-      ...(isCabaneType
-        ? { county: filters.COUNTY }
-        : { city: filters.CITY }),
-    };
-
-    await fetchPaginatedAnnouncements({
-      page: 1,
-      limit: 8,
-      filter: dynamicFilters,
-    });
 
     [
       ["page", "1"],
@@ -146,6 +127,8 @@ export const Main = () => {
       handleQueryParams(queryParams, key!.toString(), value)
     );
 
+    // 🛑 DO NOT CALL fetchPaginatedAnnouncements HERE
+    // ✅ Just update the URL
     router.push(`${Endpoints.ANNOUNCEMENTS}?${queryParams.toString()}`);
   };
 
