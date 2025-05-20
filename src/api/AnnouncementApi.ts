@@ -35,7 +35,6 @@ export class AnnouncementApi {
 
   async createImageOrVideo(
     fileData: FormData,
-    userId: string,
     announcementId: string,
     options?: {
       fileName?: string;
@@ -50,7 +49,7 @@ export class AnnouncementApi {
         () =>
           this.apiConfig.sendRequest(
             HttpMethods.POST,
-            `${Endpoints.UPLOADS}/${userId}/${announcementId}`,
+            `${Endpoints.UPLOADS}/${announcementId}`,
             fileData,
             undefined,
             ContentTypes.MULTIPART
@@ -115,10 +114,10 @@ export class AnnouncementApi {
     return this.apiConfig.sendRequest(HttpMethods.GET, endpoint);
   }
 
-  async getAnnouncementImages(userId: string, announcementId: string) {
+  async getAnnouncementImages(announcementId: string) {
     return this.apiConfig.sendRequest(
       HttpMethods.GET,
-      `${Endpoints.GET_ANNOUNCEMENT_IMAGES}/${userId}/${announcementId}`
+      `${Endpoints.GET_ANNOUNCEMENT_IMAGES}/${announcementId}`
     );
   }
 

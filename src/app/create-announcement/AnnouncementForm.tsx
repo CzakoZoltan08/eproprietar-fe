@@ -635,7 +635,7 @@ const AnnouncementFormContent = () => {
         formDataToSend.append("file", image);
         formDataToSend.append("type", "image");
   
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        await createImageOrVideo(formDataToSend, announcementId);
         incrementImage();
       })()
     );
@@ -648,7 +648,7 @@ const AnnouncementFormContent = () => {
         }
         formDataToSend.append("type", "image");
   
-        const response = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        const response = await createImageOrVideo(formDataToSend, announcementId);
         if (response?.optimized_url) {
           await updateAnnouncement(announcementId, { imageUrl: response.optimized_url });
         }
@@ -673,7 +673,7 @@ const AnnouncementFormContent = () => {
     
         formDataToSend.append("type", "image");
     
-        const uploadResponse = await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        const uploadResponse = await createImageOrVideo(formDataToSend, announcementId);
         if (uploadResponse?.optimized_url) {
           await updateAnnouncement(announcementId, { sketchUrl: uploadResponse.optimized_url });
         }
@@ -690,7 +690,7 @@ const AnnouncementFormContent = () => {
         formDataToSend.append("file", video);
         formDataToSend.append("type", "video");
   
-        await createImageOrVideo(formDataToSend, user?.id || "", announcementId);
+        await createImageOrVideo(formDataToSend, announcementId);
         incrementVideo();
       })()
     );

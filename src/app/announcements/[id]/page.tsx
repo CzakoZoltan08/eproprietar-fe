@@ -506,7 +506,7 @@ const AnnouncementDetailPage: React.FC = () => {
     getAnnouncementById(announcementId).then(() => {
       const fetched = currentAnnouncement;
       if (fetched?.id && fetched?.user?.id) {
-        fetchAnnouncementImages(fetched.user.id, fetched.id).then(() => {
+        fetchAnnouncementImages(fetched.id).then(() => {
           setAnnouncement({ ...fetched });
           setImages(fetched.images ?? []);
           setVideos(fetched.videos ?? []);
@@ -559,7 +559,7 @@ const AnnouncementDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (announcement?.id && announcement?.user?.id) {
-      fetchAnnouncementImages(announcement.user.id, announcement.id);
+      fetchAnnouncementImages(announcement.id);
     }
   }, [announcement?.id, announcement?.user?.id, fetchAnnouncementImages]);
 

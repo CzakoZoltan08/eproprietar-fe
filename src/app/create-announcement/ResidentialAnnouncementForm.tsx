@@ -142,7 +142,7 @@ const ResidentialAnnouncementForm = () => {
         fd.append("file", image);
         fd.append("type", "image");
 
-        await createImageOrVideo(fd, user?.id || "", announcementId);
+        await createImageOrVideo(fd, announcementId);
         incrementImage();
       })()
     );
@@ -155,7 +155,7 @@ const ResidentialAnnouncementForm = () => {
         }
         fd.append("type", "image");
 
-        const response = await createImageOrVideo(fd, user?.id || "", announcementId);
+        const response = await createImageOrVideo(fd, announcementId);
         if (response?.optimized_url) {
           await updateAnnouncement(announcementId, {
             imageUrl: response.optimized_url,
@@ -175,7 +175,7 @@ const ResidentialAnnouncementForm = () => {
         }
         fd.append("type", "image");
 
-        const response = await createImageOrVideo(fd, user?.id || "", announcementId);
+        const response = await createImageOrVideo(fd, announcementId);
         if (response?.optimized_url) {
           await updateAnnouncement(announcementId, {
             logoUrl: response.optimized_url,
@@ -193,7 +193,7 @@ const ResidentialAnnouncementForm = () => {
         fd.append("file", video);
         fd.append("type", "video");
 
-        await createImageOrVideo(fd, user?.id || "", announcementId);
+        await createImageOrVideo(fd, announcementId);
         incrementVideo();
       })()
     );
