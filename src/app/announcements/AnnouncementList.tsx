@@ -38,6 +38,11 @@ const AnnouncementList = ({
   const [filters, setFilters] = useState<Record<string, string | number>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // ✅ guard for user-dependent lists
+  if (source === "mine" && !user?.id) {
+    return null;
+  }
+
   const initializeFilters = () => {
     const type = searchParams.get("type") || sessionStorage.getItem("type") || "";
     const providerType = searchParams.get("providerType") || "";

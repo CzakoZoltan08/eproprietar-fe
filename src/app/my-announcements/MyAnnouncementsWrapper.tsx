@@ -27,6 +27,9 @@ const MyAnnouncementsWrapper = () => {
   useEffect(() => {
     if (!user?.id) return;
 
+    const currentUserId = searchParams.get("userId");
+    if (currentUserId === user.id) return; // avoid infinite redirect loop
+
     const params = new URLSearchParams(searchParams.toString());
     updateQueryParams(params, "page", "1");
     updateQueryParams(params, "userId", user.id);
@@ -35,9 +38,14 @@ const MyAnnouncementsWrapper = () => {
     router.push(`/my-announcements?${params.toString()}`);
   }, [user, searchParams, router]);
 
+  // Block rendering until user is known
+  if (!user?.id) {
+    return <div>Loading...</div>; // or `null`
+  }
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <AnnouncementList paginated={true} />
+      <AnnouncementList paginated={true} source="mine" />
     </Suspense>
   );
 };
