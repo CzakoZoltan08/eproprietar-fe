@@ -578,8 +578,8 @@ const AnnouncementDetailPage: React.FC = () => {
       <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", alignItems: "center" }}>
         <ResponsiveBox>
           <GalleryContainerImage>
-            {images.length > 0 ? (
-              <ImageGallery key={announcement.id} images={images} />
+            {(currentAnnouncement?.images ?? []).length > 0 ? (
+              <ImageGallery key={announcement.id} images={currentAnnouncement?.images ?? []} />
             ) : (
               <Box>No images available</Box>
             )}
@@ -588,11 +588,11 @@ const AnnouncementDetailPage: React.FC = () => {
   
         {/* ✅ Responsive Video Gallery Section */}
         <ResponsiveBox>
-          {videos.length > 0 && (
+          {Array.isArray(currentAnnouncement?.videos) && currentAnnouncement.videos.length > 0 ? (
             <GalleryContainer>
-              <VideoGallery key={announcement.id} videos={videos} />
+              <VideoGallery key={announcement.id} videos={currentAnnouncement.videos} />
             </GalleryContainer>
-          )}
+          ) : null}
         </ResponsiveBox>
   
         {/* Description & Characteristics */}
