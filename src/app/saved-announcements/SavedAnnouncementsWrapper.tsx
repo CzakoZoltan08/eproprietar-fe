@@ -20,30 +20,43 @@ const SavedAnnouncementsWrapper = () => {
 
   useEffect(() => {
     const init = async () => {
-      let resolvedUser = user;
+      try {
+        let resolvedUser = user;
 
-      // Load user if missing
-      if (!resolvedUser?.id) {
-        await getCurrentUser();
-        resolvedUser = user;
+        // Load user if missing
+        if (!resolvedUser?.id) {
+          await getCurrentUser();
+          resolvedUser = user;
+        }
+
+        if (!resolvedUser?.id) {
+          console.warn("User not found; cannot load favorites.");
+          return;
+        }
+
+        const currentUserId = searchParams.get("userId");
+        const currentTitle = searchParams.get("title");
+
+        // Prevent redirect loop if already correct
+        if (currentUserId === resolvedUser.id && currentTitle === "Anunturi salvate") {
+          setIsReady(true);
+          return;
+        }
+
+        // Update query string
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("userId", String(resolvedUser.id));
+        params.set("title", "Anunturi salvate");
+
+        router.replace(`${Endpoints.SAVED_ANNOUNCEMENTS}?${params.toString()}`);
+        setIsReady(true);
+      } catch (error) {
+        console.error("Error initializing SavedAnnouncementsWrapper:", error);
       }
-
-      if (!resolvedUser?.id) {
-        console.warn("User not found; cannot load favorites.");
-        return;
-      }
-
-      // Update query string
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("userId", resolvedUser.id);
-      params.set("title", "Anunturi salvate");
-
-      router.replace(`${Endpoints.SAVED_ANNOUNCEMENTS}?${params.toString()}`);
-      setIsReady(true);
     };
 
     init();
-  }, []);
+  }, [searchParams, router, user, getCurrentUser]);
 
   if (!isReady) {
     return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
