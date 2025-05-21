@@ -230,8 +230,9 @@ const ImageContainer = styled.div`
 const Image = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;  // ✅ Ensures full image is visible, adds letterboxing if needed
   display: block;
+  background-color: white; // Optional: helps make letterbox areas visually clean
 `;
 
 interface Image {
