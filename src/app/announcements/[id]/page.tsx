@@ -4,7 +4,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import { ArrowLeft, ArrowRight, Pause, PlayArrow } from "@mui/icons-material";
-import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
+import { Box, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
@@ -230,8 +230,9 @@ const ImageContainer = styled.div`
 const Image = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;  // ✅ Ensures full image is visible, adds letterboxing if needed
   display: block;
+  background-color: white; // Optional: helps make letterbox areas visually clean
 `;
 
 interface Image {
@@ -247,6 +248,20 @@ const ImageGalleryWrapper = styled.div`
 `;
 
 const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+  const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
+
+  const openFullScreen = (index: number) => {
+    setSelectedIndex(index);
+    setIsFullScreenOpen(true);
+  };
+
+  const closeFullScreen = (index: number) => {
+    setSelectedIndex(null);
+    setIsFullScreenOpen(false);
+  };
+
   const settings = {
     dots: true,
     infinite: true,
@@ -258,19 +273,44 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
     nextArrow: <NextArrow onClick={undefined} />,
     prevArrow: <PrevArrow onClick={undefined} />,
     lazyLoad: "ondemand" as const,
-    adaptiveHeight: false, // ❌ Disables height jumping issue
+    adaptiveHeight: false,
   };
 
   return (
-    <ImageGalleryWrapper>
-      <CustomSliderImage {...settings}>
-        {images.map((image, index) => (
-          <ImageContainer key={index}>
-            <Image src={image.original} alt={`Image ${index}`} />
-          </ImageContainer>
-        ))}
-      </CustomSliderImage>
-    </ImageGalleryWrapper>
+    <>
+      <ImageGalleryWrapper>
+        <CustomSliderImage {...settings}>
+          {images.map((image, index) => (
+            <ImageContainer key={index} onClick={() => openFullScreen(index)} style={{ cursor: "zoom-in" }}>
+              <Image src={image.original} alt={`Image ${index}`} />
+            </ImageContainer>
+          ))}
+        </CustomSliderImage>
+      </ImageGalleryWrapper>
+
+      <Dialog
+        fullScreen
+        open={isFullScreenOpen}
+        onClose={closeFullScreen}
+        PaperProps={{ style: { backgroundColor: "white" } }}
+      >
+        <Box height="100%" width="100%" display="flex" alignItems="center" justifyContent="center">
+          <Box width="100%" maxWidth="800px">
+            <CustomSliderImage
+              {...settings}
+              initialSlide={selectedIndex ?? 0}
+            >
+              {images.map((image, index) => (
+                <ImageContainer key={index}>
+                  <Image src={image.original} alt={`Image ${index}`} />
+                </ImageContainer>
+              ))}
+            </CustomSliderImage>
+          </Box>
+        </Box>
+      </Dialog>
+
+    </>
   );
 };
 
