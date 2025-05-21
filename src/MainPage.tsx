@@ -119,7 +119,7 @@ export const Main = () => {
       isCabaneType
         ? ["county", filters.COUNTY]
         : ["city", filters.CITY],
-      ...(isApartmentType ? [] : [["rooms", filters.ROOMS]]),
+      ...(!isApartmentType ? [] : [["rooms", filters.ROOMS]]),
       ["transactionType", selectedTransactionType?.id],
       ["type", selectedType?.id],
       ["status", filters.STATUS],

@@ -73,8 +73,13 @@ const AnnouncementList = ({
 
     const minSurface = searchParams.get("minSurface");
     const maxSurface = searchParams.get("maxSurface");
-    if (minSurface || maxSurface) {
-      initialFilters.surface = `$btw:${minSurface || 0},${maxSurface || 999999}`;
+
+    if (minSurface) {
+      initialFilters.minSurface = parseInt(minSurface, 10);
+    }
+    
+    if (maxSurface) {
+      initialFilters.maxSurface = parseInt(maxSurface, 10);
     }
 
     if (searchParams.get("city")) {
@@ -106,6 +111,8 @@ const AnnouncementList = ({
     if (userIdParam && (source === "saved" || source === "mine")) {
       initialFilters.userId = userIdParam;
     }
+
+    console.log("🔎 All query params:", searchParams.toString());
 
     setPage(1);
     Object.keys(defaultFilters).forEach((key) => sessionStorage.removeItem(key));
@@ -156,14 +163,6 @@ const AnnouncementList = ({
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        sx={{ fontWeight: 600, marginBottom: "32px" }}
-        color={COLOR_TEXT}
-      >
-        {title || filters.type || "Anunțuri"}
-      </Typography>
-
       {filters.providerType === "ensemble" ? (
         <Box
           sx={{

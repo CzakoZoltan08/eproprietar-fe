@@ -41,7 +41,8 @@ export class ApiConfig {
 
       return response.data;
     } catch (error) {
-      this.logError(error);
+      // this.logError(error);
+      // return null;
       return null;
     }
   }

@@ -43,6 +43,11 @@ export class AnnouncementStore {
 
   setAnnouncements(announcements: PropertyAnnouncementModel[]) {
     runInAction(() => {
+      if(announcements === null) {
+        this.announcements = [];
+        return;
+      }
+      
       this.announcements.splice(0, this.announcements.length, ...announcements);
     });
   }
