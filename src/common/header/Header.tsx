@@ -164,7 +164,6 @@ const Header = () => {
             <div onClick={() => navigateWithFilters("Vanzare", "apartament", 4)}>Apartamente 4 camere</div>
             <div onClick={() => navigateWithFilters("Vanzare", "apartament", 5)}>Apartamente 5 camere</div>
             <div onClick={() => navigateWithFilters("Vanzare", "casa")}>Case</div>
-            <div onClick={() => navigateWithFilters("Vanzare", "vila")}>Vile</div>
             <div onClick={() => navigateWithFilters("Vanzare", "teren")}>Terenuri</div>
           </DropdownMenu>
         </NavItem>
