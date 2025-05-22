@@ -18,6 +18,7 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { CircularProgress } from "@mui/material";
 import { Currency } from "@/constants/currencies.enum";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -82,6 +83,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
 
   const [isFavorized, setIsFavorized] = useState<boolean>(false);
   const [favsSet, setFavsSet] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user && Array.isArray(user.favourites) && item?.id) {
@@ -129,12 +131,17 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
 
   const handleDelete = async () => {
     if (confirm("Ești sigur că vrei să ștergi acest anunț?")) {
-      await announcementStore.deleteAnnouncement(item.id);
-      await announcementStore.fetchPaginatedAnnouncements({
-        page: 1,
-        limit: 8,
-        filter: { userId: user?.id ?? "" },
-      });
+      try {
+        setIsDeleting(true);
+        await announcementStore.deleteAnnouncement(item.id);
+        await announcementStore.fetchPaginatedAnnouncements({
+          page: 1,
+          limit: 8,
+          filter: { userId: user?.id ?? "" },
+        });
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -150,7 +157,11 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
         ) : (
           <>
             <StyledEditIcon onClick={goToEdit} />
-            <StyledDeleteIcon onClick={handleDelete} />
+            {isDeleting ? (
+              <CircularProgress size={24} color="error" />
+            ) : (
+              <StyledDeleteIcon onClick={handleDelete} />
+            )}
           </>
         )}
       </IconButtonWrapper>
