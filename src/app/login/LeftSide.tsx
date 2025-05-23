@@ -13,10 +13,8 @@ import AuthContainer from "./AuthContainer";
 import { AuthProvider } from "@/constants/authProviders";
 import { Box } from "@mui/material";
 import LoginForm from "./LoginForm";
-import OtpVerification from "./OtpVerification";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import SocialLoginButtons from "./SocialLoginButtons";
-import { StorageKeys } from "@/constants/storageKeys";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
 import { handleSocialAuth } from "./socialAuthHandler";
@@ -218,15 +216,6 @@ const LeftSide = () => {
         <SocialLoginButtons
           socialAuthConfigs={socialAuthConfigs}
           onSocialLogin={handleSocialLogin}
-        />
-        <OtpVerification
-          isOtpSent={isOtpSent}
-          phoneNumber={phoneNumber}
-          otp={otp}
-          onPhoneNumberChange={setPhoneNumber}
-          onOtpChange={setOtp}
-          handleSendOtp={handleSendOtp}
-          handleVerifyOtp={handleVerifyOtp}
         />
       </AuthContainer>
     </div>

@@ -121,6 +121,7 @@ const DropdownMenu = styled.div`
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { userStore: { getCurrentUser, user } } = useStore();
 
   // Menu state
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -128,6 +129,13 @@ const Header = () => {
   useEffect(() => {
     setOpenMenu(null);
   }, [pathname]);
+
+  // Load current user
+  useEffect(() => {
+    if (!user?.id) {
+      getCurrentUser();
+    }
+  }, [user]);
 
   const handleMouseEnter = (menu: string) => setOpenMenu(menu);
   const handleMouseLeave = () => setOpenMenu(null);
@@ -137,6 +145,14 @@ const Header = () => {
     url += `&price=9999999&minSurface=1&maxSurface=10000&status=active`;
     if (rooms) url += `&rooms=${rooms}`;
     router.push(url);
+  };
+
+  const handleAddAnnouncementClick = () => {
+    if (!user) {
+      router.push("/login"); // Redirect to login if not authenticated
+    } else {
+      router.push("/create-announcement");
+    }
   };
 
   return (
@@ -193,7 +209,7 @@ const Header = () => {
           <PrimaryButton
             icon="add"
             text="Adaugă anunț"
-            onClick={() => router.push("/create-announcement")}
+            onClick={handleAddAnnouncementClick} // <- Use the new handler
           />
         </RightSection>
       </SecondaryHeader>
