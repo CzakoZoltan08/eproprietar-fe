@@ -58,8 +58,8 @@ const PrincipalHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   background: ${colors.COLOR_PRIMARY};
-  height: 100px;
-  padding: 0 16px;
+  height: 64px;
+  padding: 0 40px;
   position: relative;
 `;
 
@@ -97,7 +97,7 @@ const SecondaryHeader = styled.div`
   justify-content: flex-start;
   align-items: center;
   color: ${colors.COLOR_WHITE};
-  padding: 0 16px;
+  padding: 0 24px;
   gap: 24px;
 
   @media only screen and (max-width: ${breakpoints.MAX_PHONE}) {
