@@ -1,3 +1,4 @@
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 import Button, { ButtonProps } from "@mui/material/Button";
 import {
   COLOR_PRIMARY,
@@ -6,7 +7,6 @@ import {
 } from "@/constants/colors";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Box } from "@mui/material";
 import DoubleArrowIcon from "@mui/icons-material/DoubleArrow";
 import PhoneIcon from "@mui/icons-material/Phone";
 import React from "react";
@@ -28,19 +28,22 @@ interface PrimaryButtonProps {
   size?: Size;
   fullWidth?: boolean;
   sx?: SxProps;
-  disabled?: boolean; // <-- Add this line
+  disabled?: boolean;
 }
 
-const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(
-  ({ size }) => ({
-    width: "fit-content",
-    color: COLOR_WHITE,
-    backgroundColor: COLOR_PRIMARY,
-    borderRadius: "4px",
-    height: "fit-content",
-    paddingLeft: size === "large" ? "60px" : "40px",
-  }),
-);
+const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(({ size }) => ({
+  position: "relative",
+  color: COLOR_WHITE,
+  backgroundColor: COLOR_PRIMARY,
+  borderRadius: "4px",
+  height: size === "large" ? "50px" : "36px",
+  paddingLeft: size === "large" ? "60px" : "44px",
+  paddingRight: "16px",
+  fontSize: size === "large" ? "1rem" : "0.875rem",
+  textTransform: "none",
+  display: "inline-flex",
+  alignItems: "center",
+}));
 
 const IconWrapper = ({
   icon,
@@ -49,25 +52,33 @@ const IconWrapper = ({
   icon: React.ReactNode;
   size?: Size;
 }) => {
-  const height = size === "large" ? "50px" : "32px";
-  const width = size === "large" ? "60px" : "40px";
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Use different sizes for mobile vs desktop
+  const dimensions = size === "large" ? 50 : 26;
+  const iconSize = size === "large" ? 20 : 16;
+  const containerWidth = size === "large" ? 60 : 40;
 
   return (
     <Box
       sx={{
-        height,
-        width,
+        height: dimensions,
+        width: containerWidth,
         position: "absolute",
         top: 0,
         left: 0,
         color: COLOR_WHITE,
         background: COLOR_RED_BUTTON,
         borderRadius: "4px",
-        borderTopRightRadius: "0 !important",
-        borderBottomRightRadius: "37% 100% !important",
+        borderTopRightRadius: "0",
+        borderBottomRightRadius: "37% 100%",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        "& svg": {
+          fontSize: iconSize,
+        },
       }}
     >
       {icon}
@@ -82,6 +93,7 @@ export const PrimaryButton = ({
   size,
   fullWidth,
   sx,
+  disabled,
 }: PrimaryButtonProps) => {
   const getIconByType = (icon?: IconType) => {
     switch (icon) {
@@ -99,7 +111,6 @@ export const PrimaryButton = ({
   return (
     <PrimaryButtonStyled
       variant="contained"
-      startIcon={<IconWrapper icon={getIconByType(icon)} size={size} />}
       onClick={onClick}
       size={size}
       fullWidth={fullWidth}
@@ -107,7 +118,9 @@ export const PrimaryButton = ({
         width: size === "large" || fullWidth ? "100%" : "fit-content",
         ...sx,
       }}
+      disabled={disabled}
     >
+      {icon && <IconWrapper icon={getIconByType(icon)} size={size} />}
       {text}
     </PrimaryButtonStyled>
   );

@@ -137,29 +137,34 @@ export const Main = () => {
   }
 
   const citiesAutcompleteWidth = isDesktop ? "" : "100%";
+
   const renderFilters = () => (
     <div
       style={{
         display: "flex",
         flexDirection: isDesktop ? "row" : "column",
-        flexWrap: isDesktop ? "nowrap" : "nowrap",
+        flexWrap: "nowrap",
         gap: "16px",
-        alignItems: "flex-start",
+        alignItems: isDesktop ? "center" : "stretch", // center vertically on desktop
         justifyContent: "space-between",
         width: isDesktop ? "100%" : "90%",
       }}
     >
       {filters.TYPE === "Cabane/Case la tara" ? (
         <AutocompleteCounties
-          onChange={(event, value) => setFilters({ ...filters, COUNTY: value?.toString() ?? "" })}
+          onChange={(event, value) =>
+            setFilters({ ...filters, COUNTY: value?.toString() ?? "" })
+          }
           label={MESSAGES.SEARCH_COUNTY_LABEL}
-          customWidth={citiesAutcompleteWidth}
+          customWidth={isDesktop ? undefined : "100%"}
         />
       ) : (
         <AutocompleteCities
-          onChange={(event, value) => setFilters({ ...filters, CITY: value?.toString() ?? "" })}
+          onChange={(event, value) =>
+            setFilters({ ...filters, CITY: value?.toString() ?? "" })
+          }
           label={MESSAGES.SEARCH_CITY_LABEL}
-          customWidth={citiesAutcompleteWidth}
+          customWidth={isDesktop ? undefined : "100%"}
         />
       )}
 
@@ -169,19 +174,25 @@ export const Main = () => {
           label={MESSAGES.SEARCH_TYPE_LABEL}
           options={typeOptions}
           value={filters.TYPE}
-          handleChange={(event) => setFilters({ ...filters, TYPE: event.target.value.toString() })}
+          handleChange={(event) =>
+            setFilters({ ...filters, TYPE: event.target.value.toString() })
+          }
         />
       </SelectDropdownContainer>
+
       {filters.TYPE === "Apartamente" && (
         <SelectDropdown
           name="rooms"
           label={MESSAGES.SEARCH_ROOMS_LABEL}
           options={roomOptions}
           value={filters.ROOMS}
-          handleChange={(event) => setFilters({ ...filters, ROOMS: Number(event.target.value) })}
+          handleChange={(event) =>
+            setFilters({ ...filters, ROOMS: Number(event.target.value) })
+          }
           sx={{ flex: "1 1 30%" }}
         />
       )}
+
       <SelectDropdown
         name="minSurface"
         label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
@@ -192,6 +203,7 @@ export const Main = () => {
         }
         sx={{ flex: "1 1 30%" }}
       />
+
       <SelectDropdown
         name="maxSurface"
         label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
@@ -202,6 +214,7 @@ export const Main = () => {
         }
         sx={{ flex: "1 1 30%" }}
       />
+
       <SelectDropdown
         name="price"
         label={MESSAGES.SEARCH_PRICE_LABEL}
@@ -212,15 +225,15 @@ export const Main = () => {
         }
         sx={{ flex: "1 1 30%" }}
       />
+
       <PrimaryButton
         icon="search"
         text="Caută"
         onClick={onSearch}
         fullWidth={!isDesktop}
+        size="large" // ensures 56px height
         sx={{
           flex: "1 1 30%",
-          padding: isDesktop ? "15px 20px" : "6px 16px",
-          alignSelf: isDesktop ? "flex-end" : "center",
         }}
       />
     </div>
