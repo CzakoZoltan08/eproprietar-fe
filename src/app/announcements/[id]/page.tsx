@@ -23,25 +23,52 @@ import { useStore } from "@/hooks/useStore";
 // Styled Components
 const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
+  flex-direction: ${(p) => p.$flexdirection};
   justify-content: space-between;
-  align-items: flex-start;
-  flex-direction: ${(props) => props.$flexdirection};
-  gap: 16px;
-
-  div:first-of-type {
-    flex: 2;
-  }
+  align-items: stretch;   /* ← stretch, not flex-start */
+  gap: 2px;
+  width: 100%;
 `;
 
+// Adjust your ContactContainer:
 const ContactContainer = styled.div`
-  flex: 1;
+  flex: 0 0 300px;       /* ↪ never shrink below or grow beyond 300px */
+  max-width: 300px;
+  
+  @media (max-width: 600px) {
+    flex: 1 1 100%;       /* ↪ full-width on small screens */
+    max-width: 100%;
+  }
 `;
 
 const ColumnBox = styled(Box)`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 2px;
 `;
+
+// Near the top, replace your MediaContainer & ResponsiveBox with:
+
+const MediaContainer = styled(Box)<{ $flexdirection: string }>`
+  display: flex;
+  flex-direction: ${(p) => p.$flexdirection};
+  flex-wrap: wrap;            /* ↪ allow items to wrap on narrow screens */
+  gap: 2px;
+  width: 100%;
+`;
+
+const ResponsiveBox = styled(Box)`
+  flex: 1 1 0;                 /* ↪ allow shrinking and growing */
+  min-width: 0;                /* ↪ necessary for flex items to shrink below content width */
+  max-width: 100%;             /* ↪ don’t exceed parent width */
+  overflow: hidden;
+
+  @media (max-width: 600px) {
+    flex-basis: 100%;          /* ↪ on small screens each takes full width */
+    max-width: 100%;
+  }
+`;
+
 
 const GalleryContainer = styled.div`
   width: 100%;
@@ -205,20 +232,6 @@ const NextArrow = (props: any) => {
   );
 };
 
-const ResponsiveBox = styled(Box)`
-  display: flex;
-  flex-direction: row;
-  justifyContent: center;
-  alignItems: center;
-  width: 50%;
-  overflow: hidden;
-
-  @media (max-width: 480px) {
-    width: 100vw; /* Ensures it does not exceed viewport width */
-  }
-`;
-
-
 // 🔹 Ensure images fill the space properly
 const ImageContainer = styled.div`
   width: 100%;
@@ -317,7 +330,7 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
 const VideoContainer = styled(Box)`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 2px;
   overflow: visible;
 `;
 
@@ -615,31 +628,37 @@ const AnnouncementDetailPage: React.FC = () => {
   // Common Layout
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", alignItems: "center" }}>
-        <ResponsiveBox>
-          <GalleryContainerImage>
-            {(currentAnnouncement?.images ?? []).length > 0 ? (
-              <ImageGallery key={announcement.id} images={currentAnnouncement?.images ?? []} />
-            ) : (
-              <Box>No images available</Box>
-            )}
-          </GalleryContainerImage>
-        </ResponsiveBox>
-  
-        {/* ✅ Responsive Video Gallery Section */}
-        <ResponsiveBox>
-          {Array.isArray(currentAnnouncement?.videos) && currentAnnouncement.videos.length > 0 ? (
-            <GalleryContainer>
-              <VideoGallery key={announcement.id} videos={currentAnnouncement.videos} />
-            </GalleryContainer>
-          ) : null}
-        </ResponsiveBox>
-  
-        {/* Description & Characteristics */}
-        {currentAnnouncement?.description && <DescriptionCard />}
+      {/* Left side: media + description/characteristics */}
+      <Box flex={1} display="flex" flexDirection="column" gap={1}>
+        {/* Media row/column */}
+        <MediaContainer $flexdirection={isMobile ? "column" : "row"}>
+          {/* Image */}
+          <ResponsiveBox>
+            <GalleryContainerImage>
+              {(images.length > 0) ? (
+                <ImageGallery images={images} />
+              ) : (
+                <Box>No images available</Box>
+              )}
+            </GalleryContainerImage>
+          </ResponsiveBox>
+
+          {/* Video */}
+          {videos.length > 0 && (
+            <ResponsiveBox>
+              <GalleryContainer>
+                <VideoGallery videos={videos} />
+              </GalleryContainer>
+            </ResponsiveBox>
+          )}
+        </MediaContainer>
+
+        {/* Below media: description + characteristics */}
+        {announcement?.description && <DescriptionCard />}
         <CharacteristicsCard />
-      </div>
-  
+      </Box>
+
+      {/* Right side: contact */}
       <ContactContainer>
         <ContactCardComponent />
       </ContactContainer>
