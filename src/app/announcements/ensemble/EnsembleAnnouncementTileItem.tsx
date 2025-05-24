@@ -7,8 +7,6 @@ import Image from "next/image";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
 import { useRouter } from "next/navigation";
 
-const TILE_WIDTH = 300;
-const TILE_HEIGHT = 200;
 const DEFAULT_IMAGE_URL = "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg";
 
 const EnsembleAnnouncementTileItem = ({ item }: { item: PropertyAnnouncementModel }) => {
@@ -25,7 +23,8 @@ const EnsembleAnnouncementTileItem = ({ item }: { item: PropertyAnnouncementMode
   return (
     <Box
       sx={{
-        width: TILE_WIDTH,
+        width: "100%",
+        maxWidth: 340,
         borderRadius: 3,
         overflow: "hidden",
         boxShadow: 2,
@@ -37,34 +36,36 @@ const EnsembleAnnouncementTileItem = ({ item }: { item: PropertyAnnouncementMode
           transform: "translateY(-4px)",
           boxShadow: 4,
         },
+        margin: "0 auto",
       }}
     >
       {/* Title on top */}
       <Box
-            sx={{
-                p: 2,
-                backgroundColor: "#f9f9f9", // Light background to distinguish title
-                borderBottom: "1px solid #eee",
-            }}
-            >
-            <Typography
-                variant="subtitle1"
-                fontWeight={600}
-                sx={{ textAlign: "center", color: "#333" }} // Darker text color
-                noWrap
-            >
-                {item.title}
-            </Typography>
-        </Box>
-        
+        sx={{
+          p: 2,
+          backgroundColor: "#f9f9f9",
+          borderBottom: "1px solid #eee",
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          fontWeight={600}
+          sx={{ textAlign: "center", color: "#333" }}
+          noWrap
+        >
+          {item.title}
+        </Typography>
+      </Box>
+
       {/* Image */}
-      <Image
-        src={item.imageUrl || DEFAULT_IMAGE_URL}
-        alt={item.title}
-        width={TILE_WIDTH}
-        height={TILE_HEIGHT}
-        style={{ objectFit: "cover" }}
-      />
+      <Box sx={{ width: "100%", height: 200, position: "relative" }}>
+        <Image
+          src={item.imageUrl || DEFAULT_IMAGE_URL}
+          alt={item.title}
+          fill
+          style={{ objectFit: "cover" }}
+        />
+      </Box>
 
       {/* Badges */}
       <Stack

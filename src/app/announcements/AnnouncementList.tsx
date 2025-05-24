@@ -168,7 +168,7 @@ const AnnouncementList = ({
           sx={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "24px",
+            gap: "12px",
             marginBottom: "64px",
           }}
         >
