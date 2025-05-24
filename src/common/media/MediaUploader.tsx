@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import styled from "styled-components";
@@ -27,29 +27,34 @@ type MediaUploaderProps = {
 const DropArea = styled.div<{ $isDragging: boolean }>`
   border: 2px dashed ${({ $isDragging }) => ($isDragging ? "#007BFF" : "#ccc")};
   background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
-  padding: 20px;
+  padding: 16px;
   text-align: center;
-  width: 100%;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 16px;
   transition: background-color 0.3s, border-color 0.3s;
+
+  /* smaller padding on very small screens */
+  @media (max-width: 360px) {
+    padding: 12px;
+  }
 `;
 
 const PreviewContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 8px;
   margin-top: 16px;
 `;
 
 const PreviewImage = styled.img`
   width: 100%;
-  max-width: 120px;
-  height: auto;
+  height: 0;
+  padding-bottom: 100%;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
+  position: relative;
   &:hover {
     opacity: 0.7;
   }
@@ -57,7 +62,6 @@ const PreviewImage = styled.img`
 
 const PreviewVideo = styled.video`
   width: 100%;
-  max-width: 180px;
   height: auto;
   object-fit: cover;
   border-radius: 8px;
@@ -78,13 +82,14 @@ const ThumbnailWrapper = styled.div`
 `;
 
 const ThumbnailBox = styled.div`
-  width: 150px;
-  height: 150px;
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1;
   border: 2px dashed #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   background-color: #fafafa;
@@ -92,6 +97,11 @@ const ThumbnailBox = styled.div`
 
   &:hover {
     border-color: #007bff;
+  }
+
+  @media (max-width: 360px) {
+    max-width: 150px;
+    border-radius: 8px;
   }
 `;
 
@@ -113,6 +123,9 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   error,
   setError,
 }) => {
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -125,14 +138,17 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  // Previews
   useEffect(() => {
-    setImagePreviews(images.map((file) => URL.createObjectURL(file)));
-    return () => images.forEach((file) => URL.revokeObjectURL(URL.createObjectURL(file)));
+    const urls = images.map((file) => URL.createObjectURL(file));
+    setImagePreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [images]);
 
   useEffect(() => {
-    setVideoPreviews(videos.map((file) => URL.createObjectURL(file)));
-    return () => videos.forEach((file) => URL.revokeObjectURL(URL.createObjectURL(file)));
+    const urls = videos.map((file) => URL.createObjectURL(file));
+    setVideoPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [videos]);
 
   useEffect(() => {
@@ -140,9 +156,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       const url = URL.createObjectURL(thumbnail);
       setThumbnailPreview(url);
       return () => URL.revokeObjectURL(url);
-    } else {
-      setThumbnailPreview(null);
     }
+    setThumbnailPreview(null);
   }, [thumbnail]);
 
   useEffect(() => {
@@ -150,11 +165,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       const url = URL.createObjectURL(logo);
       setLogoPreview(url);
       return () => URL.revokeObjectURL(url);
-    } else {
-      setLogoPreview(null);
     }
+    setLogoPreview(null);
   }, [logo]);
 
+  // Validators
   const validateImages = (files: FileList | File[]) => {
     return Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -183,10 +198,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     });
   };
 
+  // Handlers...
   const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const img = new Image();
     img.src = URL.createObjectURL(file);
     img.onload = () => {
@@ -194,7 +209,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         setError("Thumbnail resolution cannot exceed 1920x1080.");
         return;
       }
-
       setThumbnail(file);
       setError("");
     };
@@ -203,7 +217,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !setLogo) return;
-
     const img = new Image();
     img.src = URL.createObjectURL(file);
     img.onload = () => {
@@ -211,7 +224,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         setError("Logo resolution cannot exceed 1920x1080.");
         return;
       }
-
       setLogo(file);
       setError("");
     };
@@ -220,13 +232,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const valid = validateImages(files);
     if (images.length + valid.length > MAX_IMAGES) {
       setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
       return;
     }
-
     setImages([...images, ...valid]);
     setError("");
   };
@@ -234,26 +244,22 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const valid = validateVideos(files);
     if (videos.length + valid.length > MAX_VIDEOS) {
       setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
       return;
     }
-
     setVideos([...videos, ...valid]);
     setError("");
   };
 
   const removeImage = (index: number) => {
-    const updated = [...images];
-    updated.splice(index, 1);
+    const updated = images.filter((_, i) => i !== index);
     setImages(updated);
   };
 
   const removeVideo = (index: number) => {
-    const updated = [...videos];
-    updated.splice(index, 1);
+    const updated = videos.filter((_, i) => i !== index);
     setVideos(updated);
   };
 
@@ -265,7 +271,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       setError(`Max ${MAX_IMAGES} images allowed.`);
       return;
     }
-
     setImages([...images, ...valid]);
   };
 
@@ -277,19 +282,19 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       setError(`Max ${MAX_VIDEOS} videos allowed.`);
       return;
     }
-
     setVideos([...videos, ...valid]);
   };
 
   return (
-    <Box width="100%" mt={4}>
+    <Box width="100%" maxWidth={isXs ? "100%" : 600} mx="auto" mt={4} px={isXs ? 1 : 0}>
+      {/* Thumbnail */}
       <ThumbnailWrapper>
         <Typography variant="h6">Thumbnail Image</Typography>
         <ThumbnailBox onClick={() => thumbnailInputRef.current?.click()}>
           {thumbnailPreview ? (
             <ThumbnailPreviewImage src={thumbnailPreview} />
           ) : (
-            <Typography color="textSecondary">Click to upload</Typography>
+            <Typography color="textSecondary">Tap to upload</Typography>
           )}
         </ThumbnailBox>
         <input
@@ -301,13 +306,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         />
       </ThumbnailWrapper>
 
+      {/* Logo */}
       <ThumbnailWrapper>
         <Typography variant="h6">Agency/Developer Logo (optional)</Typography>
         <ThumbnailBox onClick={() => logoInputRef.current?.click()}>
           {logoPreview ? (
             <ThumbnailPreviewImage src={logoPreview} />
           ) : (
-            <Typography color="textSecondary">Click to upload</Typography>
+            <Typography color="textSecondary">Tap to upload</Typography>
           )}
         </ThumbnailBox>
         <input
@@ -319,6 +325,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         />
       </ThumbnailWrapper>
 
+      {/* Images */}
       <Typography mt={4} variant="h6">
         Images
       </Typography>
@@ -332,7 +339,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onDrop={handleImageDrop}
         onClick={() => imageInputRef.current?.click()}
       >
-        Drag & drop images here or click to select
+        Drag & drop images here or tap to select
       </DropArea>
       <input
         type="file"
@@ -343,11 +350,12 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onChange={handleImageUpload}
       />
       <PreviewContainer>
-        {imagePreviews.map((src, index) => (
-          <PreviewImage key={index} src={src} alt="preview" onClick={() => removeImage(index)} />
+        {imagePreviews.map((src, idx) => (
+          <PreviewImage key={idx} src={src} alt="preview" onClick={() => removeImage(idx)} />
         ))}
       </PreviewContainer>
 
+      {/* Videos */}
       <Typography mt={4} variant="h6">
         Videos
       </Typography>
@@ -361,7 +369,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onDrop={handleVideoDrop}
         onClick={() => videoInputRef.current?.click()}
       >
-        Drag & drop videos here or click to select
+        Drag & drop videos here or tap to select
       </DropArea>
       <input
         type="file"
@@ -372,13 +380,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onChange={handleVideoUpload}
       />
       <PreviewContainer>
-        {videoPreviews.map((src, index) => (
-          <PreviewVideo key={index} src={src} controls onClick={() => removeVideo(index)} />
+        {videoPreviews.map((src, idx) => (
+          <PreviewVideo key={idx} src={src} controls onClick={() => removeVideo(idx)} />
         ))}
       </PreviewContainer>
 
+      {/* Error */}
       {error && (
-        <Typography color="error" mt={2}>
+        <Typography color="error" mt={2} align="center">
           {error}
         </Typography>
       )}
