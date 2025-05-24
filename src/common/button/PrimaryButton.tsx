@@ -19,6 +19,7 @@ type IconType = "search" | "add" | "phone";
 
 interface PrimaryButtonStyledProps extends ButtonProps {
   size?: Size;
+  hasIcon?: boolean;
 }
 
 interface PrimaryButtonProps {
@@ -31,18 +32,27 @@ interface PrimaryButtonProps {
   disabled?: boolean;
 }
 
-const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(({ size }) => ({
-  position: "relative",
+const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(({ size, hasIcon }) => ({
+  position: 'relative',
   color: COLOR_WHITE,
   backgroundColor: COLOR_PRIMARY,
-  borderRadius: "4px",
-  height: size === "large" ? "50px" : "36px",
-  paddingLeft: size === "large" ? "60px" : "44px",
-  paddingRight: "16px",
-  fontSize: size === "large" ? "1rem" : "0.875rem",
-  textTransform: "none",
-  display: "inline-flex",
-  alignItems: "center",
+  borderRadius: '4px',
+  height: size === 'large' ? '50px' : '36px',
+  fontSize: size === 'large' ? '1rem' : '0.875rem',
+  textTransform: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  ...(hasIcon
+    ? {
+        paddingLeft: size === 'large' ? '60px' : '44px',
+        paddingRight: '16px',
+        justifyContent: 'flex-start',
+      }
+    : {
+        padding: size === 'large' ? '0 24px' : '0 16px',
+        justifyContent: 'center',
+      }
+  ),
 }));
 
 const IconWrapper = ({
@@ -108,11 +118,14 @@ export const PrimaryButton = ({
     }
   };
 
+  const hasIcon = Boolean(icon);
+
   return (
     <PrimaryButtonStyled
       variant="contained"
       onClick={onClick}
       size={size}
+      hasIcon={hasIcon}
       fullWidth={fullWidth}
       sx={{
         width: size === "large" || fullWidth ? "100%" : "fit-content",
