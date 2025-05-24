@@ -1,4 +1,3 @@
-// components/DeveloperContactCard.tsx
 "use client";
 
 import { Box, Typography } from "@mui/material";
@@ -20,18 +19,28 @@ const Card = styled(Box)`
   text-align: center;
   background-color: #fafafa;
   width: 100%;
-  max-width: 280px;
+  max-width: 100%; /* Removed fixed max-width */
+  box-sizing: border-box;
+
+  @media (min-width: 600px) {
+    max-width: 320px; /* Apply max width on tablet+ */
+  }
 `;
 
 const LogoWrapper = styled.div`
-  margin: 0 auto 20px;
-  width: 240px;
-  height: 240px;
+  margin: 0 auto 16px;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1;
   position: relative;
   background-color: white;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 400px) {
+    max-width: 180px;
+  }
 `;
 
 const CompanyTag = styled.div`
@@ -50,7 +59,7 @@ const PhoneButton = styled.a`
   background-color: #448aff;
   color: white;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
   padding: 10px 20px;
   border-radius: 6px;
   text-decoration: none;
@@ -58,6 +67,11 @@ const PhoneButton = styled.a`
 
   &:hover {
     background-color: #2979ff;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 14px;
+    padding: 8px 16px;
   }
 `;
 
@@ -70,11 +84,11 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
     <Card>
       <LogoWrapper>
         <Image
-            src={logoUrl}
-            alt={`${name} logo`}
-            layout="fill"
-            objectFit="contain"
-            priority
+          src={logoUrl}
+          alt={`${name} logo`}
+          layout="fill"
+          objectFit="contain"
+          priority
         />
       </LogoWrapper>
 

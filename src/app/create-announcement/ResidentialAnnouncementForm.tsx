@@ -32,10 +32,19 @@ const Styled = {
     flex-direction: column;
     align-items: center;
     border-radius: 8px;
-    border: 1px solid ${palette.COLOR_LIGHT_GREY};
-    color: ${palette.COLOR_TEXT};
-    background: ${palette.COLOR_WHITE};
-    padding: 24px;
+    border: 1px solid #e0e0e0;
+    color: #000;
+    background: #fff;
+    padding: 16px;
+    gap: 16px;
+    max-width: 800px; /* Prevent excessive width on large screens */
+    margin: auto;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    
+    @media (max-width: 768px) {
+      max-width: 100%; /* Ensure it fits within mobile screens */
+      padding: 12px;
+    }
   `,
   Subtitle: styled.h2`
     font-weight: 300;

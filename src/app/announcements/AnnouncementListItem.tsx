@@ -4,6 +4,7 @@ import {
   AnnouncementCard,
   Description,
   DescriptionContainer,
+  FlexRowToColumn,
   ImageContainer,
   Price,
   PriceMP,
@@ -146,7 +147,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
   };
 
   return (
-    <AnnouncementCard display="flex" position="relative">
+    <AnnouncementCard>
       <IconButtonWrapper>
         {user?.id !== item.user?.id ? (
           isFavorized ? (
@@ -177,7 +178,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
 
       <DescriptionContainer>
         <Title>{item.title}</Title>
-        <Flex>
+        <FlexRowToColumn>
           <Subtitle>
             {item.rooms && (
               <>
@@ -196,7 +197,7 @@ const AnnouncementListItem = ({ item }: { item: PropertyAnnouncementModel }) => 
               {Currency.EUR}/{Unit.SQUARE_METER}
             </PriceMP>
           </Price>
-        </Flex>
+        </FlexRowToColumn>
         <Description>{item.description}</Description>
         <PrimaryButton
           text={BUTTON_TEXT}
