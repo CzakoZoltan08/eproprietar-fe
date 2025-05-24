@@ -32,7 +32,10 @@ interface PrimaryButtonProps {
   disabled?: boolean;
 }
 
-const PrimaryButtonStyled = styled(Button)<PrimaryButtonStyledProps>(({ size, hasIcon }) => ({
+// Filter out the custom prop `hasIcon` so it doesn't go to the DOM
+const PrimaryButtonStyled = styled(Button, {
+  shouldForwardProp: (prop) => prop !== 'hasIcon'
+})<PrimaryButtonStyledProps>(({ size, hasIcon }) => ({
   position: 'relative',
   color: COLOR_WHITE,
   backgroundColor: COLOR_PRIMARY,
@@ -65,7 +68,6 @@ const IconWrapper = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Use different sizes for mobile vs desktop
   const dimensions = size === "large" ? 50 : 26;
   const iconSize = size === "large" ? 20 : 16;
   const containerWidth = size === "large" ? 60 : 40;
