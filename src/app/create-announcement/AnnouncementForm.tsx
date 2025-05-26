@@ -255,7 +255,7 @@ const AnnouncementFormContent = () => {
   const {
     userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
     announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
-    pricingStore : { freePlanId },
+    pricingStore : { freePlanId, getAnnouncementPackages },
     announcementStore: { createPaymentSession },
   } = useStore();
 
@@ -319,6 +319,12 @@ const AnnouncementFormContent = () => {
       getCurrentUser();
     } else if (user.role === 'admin') {
       fetchAllUsers();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getAnnouncementPackages(user.id);
     }
   }, [user]);
 
@@ -782,7 +788,7 @@ const AnnouncementFormContent = () => {
           products: [],
         });
         // redirect to admin detail view
-        window.location.href = `/admin/announcements/${newAnnouncement.id}`;
+        window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
       } else {
         // normal user: go to payment packages flow
         window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
