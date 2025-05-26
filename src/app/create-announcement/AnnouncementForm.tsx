@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CircularProgress, LinearProgress, Modal, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
+import { Box, CircularProgress, FormControl, InputLabel, LinearProgress, MenuItem, Modal, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -253,8 +253,10 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const AnnouncementFormContent = () => {
   const {
-    userStore: { user, getCurrentUser, updateUser },
+    userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
     announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
+    pricingStore : { freePlanId, getAnnouncementPackages },
+    announcementStore: { createPaymentSession },
   } = useStore();
 
   const sketchFileInputRef = useRef<HTMLInputElement>(null);
@@ -264,6 +266,7 @@ const AnnouncementFormContent = () => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const [formData, setFormData] = useState({
+    userId: user?.id || "",
     announcementType: "",
     providerType: "owner",
     transactionType: "",
@@ -314,6 +317,14 @@ const AnnouncementFormContent = () => {
   useEffect(() => {
     if (!user?.id) {
       getCurrentUser();
+    } else if (user.role === 'admin') {
+      fetchAllUsers();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getAnnouncementPackages(user.id);
     }
   }, [user]);
 
@@ -346,6 +357,7 @@ const AnnouncementFormContent = () => {
       );
 
       setFormData({
+        userId: currentAnnouncement.user?.id || user?.id || "",
         announcementType: normalizedType || propertyTypes[0],
         providerType: formData.providerType,
         transactionType:
@@ -724,6 +736,11 @@ const AnnouncementFormContent = () => {
   
     try {
       const { thumbnail, sketch, ...data } = formData;
+
+      const selectedUser = user && user.role === 'admin'
+        ? usersList.find(u => u.id === formData.userId)
+        : user;
+      if (!selectedUser || !selectedUser.id) throw new Error('User not found');
   
       const announcementDraft = {
         ...data,
@@ -734,12 +751,9 @@ const AnnouncementFormContent = () => {
         numberOfKitchens: Number(data.numberOfKitchens),
         floor: Number(data.floor),
         surface: Number(data.surface),
-        status: "pending",
+        status: user && user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
-        user: {
-          id: user?.id || "",
-          firebaseId: user?.firebaseId || ""
-        }
+        user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
       };
   
       // 1. Update phone number if changed
@@ -753,8 +767,33 @@ const AnnouncementFormContent = () => {
       // 4. Upload media in the background
       await uploadMedia(newAnnouncement.id);
 
-      // Immediately redirect
-      window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
+      const isAdmin = user?.role === 'admin';
+
+      if (isAdmin) {
+        // record free payment for admin
+        await createPaymentSession({
+          orderId: newAnnouncement.id,
+          packageId: freePlanId ?? "",
+          amount: 0,
+          originalAmount: 0,
+          currency: 'RON',
+          invoiceDetails: {
+            name: "",
+            address: "",
+            city: "",
+            country: "",
+            email: "",
+            isTaxPayer: false
+          },
+          products: [],
+        });
+        // redirect to admin detail view
+        window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
+      } else {
+        // normal user: go to payment packages flow
+        window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
+      }
+      
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");
@@ -813,6 +852,25 @@ const AnnouncementFormContent = () => {
             <Typography color="error" sx={{ marginBottom: "16px", textAlign: "center" }}>
               {error}
             </Typography>
+          )}
+
+          {user && user.role === 'admin' && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="user-select-label">Assign To User</InputLabel>
+              <Select
+                labelId="user-select-label"
+                name="userId"
+                value={formData.userId}
+                label="Assign To User"
+                onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value as string }))}
+              >
+                {usersList.map(u => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} ({u.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           )}
 
           <InputContainer>

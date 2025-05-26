@@ -535,89 +535,35 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
 };
 
 const AnnouncementDetailPage: React.FC = () => {
-  const {
-    announcementStore: { getAnnouncementById, setCurrentAnnouncement, currentAnnouncement, fetchAnnouncementImages },
-  } = useStore();
+  const { announcementStore } = useStore();
+  const { getAnnouncementById, fetchAnnouncementImages, currentAnnouncement } = announcementStore;
   const params = useParams();
-  const { id } = params;
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
 
-  const [announcement, setAnnouncement] = useState<typeof currentAnnouncement | null>(null);
-  const [images, setImages] = useState<Image[]>([]);
-  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Single effect to load everything in sequence
   useEffect(() => {
     if (!id) return;
 
-    // Clear previous content immediately
-    setAnnouncement(null);
-    setImages([]);
-    setVideos([]);
+    (async () => {
+      setLoading(true);
+      try {
+        // 1) load the announcement by the route-param ID
+        await getAnnouncementById(id);
 
-    // Fetch and wait
-    const announcementId = Array.isArray(id) ? id[0] : id;
-    getAnnouncementById(announcementId).then(() => {
-      const fetched = currentAnnouncement;
-      if (fetched?.id && fetched?.user?.id) {
-        fetchAnnouncementImages(fetched.id).then(() => {
-          setAnnouncement({ ...fetched });
-          setImages(fetched.images ?? []);
-          setVideos(fetched.videos ?? []);
-        });
+        // 2) now load media for that same ID (we know it must exist)
+        await fetchAnnouncementImages(id);
+      } catch (err) {
+        console.error("Error loading announcement or images:", err);
+      } finally {
+        setLoading(false);
       }
-    });
- }, [id]);
+    })();
+  }, [id, getAnnouncementById, fetchAnnouncementImages]);
 
-  useEffect(() => {
-    if (currentAnnouncement?.id && currentAnnouncement.images) {
-      setAnnouncement(currentAnnouncement);
-    } else {
-      setAnnouncement(null); // Reset to avoid showing stale content
-    }
-  }, [currentAnnouncement?.id, currentAnnouncement?.images]);
-
-
-  // Fetch Announcement Data
-  useEffect(() => {
-    if (id) {
-      // reset before loading new announcement
-      setCurrentAnnouncement({
-        id: "",
-        title: "",
-        description: "",
-        images: [],
-        videos: [],
-        user: {
-          email: null,
-          firstName: null,
-          lastName: null,
-          firebaseId: null,
-          role: ""
-        },
-        announcementType: "",
-        providerType: "",
-        transactionType: "",
-        city: "",
-        county: "",
-        price: 0,
-        rooms: 0,
-        surface: 0,
-        currency: "",
-        floor: 0
-      }); // 👈 reset
-      getAnnouncementById(Array.isArray(id) ? id[0] : id);
-    }
-  }, [id, getAnnouncementById]);
-
-
-  useEffect(() => {
-    if (announcement?.id && announcement?.user?.id) {
-      fetchAnnouncementImages(announcement.id);
-    }
-  }, [announcement?.id, announcement?.user?.id, fetchAnnouncementImages]);
-
-  // Render Loading Spinner
-  if (!announcement?.id || !announcement.images) {
+  if (loading) {
     return (
       <Layout paddingContainer>
         <CircularProgress />
@@ -625,17 +571,16 @@ const AnnouncementDetailPage: React.FC = () => {
     );
   }
 
-  // Common Layout
+  const images = currentAnnouncement?.images ?? [];
+  const videos = currentAnnouncement?.videos ?? [];
+
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
-      {/* Left side: media + description/characteristics */}
       <Box flex={1} display="flex" flexDirection="column" gap={1}>
-        {/* Media row/column */}
         <MediaContainer $flexdirection={isMobile ? "column" : "row"}>
-          {/* Image */}
           <ResponsiveBox>
             <GalleryContainerImage>
-              {(images.length > 0) ? (
+              {images.length > 0 ? (
                 <ImageGallery images={images} />
               ) : (
                 <Box>No images available</Box>
@@ -643,7 +588,6 @@ const AnnouncementDetailPage: React.FC = () => {
             </GalleryContainerImage>
           </ResponsiveBox>
 
-          {/* Video */}
           {videos.length > 0 && (
             <ResponsiveBox>
               <GalleryContainer>
@@ -653,12 +597,10 @@ const AnnouncementDetailPage: React.FC = () => {
           )}
         </MediaContainer>
 
-        {/* Below media: description + characteristics */}
-        {announcement?.description && <DescriptionCard />}
+        {currentAnnouncement && currentAnnouncement.description && <DescriptionCard />}
         <CharacteristicsCard />
       </Box>
 
-      {/* Right side: contact */}
       <ContactContainer>
         <ContactCardComponent />
       </ContactContainer>

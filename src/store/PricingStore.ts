@@ -7,6 +7,7 @@ export class PricingStore {
   pricingApi: PricingApi;
   packages: any[] = [];
   promotions: any[] = [];
+  freePlanId: string | null = null;
 
   constructor(pricingApi: PricingApi) {
     this.pricingApi = pricingApi;
@@ -19,7 +20,9 @@ export class PricingStore {
     try {
       const response = await this.pricingApi.getAnnouncementPackages(userId, targetAudience);
       runInAction(() => {
-        this.packages = response?.packages || [];
+        this.packages = response || [];
+        const freePkg = this.packages.find(p => Number(p.price) === 0);
+        this.freePlanId = freePkg?.id || null;
       });
 
       return response;

@@ -149,7 +149,7 @@ export class AnnouncementApi {
       isTaxIncluded: boolean;
       vatPercent: number;
     }[];
-  }): Promise<{ checkoutUrl: string } | null> {
+  }): Promise<{ checkoutUrl: string, skipStripe?: boolean } | null> {
     const payload: any = {
       orderId: paymentData.orderId,
       amount: Number(paymentData.amount),
