@@ -182,6 +182,20 @@ export class AnnouncementApi {
     );
   }
 
+  async sendAnnouncementCreationMail(name: string, email: string, url: string) {
+    const payload: any = {
+      to: email,
+      name: name,
+      announcementState: url,
+    };
+
+    return await this.apiConfig.sendRequest(
+      HttpMethods.POST,
+      `${Endpoints.NEW_ANNOUNCEMENT_MAIL}`,
+      payload
+    );
+  }
+
   private buildPaginatedEndpoint(data: FetchAnnouncementsModel): string {
     const filters = {
       ...this.buildPaginationParams(data),

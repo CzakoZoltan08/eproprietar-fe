@@ -254,7 +254,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const AnnouncementFormContent = () => {
   const {
     userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
-    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement },
+    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement, sendAnnouncementCreationMail },
     pricingStore : { freePlanId, getAnnouncementPackages },
     announcementStore: { createPaymentSession },
   } = useStore();
@@ -787,6 +787,11 @@ const AnnouncementFormContent = () => {
           },
           products: [],
         });
+
+        const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!
+        const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`; 
+        await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
+
         // redirect to admin detail view
         window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
       } else {

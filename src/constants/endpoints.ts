@@ -14,4 +14,5 @@ export const Endpoints = {
     PAYMENT_CREATE: "/payment/create",
     PRICING_PACKAGES: "/payment/announcement-packages",
     PRICING_PROMOTIONS: "/payment/promotion-packages",
+    NEW_ANNOUNCEMENT_MAIL: "/mail/annnouncement-confirmation",
   } as const;
