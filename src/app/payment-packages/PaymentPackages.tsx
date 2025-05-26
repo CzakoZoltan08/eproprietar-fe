@@ -233,10 +233,14 @@ const SelectPackagePage = () => {
         products,
       });
 
-      if (res?.checkoutUrl) {
+      if (res?.skipStripe) {
+        // no payment needed → go directly to status page
+        router.push(`/payment-status?orderId=${announcementId}&success=true`);
+      } else if (res?.checkoutUrl) {
+        // normal Stripe flow
         window.location.href = res.checkoutUrl;
       } else {
-        console.error("Missing checkoutUrl");
+        console.error("Missing checkoutUrl or skipStripe flag");
       }
     } catch (err) {
       console.error("Submission failed", err);
@@ -255,6 +259,8 @@ const SelectPackagePage = () => {
       </Box>
     );
   }
+
+  const isFree = totalPrice === 0 && !selectedPromotion;
 
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
@@ -279,7 +285,13 @@ const SelectPackagePage = () => {
           </Typography>
           <PackageGrid>
             {promotions.map((promo) => (
-              <StyledCard key={promo.id} selected={selectedPromotion?.id === promo.id} onClick={() => setSelectedPromotion(promo)}>
+              <StyledCard 
+              key={promo.id} selected={selectedPromotion?.id === promo.id} 
+              onClick={() =>
+                selectedPromotion?.id === promo.id
+                  ? setSelectedPromotion(null)
+                  : setSelectedPromotion(promo)
+              }>
                 <CardContent>
                   <PriceWithDiscount item={promo} />
                 </CardContent>
@@ -291,6 +303,7 @@ const SelectPackagePage = () => {
 
       {selectedPackage && (
         <>
+        {!isFree && (
           <Box mt={6}>
             <Typography variant="h5" fontWeight={700} mb={2} color="primary">
               Fill in your invoicing details
@@ -327,10 +340,18 @@ const SelectPackagePage = () => {
                 <TextField fullWidth label="Email" name="email" onChange={handleChange} value={form.email} />
               </Grid>
             </Grid>
-
+          </Box>
+        )}
+          <Box>
             <Box textAlign="center" mt={4}>
               <CommonButton
-                text={loading ? "Processing..." : "Continue to Payment"}
+                text={
+                loading
+                  ? "Processing…"
+                  : isFree
+                    ? "Publish for Free"
+                    : "Continue to Payment"
+                }
                 onClick={handleSubmit}
                 sx={{
                   backgroundColor: COLOR_PRIMARY,
