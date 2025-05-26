@@ -197,4 +197,14 @@ export class AnnouncementStore {
       return null;
     }
   }
+
+  async sendAnnouncementCreationMail(name: string, email: string, url: string) {
+    try {
+      const response = await this.announcementApi.sendAnnouncementCreationMail(name, email, url);
+      return response;
+    } catch (error) {
+      console.error("Error sending announcement creation mail:", error);
+      return null;
+    }
+  }
 }
