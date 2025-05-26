@@ -8,10 +8,12 @@ import autoBind from "auto-bind";
 export class UserStore {
   userApi: UserApi;
   user: UserModel | null;
+  users: UserModel[] = [];
 
   constructor(userApi: UserApi) {
     this.userApi = userApi;
     this.user = null;
+    this.users = [];
 
     makeAutoObservable(this);
     autoBind(this);
@@ -37,6 +39,20 @@ export class UserStore {
         }
       }, reject); // Reject if onAuthStateChanged encounters an error
     });
+  }
+
+  async fetchAllUsers(): Promise<void> {
+    try {
+      const all = await this.userApi.getAllUsers();
+      runInAction(() => {
+        this.users = all;
+      });
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      runInAction(() => {
+        this.users = [];
+      });
+    }
   }
   
   setCurrentUser(currentUser: UserModel | null) {
