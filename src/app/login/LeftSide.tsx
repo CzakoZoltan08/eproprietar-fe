@@ -158,10 +158,22 @@ const LeftSide = () => {
     }
   };
 
+  const providerMap: Record<string, AuthProvider> = {
+    Google:   AuthProvider.GOOGLE,    // "google.com"
+    Facebook: AuthProvider.FACEBOOK,  // "facebook.com"
+    Yahoo:    AuthProvider.YAHOO,     // "yahoo.com"
+  };
+
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
     try {
+      const enumName = providerMap[authProviderName];
+      if (!enumName) {
+        throw new Error("Unknown social provider: " + authProviderName);
+      }
+
       setIsLoading(true);
-      await handleSocialAuth(auth, provider, userApi, userStore, authProviderName);
+      
+      await handleSocialAuth(auth, provider, userApi, userStore, enumName);
       router.replace("/");
     } catch (error) {
       console.error(`${authProviderName} login failed`, error);
