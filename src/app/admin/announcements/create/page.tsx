@@ -3,6 +3,7 @@
 import { Box, Typography } from "@mui/material";
 
 import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
+import { ProviderType } from "@/constants/provider-types.enum";
 import React from "react";
 
 const AdminCreateAnnouncementPage: React.FC = () => {
@@ -12,7 +13,7 @@ const AdminCreateAnnouncementPage: React.FC = () => {
         Admin: Create New Announcement
       </Typography>
       {/* Reuse the existing AnnouncementForm component */}
-      <AnnouncementForm />
+      <AnnouncementForm item={ProviderType.OWNER} />
     </Box>
   );
 };
