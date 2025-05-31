@@ -252,6 +252,13 @@ const Header = () => {
           Ansambluri Rezidențiale
         </Button>
 
+        <Button
+          onClick={() => router.push("/announcements?providerType=agency&status=active")}
+          color="inherit"
+        >
+          Exclusivitate - Agentii - Comision 0
+        </Button>
+
         <RightSection>
           <PrimaryButton icon="add" text="Adaugă anunț" onClick={handleAddAnnouncementClick} />
         </RightSection>
@@ -284,8 +291,12 @@ const Header = () => {
             </div>
           ))}
 
-          <div onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}>
+          <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}>
             Ansambluri Rezidențiale
+          </div>
+
+          <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=agency&status=active")}>
+            Exclusivitate - Agentii - Comision 0
           </div>
         </DrawerContent>
       </Drawer>

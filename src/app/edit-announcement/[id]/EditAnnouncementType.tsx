@@ -40,8 +40,13 @@ const EditAnnouncementType = () => {
       ) : (
         <>
           {currentAnnouncement?.providerType === ProviderType.OWNER ? (
-            <AnnouncementForm />
-          ) : (
+            <AnnouncementForm item={ProviderType.OWNER} />
+          ) : 
+          currentAnnouncement?.providerType === ProviderType.AGENCY ?
+          (
+            <AnnouncementForm item={ProviderType.AGENCY} />
+          ) :
+          (
             <ResidentialAnnouncementForm />
           )}
         </>

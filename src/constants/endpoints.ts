@@ -1,6 +1,7 @@
 export const Endpoints = {
     ANNOUNCEMENTS: "/announcements",
     ENSEMBLE_ANNOUNCEMENTS: "/announcements/ensemble",
+    AGENCY_ANNOUNCEMENTS: "/announcements/agency",
     PAGINATED_ANNOUNCEMENTS: "/announcements/paginated",
     EDIT_ANNOUNCEMENTS: "/edit-announcement",
     SAVED_ANNOUNCEMENTS: "/saved-announcements",

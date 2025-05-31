@@ -28,19 +28,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import CheckIcon from "@mui/icons-material/Check";
 import { CommonButton } from "@/common/button/CommonButton";
-import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { observer } from "mobx-react";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
 
-const PackageGrid = styled.div`
+const PackageGrid = styled.div<{ $single: boolean }>`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* If there's exactly one package, force a single 280px-wide column and center it.
+     Otherwise use the original auto-fit, minmax(280px,1fr) behavior. */
+  grid-template-columns: ${({ $single }) =>
+    $single ? "minmax(280px, 280px)" : "repeat(auto-fit, minmax(280px, 1fr))"};
   gap: 24px;
   margin-top: 32px;
 
+  /* When $single is true, center the only card horizontally */
+  justify-content: ${({ $single }) => ($single ? "center" : "initial")};
+
   @media (max-width: 768px) {
+    /* On small screens, always use a single column */
     grid-template-columns: 1fr;
+    justify-content: initial;
   }
 `;
 
@@ -71,6 +78,7 @@ const mockFeaturesMap: Record<string, string[]> = {
   ["free"]: ["Basic listing", "Visible for 3 days", "No image uploads"],
   ["7_days"]: ["Up to 3 images", "Visible for 7 days", "Standard listing placement"],
   ["15_days"]: ["Up to 5 images", "Visible for 15 days", "Highlighted in listings"],
+  ["20_days"]: ["Up to 10 images", "Visible for 20 days", "Highlighted in all listings"],
   ["unlimited"]: ["Unlimited visibility", "Unlimited image uploads", "Priority placement", "Featured badge"],
   "3_months": ["Visible for 3 months", "Up to 10 images", "Boosted placement"],
   "6_months": ["Visible for 6 months", "Up to 15 images", "Priority placement"],
@@ -86,7 +94,10 @@ const PriceWithDiscount = ({ item }: { item: any }) => (
       {item.discountedPrice} {item.currency}
     </Typography>
     {item.originalPrice !== item.discountedPrice && (
-      <Typography fontSize="0.9rem" sx={{ textDecoration: "line-through", color: COLOR_RED_BUTTON, fontWeight: 600 }}>
+      <Typography
+        fontSize="0.9rem"
+        sx={{ textDecoration: "line-through", color: COLOR_RED_BUTTON, fontWeight: 600 }}
+      >
         {item.originalPrice} {item.currency}
       </Typography>
     )}
@@ -151,8 +162,9 @@ const SelectPackagePage = () => {
 
   useEffect(() => {
     if (!user?.id) getCurrentUser();
-  }, []);
+  }, [user?.id]);
 
+  // Fetch packages & promotions…
   useEffect(() => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
@@ -165,7 +177,10 @@ const SelectPackagePage = () => {
 
         const withMockFeatures = (items: any[]) =>
           items.map((item) => {
-            const features = item.features?.length ? item.features : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
+            const features =
+              item.features?.length
+                ? item.features
+                : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
             return { ...item, features };
           });
 
@@ -176,7 +191,14 @@ const SelectPackagePage = () => {
       }
     };
     fetchPricingData();
-  }, [user?.id]);
+  }, [user?.id, searchParams]);
+
+  // **New useEffect**: If there is exactly one package, auto‐select it
+  useEffect(() => {
+    if (packages.length === 1) {
+      setSelectedPackage(packages[0]);
+    }
+  }, [packages]);
 
   useEffect(() => {
     const pkgPrice = Number(selectedPackage?.discountedPrice) || 0;
@@ -234,7 +256,7 @@ const SelectPackagePage = () => {
       });
 
       if (res?.skipStripe) {
-        // no payment needed → go directly to status page
+        // no payment → go directly to status page
         router.push(`/payment-status?orderId=${announcementId}&success=true`);
       } else if (res?.checkoutUrl) {
         // normal Stripe flow
@@ -268,9 +290,14 @@ const SelectPackagePage = () => {
         Choose your listing package
       </Typography>
 
-      <PackageGrid>
+      {/* Pass `single={packages.length === 1}` to adjust the grid when only one package */}
+      <PackageGrid $single={packages.length === 1}>
         {packages.map((pkg) => (
-          <StyledCard key={pkg.id} selected={selectedPackage?.id === pkg.id} onClick={() => setSelectedPackage(pkg)}>
+          <StyledCard
+            key={pkg.id}
+            selected={selectedPackage?.id === pkg.id}
+            onClick={() => setSelectedPackage(pkg)}
+          >
             <CardContent>
               <PriceWithDiscount item={pkg} />
             </CardContent>
@@ -283,15 +310,17 @@ const SelectPackagePage = () => {
           <Typography variant="h5" fontWeight={700} mt={6} mb={2} color="primary">
             Add Promotion (Optional)
           </Typography>
-          <PackageGrid>
+          <PackageGrid $single={promotions.length === 1}>
             {promotions.map((promo) => (
-              <StyledCard 
-              key={promo.id} selected={selectedPromotion?.id === promo.id} 
-              onClick={() =>
-                selectedPromotion?.id === promo.id
-                  ? setSelectedPromotion(null)
-                  : setSelectedPromotion(promo)
-              }>
+              <StyledCard
+                key={promo.id}
+                selected={selectedPromotion?.id === promo.id}
+                onClick={() =>
+                  selectedPromotion?.id === promo.id
+                    ? setSelectedPromotion(null)
+                    : setSelectedPromotion(promo)
+                }
+              >
                 <CardContent>
                   <PriceWithDiscount item={promo} />
                 </CardContent>
@@ -303,52 +332,100 @@ const SelectPackagePage = () => {
 
       {selectedPackage && (
         <>
-        {!isFree && (
-          <Box mt={6}>
-            <Typography variant="h5" fontWeight={700} mb={2} color="primary">
-              Fill in your invoicing details
-            </Typography>
-            <Tabs value={tab} onChange={(_, newVal) => setTab(newVal)} indicatorColor="primary" textColor="primary" sx={{ mb: 3 }}>
-              <Tab label="Individual" />
-              <Tab label="Company" />
-            </Tabs>
+          {!isFree && (
+            <Box mt={6}>
+              <Typography variant="h5" fontWeight={700} mb={2} color="primary">
+                Fill in your invoicing details
+              </Typography>
+              <Tabs
+                value={tab}
+                onChange={(_, newVal) => setTab(newVal)}
+                indicatorColor="primary"
+                textColor="primary"
+                sx={{ mb: 3 }}
+              >
+                <Tab label="Individual" />
+                <Tab label="Company" />
+              </Tabs>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Full Name" name="name" onChange={handleChange} value={form.name} />
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Full Name"
+                    name="name"
+                    onChange={handleChange}
+                    value={form.name}
+                  />
+                </Grid>
+                {tab === 1 && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="CIF"
+                        name="cif"
+                        onChange={handleChange}
+                        value={form.cif}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="RegCom"
+                        name="regCom"
+                        onChange={handleChange}
+                        value={form.regCom}
+                      />
+                    </Grid>
+                  </>
+                )}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Address"
+                    name="address"
+                    onChange={handleChange}
+                    value={form.address}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="City"
+                    name="city"
+                    onChange={handleChange}
+                    value={form.city}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Country"
+                    name="country"
+                    onChange={handleChange}
+                    value={form.country}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    onChange={handleChange}
+                    value={form.email}
+                  />
+                </Grid>
               </Grid>
-              {tab === 1 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="CIF" name="cif" onChange={handleChange} value={form.cif} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="RegCom" name="regCom" onChange={handleChange} value={form.regCom} />
-                  </Grid>
-                </>
-              )}
-              <Grid item xs={12}>
-                <TextField fullWidth label="Address" name="address" onChange={handleChange} value={form.address} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="City" name="city" onChange={handleChange} value={form.city} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Country" name="country" onChange={handleChange} value={form.country} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Email" name="email" onChange={handleChange} value={form.email} />
-              </Grid>
-            </Grid>
-          </Box>
-        )}
+            </Box>
+          )}
           <Box>
             <Box textAlign="center" mt={4}>
               <CommonButton
                 text={
-                loading
-                  ? "Processing…"
-                  : isFree
+                  loading
+                    ? "Processing…"
+                    : isFree
                     ? "Publish for Free"
                     : "Continue to Payment"
                 }
