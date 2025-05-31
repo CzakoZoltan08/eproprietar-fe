@@ -39,7 +39,9 @@ const ContactCardComponent: React.FC = () => {
       <TextGrayLabel>
         {currentAnnouncement.providerType === "owner"
           ? ProviderType.OWNER
-          : ProviderType.AGENCY}
+          : currentAnnouncement.providerType === "agency"
+          ? ProviderType.AGENCY
+          : ProviderType.ENSEMBLE}
       </TextGrayLabel>
       <Title>{`${firstName} ${lastName}`}</Title>
       <StyledPrimaryButton

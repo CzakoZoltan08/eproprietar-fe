@@ -11,7 +11,9 @@ import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
 import { AuthLayout } from "@/common/layout/AuthLayout";
 import HouseIcon from "@mui/icons-material/House";
 import LocationCityIcon from "@mui/icons-material/LocationCity";
+import { ProviderType } from "@/constants/provider-types.enum";
 import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
+import { Work } from "@mui/icons-material";
 import styled from "styled-components";
 
 // Styled components
@@ -88,10 +90,16 @@ export default function CreateAnnounce() {
             IconComponent={LocationCityIcon}
             onClick={() => setSelectedTab(1)}
           />
+          <TabIcon
+            isSelected={selectedTab === 2}
+            IconComponent={Work}
+            onClick={() => setSelectedTab(2)}
+          />
         </IconContainer>
         <Box width="100%">
-          {selectedTab === 0 && <AnnouncementForm />}
+          {selectedTab === 0 && <AnnouncementForm item={ProviderType.OWNER} />}
           {selectedTab === 1 && <ResidentialAnnouncementForm />}
+          {selectedTab === 2 && <AnnouncementForm item={ProviderType.AGENCY} />}
         </Box>
       </Box>
     </AuthLayout>

@@ -19,6 +19,7 @@ import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
+import { ProviderType } from "@/constants/provider-types.enum";
 import RadioButtonsGroup from "@/common/radio/RadioGroup";
 import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
@@ -251,10 +252,10 @@ const MAX_IMAGES = 20;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const AnnouncementFormContent = () => {
+const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const {
     userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
-    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement, sendAnnouncementCreationMail },
+    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement, sendAnnouncementCreationMail, getAnnouncementById },
     pricingStore : { freePlanId, getAnnouncementPackages },
     announcementStore: { createPaymentSession },
   } = useStore();
@@ -268,7 +269,7 @@ const AnnouncementFormContent = () => {
   const [formData, setFormData] = useState({
     userId: user?.id || "",
     announcementType: "",
-    providerType: "owner",
+    providerType: item,
     transactionType: "",
     title: "",
     description: "",
@@ -285,7 +286,7 @@ const AnnouncementFormContent = () => {
     numberOfKitchens: "",
     balcony: "",
     parking: "",
-    thumbnail: null as File | null, // Thumbnail file
+    thumbnail: null as File | string | null, // Thumbnail file can be File or string (URL)
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
@@ -336,6 +337,14 @@ const AnnouncementFormContent = () => {
     }));
   }, []);
 
+  // (1) Fetch currentAnnouncement when in edit mode
+  useEffect(() => {
+    if (isEdit && params?.id) {
+      const id = Array.isArray(params.id) ? params.id[0] : params.id;
+      getAnnouncementById(id);
+    }
+  }, [isEdit, params?.id]);
+
 
   // Prefill data if redirected from failed payment
   useEffect(() => {
@@ -351,20 +360,23 @@ const AnnouncementFormContent = () => {
   // Load current announcement for editing
   useEffect(() => {
     if (isEdit && currentAnnouncement) {
+      // ─── A) Map basic fields ───
       const normalizedType = propertyTypes.find(
         (type) =>
-          type.toLowerCase() === currentAnnouncement.announcementType?.toLowerCase()
+          type.toLowerCase() ===
+          currentAnnouncement.announcementType?.toLowerCase()
       );
+      const normalizedTrans = serviceTypes.find(
+        (type) =>
+          type.toLowerCase() ===
+          currentAnnouncement.transactionType?.toLowerCase()
+      ) || serviceTypes[0];
 
       setFormData({
         userId: currentAnnouncement.user?.id || user?.id || "",
         announcementType: normalizedType || propertyTypes[0],
         providerType: formData.providerType,
-        transactionType:
-          serviceTypes.find(
-            (type) =>
-              type.toLowerCase() === currentAnnouncement.transactionType?.toLowerCase()
-          ) || serviceTypes[0],
+        transactionType: normalizedTrans,
         title: currentAnnouncement.title || "",
         description: currentAnnouncement.description || "",
         price: currentAnnouncement.price?.toString() || "",
@@ -380,16 +392,45 @@ const AnnouncementFormContent = () => {
         numberOfKitchens: currentAnnouncement.numberOfKitchens?.toString() || "",
         balcony: currentAnnouncement.balcony || "",
         parking: currentAnnouncement.parking || "",
-        thumbnail: null,
+        // ─── B) Prefill existing thumbnail URL as string ───
+        thumbnail: currentAnnouncement.imageUrl || null,
+        // We leave `formData.images` empty: newly selected Files go here
         images: [],
+        // We leave `formData.videos` empty: newly selected Files go here
         videos: [],
-        sketch: null,
+        // ─── C) Prefill existing sketch URL as string ───
+        sketch: currentAnnouncement.sketchUrl || null,
       });
 
+      // ─── D) Prefill thumbnail preview ───
       if (currentAnnouncement.imageUrl) {
         setThumbnailPreview(currentAnnouncement.imageUrl);
       }
 
+      // ─── E) Prefill sketch preview ───
+      if (currentAnnouncement.sketchUrl) {
+        setSketchPreview(currentAnnouncement.sketchUrl);
+      }
+
+      // ─── F) Prefill images preview array ───
+      if (Array.isArray(currentAnnouncement.images)) {
+        // Assume each image is { original: string, thumbnail: string }
+        const existingImageUrls = currentAnnouncement.images.map(
+          (imgObj) => imgObj.original
+        );
+        setImagePreviews(existingImageUrls);
+      }
+
+      // ─── G) Prefill videos preview array ───
+      if (Array.isArray(currentAnnouncement.videos)) {
+        // Assume each video is { original: string, format: string }
+        const existingVideoUrls = currentAnnouncement.videos.map(
+          (vidObj) => vidObj.original
+        );
+        setVideoPreviews(existingVideoUrls);
+      }
+
+      // ─── H) Prefill contact phone ───
       if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
         setContactPhone(currentAnnouncement.user.phoneNumber);
       }
@@ -631,82 +672,91 @@ const AnnouncementFormContent = () => {
   const uploadMedia = async (announcementId: string) => {
     const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
     const totalVideos = formData.videos.length;
-  
+
     setImageUploadProgress({ uploaded: 0, total: totalImages });
     setVideoUploadProgress({ uploaded: 0, total: totalVideos });
-  
+
     const incrementImage = () =>
-      setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
-  
+      setImageUploadProgress((prev) => ({
+        ...prev,
+        uploaded: prev.uploaded + 1,
+      }));
     const incrementVideo = () =>
-      setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
-  
-    const imageUploads = formData.images.map((image) =>
+      setVideoUploadProgress((prev) => ({
+        ...prev,
+        uploaded: prev.uploaded + 1,
+      }));
+
+    // 1) Upload any brand-new images (File objects in formData.images)
+    const imageUploads = formData.images.map((imageFile) =>
       (async () => {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", image);
-        formDataToSend.append("type", "image");
-  
-        await createImageOrVideo(formDataToSend, announcementId);
+        const df = new FormData();
+        df.append("file", imageFile);
+        df.append("type", "image");
+        await createImageOrVideo(df, announcementId);
         incrementImage();
       })()
     );
-  
+
+    // 2) Upload the thumbnail (could be File or existing string URL)
     if (formData.thumbnail) {
-      const thumbUpload = (async () => {
-        const formDataToSend = new FormData();
-        if (formData.thumbnail) {
-          formDataToSend.append("file", formData.thumbnail);
-        }
-        formDataToSend.append("type", "image");
-  
-        const response = await createImageOrVideo(formDataToSend, announcementId);
-        if (response?.optimized_url) {
-          await updateAnnouncement(announcementId, { imageUrl: response.optimized_url });
-        }
-        incrementImage();
-      })();
-      imageUploads.push(thumbUpload);
+      const df = new FormData();
+      if (formData.thumbnail instanceof File) {
+        df.append("file", formData.thumbnail);
+      } else if (typeof formData.thumbnail === "string") {
+        // Fetch the existing URL → convert to Blob → File
+        const resp = await fetch(formData.thumbnail);
+        const blob = await resp.blob();
+        const name = `thumbnail‐${Date.now()}.jpg`;
+        const file = new File([blob], name, { type: blob.type });
+        df.append("file", file);
+      }
+      df.append("type", "image");
+
+      const uploadResp = await createImageOrVideo(df, announcementId);
+      if (uploadResp?.optimized_url) {
+        await updateAnnouncement(announcementId, {
+          imageUrl: uploadResp.optimized_url,
+        });
+      }
+      incrementImage();
     }
 
+    // 3) Upload the sketch (could be File or existing string URL)
     if (formData.sketch) {
-      const sketchUpload = (async () => {
-        const formDataToSend = new FormData();
-        
-        if (formData.sketch instanceof File) {
-          formDataToSend.append("file", formData.sketch);
-        } else if (typeof formData.sketch === "string") {
-          const response = await fetch(formData.sketch);
-          const blob = await response.blob();
-          const fileName = `sketch-${Date.now()}.jpg`;
-          const file = new File([blob], fileName, { type: blob.type });
-          formDataToSend.append("file", file);
-        }
-    
-        formDataToSend.append("type", "image");
-    
-        const uploadResponse = await createImageOrVideo(formDataToSend, announcementId);
-        if (uploadResponse?.optimized_url) {
-          await updateAnnouncement(announcementId, { sketchUrl: uploadResponse.optimized_url });
-        }
-    
-        incrementImage();
-      })();
-    
-      imageUploads.push(sketchUpload);
+      const df2 = new FormData();
+      if (formData.sketch instanceof File) {
+        df2.append("file", formData.sketch);
+      } else if (typeof formData.sketch === "string") {
+        const resp2 = await fetch(formData.sketch);
+        const blob2 = await resp2.blob();
+        const name2 = `sketch‐${Date.now()}.jpg`;
+        const file2 = new File([blob2], name2, { type: blob2.type });
+        df2.append("file", file2);
+      }
+      df2.append("type", "image");
+
+      const uploadResp2 = await createImageOrVideo(df2, announcementId);
+      if (uploadResp2?.optimized_url) {
+        await updateAnnouncement(announcementId, {
+          sketchUrl: uploadResp2.optimized_url,
+        });
+      }
+      incrementImage();
     }
-  
-    const videoUploads = formData.videos.map((video) =>
+
+    // 4) Upload any brand-new videos (File objects in formData.videos)
+    const videoUploads = formData.videos.map((videoFile) =>
       (async () => {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", video);
-        formDataToSend.append("type", "video");
-  
-        await createImageOrVideo(formDataToSend, announcementId);
+        const df3 = new FormData();
+        df3.append("file", videoFile);
+        df3.append("type", "video");
+        await createImageOrVideo(df3, announcementId);
         incrementVideo();
       })()
     );
-  
+
+    // 5) Wait for all uploads to finish
     await Promise.all([Promise.all(imageUploads), Promise.all(videoUploads)]);
   };  
 
@@ -754,6 +804,7 @@ const AnnouncementFormContent = () => {
         status: user && user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
+        deleteMedia: false
       };
   
       // 1. Update phone number if changed
@@ -761,51 +812,67 @@ const AnnouncementFormContent = () => {
         await updateUser(user.id, { phoneNumber: contactPhone });
       }
 
-      // 2. Actually create the announcement
-      const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+      if (isEdit && currentAnnouncement?.id) {
+        // ─── EDITING AN EXISTING ANNOUNCEMENT ──
+        // 2a. Call updateAnnouncement instead of createAnnouncement
+        announcementDraft.status = 'active';
+        announcementDraft.deleteMedia = true; // Ensure we delete old media
+        await updateAnnouncement(currentAnnouncement.id, announcementDraft);
 
-      // 4. Upload media in the background
-      await uploadMedia(newAnnouncement.id);
+        // 3a. Upload media on top of the existing announcement’s ID
+        await uploadMedia(currentAnnouncement.id);
 
-      const isAdmin = user?.role === 'admin';
-
-      if (isAdmin) {
-        // record free payment for admin
-        await createPaymentSession({
-          orderId: newAnnouncement.id,
-          packageId: freePlanId ?? "",
-          amount: 0,
-          originalAmount: 0,
-          currency: 'RON',
-          invoiceDetails: {
-            name: "",
-            address: "",
-            city: "",
-            country: "",
-            email: "",
-            isTaxPayer: false
-          },
-          products: [],
-        });
-
-        const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!
-        const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`; 
-        await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
-
-        // redirect to admin detail view
-        window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
+        // 4a. Redirect or show a “success” page for editing
+        // (choose whatever makes sense: maybe go back to listing or details page)
+        // e.g.:
+        window.location.href = `/announcements/${currentAnnouncement.id}`;
       } else {
-        // normal user: go to payment packages flow
-        window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}`;
+
+        // 2. Actually create the announcement
+        const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+
+        // 4. Upload media in the background
+        await uploadMedia(newAnnouncement.id);
+
+        const isAdmin = user?.role === 'admin';
+
+        if (isAdmin) {
+          // record free payment for admin
+          await createPaymentSession({
+            orderId: newAnnouncement.id,
+            packageId: freePlanId ?? "",
+            amount: 0,
+            originalAmount: 0,
+            currency: 'RON',
+            invoiceDetails: {
+              name: "",
+              address: "",
+              city: "",
+              country: "",
+              email: "",
+              isTaxPayer: false
+            },
+            products: [],
+          });
+
+          const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!
+          const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`; 
+          await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
+
+          // redirect to admin detail view
+            window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
+        } else {
+          // normal user: go to payment packages flow
+          window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=${item}`;
+        }
       }
-      
     } catch (error) {
       console.error("Error saving announcement:", error);
       setError("An error occurred while saving the announcement.");
     } finally {
       setLoading(false);
     }
-  };   
+  };
 
   return (
     <Container>
@@ -1216,10 +1283,10 @@ const AnnouncementFormContent = () => {
   );
 };
 
-const AnnouncementForm = () => {
+const AnnouncementForm = ({ item }: { item: ProviderType }) => {
   return (
     <Suspense fallback={<CircularProgress size={50} style={{ marginTop: "50px" }} />}>
-      <AnnouncementFormContent />
+      <AnnouncementFormContent item={item} />
     </Suspense>
   );
 };
