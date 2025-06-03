@@ -1,20 +1,42 @@
-/* MyAccountComponent.module.css */
+/* src/components/MyAccountComponent.module.css */
 
+/* Center the container and limit its width */
 .container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 300px;
-  }
-  
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-bottom: 6px;
-  }
-  
-  .header {
-    font-weight: 600;
-    margin-bottom: 32px;
-  }  
+  max-width: 400px;       /* adjust as needed */
+  margin: 0 auto;         /* horizontal centering */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;              /* space between sections */
+  padding: 16px 0;        /* optional vertical padding */
+}
+
+/* If you want each “section” to also stretch full‐width within the container */
+.section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Header stays centered by default (typography is block‐level) */
+.header {
+  text-align: center;
+  margin-bottom: 16px;
+  /* (existing styles you may already have) */
+}
+
+/* Banner styling unchanged: */
+.banner {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  text-align: center;
+}
+
+.bannerImage {
+  height: 300px;      /* taller than it is wide */
+  width: auto;
+  object-fit: cover;
+  cursor: pointer;
+  margin: 0 auto;
+}
