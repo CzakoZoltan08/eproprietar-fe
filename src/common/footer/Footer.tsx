@@ -4,6 +4,7 @@ import { Flex } from "../../common/flex/Flex";
 import Image from "next/image";
 import React from "react";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import bannerImage from "../../assets/startup-ceo-banner.jpg";
 import facebookLogo from "../../assets/facebook-logo.svg";
 import instagramLogo from "../../assets/instagram-logo.svg";
 import linkedinIcon from "../../assets/linkedin-logo.svg";
@@ -16,7 +17,8 @@ import youTubeIcon from "../../assets/youtube-logo.svg";
 const FooterContainer = styled.footer<{ $padding: string }>`
   background: #eee;
   box-shadow: 0 4px 10px #000;
-  height: 250px;
+  /* increase height slightly to accommodate book section */
+  min-height: 320px;
   color: #575f7f;
   padding: ${(props) => props.$padding};
 `;
@@ -40,6 +42,23 @@ const LinkIcon = styled.a`
   }
 `;
 
+// New styled wrapper for the book section
+const BookSection = styled(Flex)`
+  flex-direction: column;
+  align-items: center;
+  margin-top: 24px;
+  gap: 8px;
+`;
+
+const BookLink = styled.a`
+  font-size: 14px;
+  color: #575f7f;
+  text-decoration: none;
+  &:hover {
+    color: ${palette.COLOR_PRIMARY};
+  }
+`;
+
 const Subfooter = styled(Flex)`
   display: flex;
   font-size: 0.9rem;
@@ -55,46 +74,18 @@ const Title = styled.h5`
 `;
 
 const appPages = [
-  {
-    name: "Home",
-    link: "/home",
-  },
-  {
-    name: "Despre noi",
-    link: "/about-us",
-  },
-  {
-    name: "Contul meu",
-    link: "/my-account",
-  },
-  {
-    name: "Adaugă anunț",
-    link: "/create-announcement",
-  },
-  {
-    name: "Contact",
-    link: "/contact",
-  },
+  { name: "Home", link: "/home" },
+  { name: "Despre noi", link: "/about-us" },
+  { name: "Contul meu", link: "/my-account" },
+  { name: "Adaugă anunț", link: "/create-announcement" },
+  { name: "Contact", link: "/contact" },
 ];
 
 const infoPages = [
-  {
-    name: "Termeni și condiții",
-    link: "/privacy-policy",
-  },
-  {
-    name: "Politica de confidențialitate și GDPR",
-    link: "/gdpr",
-  },
-  {
-    name: "Politica cookie",
-    link: "/",
-  },
-  {
-    name: "ANPC",
-    link: "https://www.anpc.ro/",
-    external: true,
-  },
+  { name: "Termeni și condiții", link: "/privacy-policy" },
+  { name: "Politica de confidențialitate și GDPR", link: "/gdpr" },
+  { name: "Politica cookie", link: "/" },
+  { name: "ANPC", link: "https://www.anpc.ro/", external: true },
 ];
 
 const Footer = () => {
@@ -104,7 +95,6 @@ const Footer = () => {
     if (item.external) {
       return window.open(item.link, "_blank");
     }
-
     router.push(item.link);
   };
   const date = new Date();
@@ -131,6 +121,7 @@ const Footer = () => {
           ))}
         </Flex>
       </Flex>
+
       <Title>Suntem prezenți și pe social media:</Title>
       <Flex $justifyContent={"space-between"}>
         <Flex $alignItems={"flex-start"} width={"unset"} $gap={"12px"}>
@@ -165,9 +156,37 @@ const Footer = () => {
         </Flex>
         <Image src={logo} alt="eproprietar" width={100} />
       </Flex>
-      <Subfooter
-        $justifyContent={"flex-start"}
-      >{`© ${date.getFullYear()}  eProprietar.ro - Imo Casa Solutions S.R.L., CIF: 36270153, REG. COM.: J12/2530/2016`}</Subfooter>
+
+      {/* === Book Section === */}
+      <BookSection $justifyContent={"center"}>
+        <BookLink
+          href="https://www.ubuy.hu/en/product/23GB1IX0-startup-ceo-a-field-guide-to-scaling-up-your-business-techstars"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            src={bannerImage.src}
+            alt="Startup CEO Book Cover"
+            width={80}
+            height={120}
+            style={{
+              objectFit: "cover",
+              objectPosition: "top",
+            }}
+          />
+        </BookLink>
+        <BookLink
+          href="https://www.ubuy.hu/en/product/23GB1IX0-startup-ceo-a-field-guide-to-scaling-up-your-business-techstars"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Startup CEO – A Field Guide to Scaling Up Your Business
+        </BookLink>
+      </BookSection>
+
+      <Subfooter $justifyContent={"flex-start"}>
+        {`© ${date.getFullYear()}  eProprietar.ro - Imo Casa Solutions S.R.L., CIF: 36270153, REG. COM.: J12/2530/2016`}
+      </Subfooter>
     </FooterContainer>
   );
 };
