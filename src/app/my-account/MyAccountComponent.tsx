@@ -5,7 +5,7 @@ import { ChangeEvent, useState } from "react";
 
 import { COLOR_TEXT } from "@/constants/colors";
 import { InputField } from "@/common/input/InputField";
-import bannerImage from "../../assets/startup-ceo-banner.jpg";
+import bannerImage from "../../assets/BookCoverImage.jpg";
 import { observer } from "mobx-react";
 import styles from "./MyAccountComponent.module.css";
 import { useStore } from "@/hooks/useStore";
@@ -82,21 +82,29 @@ const MyAccountComponent = () => {
             Delete My Account
           </Button>
         </Box>
-      </Box>
 
-      {/* === Banner Section (moved below the form) === */}
-      <Box
-        component="a"
-        href="https://www.ubuy.hu/en/product/23GB1IX0-startup-ceo-a-field-guide-to-scaling-up-your-business-techstars"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.banner}
-      >
-        <img
-          src={bannerImage.src}
-          alt="Startup CEO Book Banner"
-          className={styles.bannerImage}
-        />
+        {/* === Banner Section with Overlay Text === */}
+        <Box
+          component="a"
+          href="https://totuldespreimobiliare.ro/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.banner}
+        >
+          <img
+            src={bannerImage.src}
+            alt='"Totul" despre imobiliare'
+            className={styles.bannerImage}
+          />
+
+            <Typography className={styles.bannerText}>
+            <b>
+              "Totul" despre imobiliare - Cumpara Cartea
+              <br />
+              Proiect sprijinit de eproprietar.ro!
+            </b>
+            </Typography>
+        </Box>
       </Box>
     </Box>
   );
