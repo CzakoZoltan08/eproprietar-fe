@@ -1,0 +1,85 @@
+.footerContainer {
+  background: #eee;
+  box-shadow: 0 4px 10px #000;
+  min-height: 320px;       /* to leave room for the book section */
+  color: #575f7f;
+}
+
+.linkText {
+  font-size: 13px;
+  color: #575f7f;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.linkText:hover {
+  color: var(--COLOR_PRIMARY); /* or replace with the hex value of COLOR_PRIMARY */
+}
+
+.linkIcon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  cursor: pointer;
+}
+.linkIcon img {
+  width: 100%;
+  height: 100%;
+}
+
+.socialTitle {
+  margin: 16px 0 8px;
+  color: #b9becf;
+  font-size: 1rem;
+}
+
+.bookSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 24px;
+  gap: 8px;
+}
+
+.bannerLink {
+  display: block;
+  width: 100%;
+  max-width: 300px;        /* adjust max width as needed */
+  text-align: center;
+}
+
+.bannerWrapper {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 33.33%;     /* 3:1 aspect ratio → (1 ÷ 3 = 0.3333 ≃ 33.33%) */
+  overflow: hidden;
+}
+
+.bannerImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;     /* ensures the entire banner is visible, no cropping */
+  object-position: center;
+  cursor: pointer;
+}
+
+.bookTextLink {
+  font-size: 14px;
+  color: #575f7f;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.bookTextLink:hover {
+  color: var(--COLOR_PRIMARY); /* or replace with the hex value of COLOR_PRIMARY */
+}
+
+.subfooter {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #8c8c8c;
+  text-align: left;
+}

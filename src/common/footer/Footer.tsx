@@ -4,7 +4,7 @@ import { Flex } from "../../common/flex/Flex";
 import Image from "next/image";
 import React from "react";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
-import bannerImage from "../../assets/startup-ceo-banner.jpg";
+import bannerImage from "../../assets/BookCoverImage.jpg";
 import facebookLogo from "../../assets/facebook-logo.svg";
 import instagramLogo from "../../assets/instagram-logo.svg";
 import linkedinIcon from "../../assets/linkedin-logo.svg";
@@ -160,15 +160,15 @@ const Footer = () => {
       {/* === Book Section === */}
       <BookSection $justifyContent={"center"}>
         <BookLink
-          href="https://www.ubuy.hu/en/product/23GB1IX0-startup-ceo-a-field-guide-to-scaling-up-your-business-techstars"
+          href="https://totuldespreimobiliare.ro/"
           target="_blank"
           rel="noopener noreferrer"
         >
           <Image
             src={bannerImage.src}
-            alt="Startup CEO Book Cover"
-            width={80}
-            height={120}
+            alt='"Totul" despre imobiliare'	
+            width={240}
+            height={180}
             style={{
               objectFit: "cover",
               objectPosition: "top",
@@ -176,11 +176,11 @@ const Footer = () => {
           />
         </BookLink>
         <BookLink
-          href="https://www.ubuy.hu/en/product/23GB1IX0-startup-ceo-a-field-guide-to-scaling-up-your-business-techstars"
+          href="https://totuldespreimobiliare.ro/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Startup CEO – A Field Guide to Scaling Up Your Business
+          "Totul" despre imobiliare
         </BookLink>
       </BookSection>
 

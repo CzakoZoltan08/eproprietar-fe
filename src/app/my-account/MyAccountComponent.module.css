@@ -1,5 +1,3 @@
-/* src/components/MyAccountComponent.module.css */
-
 /* Center the container and limit its width */
 .container {
   max-width: 400px;       /* adjust as needed */
@@ -10,7 +8,6 @@
   padding: 16px 0;        /* optional vertical padding */
 }
 
-/* If you want each “section” to also stretch full‐width within the container */
 .section {
   width: 100%;
   display: flex;
@@ -18,25 +15,38 @@
   gap: 12px;
 }
 
-/* Header stays centered by default (typography is block‐level) */
 .header {
   text-align: center;
   margin-bottom: 16px;
   /* (existing styles you may already have) */
 }
 
-/* Banner styling unchanged: */
 .banner {
-  display: block;
+  position: relative;
   width: 100%;
   margin-top: 24px;
-  text-align: center;
 }
 
+/* Make the image scale to the container's width */
 .bannerImage {
-  height: 300px;      /* taller than it is wide */
-  width: auto;
+  width: 100%;
+  height: auto;
   object-fit: cover;
   cursor: pointer;
+  display: block;
   margin: 0 auto;
+}
+
+/* Overlay text stays the same */
+.bannerText {
+  position: absolute;
+  bottom: 16px;
+  left: 25px;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: pre-line;
+  font-size: 1rem;
 }
