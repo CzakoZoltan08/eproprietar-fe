@@ -171,7 +171,7 @@ const SelectPackagePage = () => {
       try {
         const audience = searchParams.get("providerType") || "normal";
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
-          getAnnouncementPackages(user.id, audience),
+          getAnnouncementPackages(user.id, audience === "owner" ? "normal" : audience),
           getPromotionPackages(user.id),
         ]);
 
