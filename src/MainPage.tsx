@@ -2,7 +2,6 @@ import * as breakpoints from "./constants/breakpoints";
 
 import {
   Container,
-  Divider,
   SearchContainer,
   SelectDropdownContainer,
   Subtitle,
@@ -20,10 +19,8 @@ import FloatingCardWrapper from "./common/floatingCard/FloatingCardWrapper";
 import Image from "next/image";
 import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
-import { ResponsiveLogoContainer } from "./style/ResponsiveLogoContainer";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
 import bannerEproprietar from "./assets/banner_eproprietar.png";
-import logo from "./assets/logo-white.svg";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
 

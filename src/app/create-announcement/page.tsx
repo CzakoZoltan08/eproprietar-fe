@@ -5,15 +5,16 @@ import * as breakpoints from "@/constants/breakpoints";
 import * as palette from "@/constants/colors";
 
 import { Box, Typography } from "@mui/material";
+import Image, { StaticImageData } from "next/image";
 import React, { useState } from "react";
 
 import AnnouncementForm from "@/app/create-announcement/AnnouncementForm";
 import { AuthLayout } from "@/common/layout/AuthLayout";
-import HouseIcon from "@mui/icons-material/House";
-import LocationCityIcon from "@mui/icons-material/LocationCity";
+import BrokerIcon from "@/assets/Broker_eproprietar.png";
+import DezvIcon from "@/assets/Dezvoltator_eproprietar.png";
+import PFIcon from "@/assets/PF_eproprietar.png";
 import { ProviderType } from "@/constants/provider-types.enum";
 import ResidentialAnnouncementForm from "@/app/create-announcement/ResidentialAnnouncementForm";
-import { Work } from "@mui/icons-material";
 import styled from "styled-components";
 
 // Styled components
@@ -47,20 +48,36 @@ const IconContainer = styled(Box)`
 // Reusable Icon component
 interface TabIconProps {
   isSelected: boolean;
-  IconComponent: React.ElementType;
+  IconComponent?: React.ElementType;
+  imageSrc?: string | StaticImageData;
   onClick: () => void;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({ isSelected, IconComponent, onClick }) => {
+const TabIcon: React.FC<TabIconProps> = ({ isSelected, IconComponent, imageSrc, onClick }) => {
+  const size = isSelected ? 64 : 48;
+
   return (
-    <IconComponent
-      sx={{
-        fontSize: isSelected ? "64px" : "48px",
-        color: isSelected ? palette.COLOR_PRIMARY : palette.COLOR_CONTRAST,
-        cursor: "pointer",
-      }}
-      onClick={onClick}
-    />
+    <Box onClick={onClick} sx={{ cursor: "pointer" }}>
+      {imageSrc ? (
+        <Image
+          src={imageSrc}
+          alt="Tab icon"
+          width={size}
+          height={size}
+          style={{ filter: isSelected ? undefined : "grayscale(100%)" }}
+        />
+      ) : (
+        IconComponent && (
+          <IconComponent
+            sx={{
+              fontSize: `${size}px`,
+              color: isSelected ? palette.COLOR_PRIMARY : palette.COLOR_CONTRAST,
+              cursor: "pointer",
+            }}
+          />
+        )
+      )}
+    </Box>
   );
 };
 
@@ -75,24 +92,24 @@ export default function CreateAnnounce() {
         alignItems="center"
         gap={3}
       >
-        <StyledSubtitle variant="h1">Adauga acum anunțul tău</StyledSubtitle>
-        <StyledSubtitleAdvice variant="h2">
+        <StyledSubtitle variant="h3">Adauga acum anunțul tău</StyledSubtitle>
+        <StyledSubtitleAdvice variant="h4">
           Urmează pașii, e mai simplu ca niciodată!
         </StyledSubtitleAdvice>
         <IconContainer>
           <TabIcon
             isSelected={selectedTab === 0}
-            IconComponent={HouseIcon}
+            imageSrc={PFIcon}
             onClick={() => setSelectedTab(0)}
           />
           <TabIcon
             isSelected={selectedTab === 1}
-            IconComponent={LocationCityIcon}
+            imageSrc={DezvIcon}
             onClick={() => setSelectedTab(1)}
           />
           <TabIcon
             isSelected={selectedTab === 2}
-            IconComponent={Work}
+            imageSrc={BrokerIcon}
             onClick={() => setSelectedTab(2)}
           />
         </IconContainer>
