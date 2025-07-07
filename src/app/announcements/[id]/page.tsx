@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
 import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
+import HistoryStatsCard from "./HistoryStatsCard";
 import { Layout } from "@/common/layout/Layout";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import Slider from "react-slick";
@@ -598,7 +599,11 @@ const AnnouncementDetailPage: React.FC = () => {
         </MediaContainer>
 
         {currentAnnouncement && currentAnnouncement.description && <DescriptionCard />}
+        
         <CharacteristicsCard />
+        
+        {currentAnnouncement?.createdAt && <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />}
+
       </Box>
 
       <ContactContainer>

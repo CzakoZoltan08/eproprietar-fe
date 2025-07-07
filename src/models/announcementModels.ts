@@ -35,6 +35,7 @@ export interface PropertyAnnouncementModel {
   developerName?: string;
   phoneContact?: string;
   sketchUrl?: string;
+  createdAt: string;
 }
 
 export class CreateAnnouncementDto {
