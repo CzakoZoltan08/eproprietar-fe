@@ -1,5 +1,6 @@
 import * as palette from "../../constants/colors";
 
+import { BookPromoSection } from "../bookPromotionSection/BookPromoSection";
 import { Flex } from "../../common/flex/Flex";
 import Image from "next/image";
 import React from "react";
@@ -73,6 +74,82 @@ const Title = styled.h5`
   color: #b9becf;
 `;
 
+const BookWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+`;
+
+const BookContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #d2d2d2;
+  padding: 24px;
+  max-width: 1000px;
+  width: 100%;
+  background-color: white;
+`;
+
+const BookTitle = styled.h2`
+  font-size: 28px;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 16px;
+`;
+
+const BookContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+`;
+
+const BookLeft = styled.div`
+  flex: 1;
+  min-width: 280px;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+`;
+
+const BookQuestions = styled.div`
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1.4;
+  margin-bottom: 8px;
+`;
+
+const BookSubtitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  margin: 8px 0;
+`;
+
+const OrderButton = styled.a`
+  display: inline-block;
+  background-color: #69a8db;
+  padding: 10px 20px;
+  color: red;
+  font-size: 18px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 2px;
+  margin-top: 8px;
+`;
+
+const BookRight = styled.div`
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+
 const appPages = [
   { name: "Home", link: "/home" },
   { name: "Despre noi", link: "/about-us" },
@@ -101,6 +178,9 @@ const Footer = () => {
 
   return (
     <FooterContainer $padding={isMobile ? "16px 24px" : "16px 120px"}>
+      {/* === Book Section === */}
+      <BookPromoSection />
+      
       <Flex>
         <Flex $flexDirection={"column"} $alignItems={"flex-start"}>
           {appPages.map((item, index) => (
@@ -156,34 +236,7 @@ const Footer = () => {
         </Flex>
         <Image src={logo} alt="eproprietar" width={100} />
       </Flex>
-
-      {/* === Book Section === */}
-      <BookSection $justifyContent={"center"}>
-        <BookLink
-          href="https://totuldespreimobiliare.ro/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            src={bannerImage.src}
-            alt='"Totul" despre imobiliare'	
-            width={240}
-            height={180}
-            style={{
-              objectFit: "cover",
-              objectPosition: "top",
-            }}
-          />
-        </BookLink>
-        <BookLink
-          href="https://totuldespreimobiliare.ro/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          "Totul" despre imobiliare
-        </BookLink>
-      </BookSection>
-
+      
       <Subfooter $justifyContent={"flex-start"}>
         {`© ${date.getFullYear()}  eProprietar.ro - Imo Casa Solutions S.R.L., CIF: 36270153, REG. COM.: J12/2530/2016`}
       </Subfooter>

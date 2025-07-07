@@ -83,28 +83,6 @@ const MyAccountComponent = () => {
           </Button>
         </Box>
 
-        {/* === Banner Section with Overlay Text === */}
-        <Box
-          component="a"
-          href="https://totuldespreimobiliare.ro/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.banner}
-        >
-          <img
-            src={bannerImage.src}
-            alt='"Totul" despre imobiliare'
-            className={styles.bannerImage}
-          />
-
-            <Typography className={styles.bannerText}>
-            <b>
-              "Totul" despre imobiliare - Cumpara Cartea
-              <br />
-              Proiect sprijinit de eproprietar.ro!
-            </b>
-            </Typography>
-        </Box>
       </Box>
     </Box>
   );
