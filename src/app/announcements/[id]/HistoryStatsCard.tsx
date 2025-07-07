@@ -3,7 +3,7 @@
 import { Box, Divider, Typography } from "@mui/material";
 
 import { format } from "date-fns";
-import { ro } from "date-fns/locale";
+import { ro } from "date-fns/locale/ro";
 import styled from "styled-components";
 
 interface HistoryStatsCardProps {
