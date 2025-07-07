@@ -15,7 +15,7 @@ export const SelectDropdownContainer = styled.div<SelectDropdownContainerProps>`
 export const Container = styled.div`
   background: ${palette.COLOR_CONTRAST};
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh; /* ✅ allows the content to grow */
   display: flex;
   align-items: center;
   flex-direction: column;

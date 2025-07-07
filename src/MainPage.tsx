@@ -22,6 +22,7 @@ import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
 import { ResponsiveLogoContainer } from "./style/ResponsiveLogoContainer";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
+import bannerEproprietar from "./assets/banner_eproprietar.png";
 import logo from "./assets/logo-white.svg";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
@@ -241,27 +242,64 @@ export const Main = () => {
 
   return (
     <Container>
-      <ResponsiveLogoContainer isDesktop={isDesktop}>
-        <Image src={logo} alt="eproprietar" fill style={{ objectFit: "contain" }} />
-      </ResponsiveLogoContainer>
-      <Subtitle>Tu ce cauți azi?</Subtitle>
-
       {isDesktop ? (
-        <SearchContainer
-          style={{
-            width: "80%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
-          {renderFilters()}
-        </SearchContainer>
+        <>
+          <SearchContainer
+            style={{
+              width: "80%",
+              margin: "0 auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            {renderFilters()}
+          </SearchContainer>
+
+          <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
+
+          <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
+            <Image
+              src={bannerEproprietar}
+              alt="Beneficii eproprietar"
+              style={{
+                width: "100%",
+                maxWidth: "600px", // ✅ limit width
+                height: "auto",
+              }}
+            />
+          </div>
+        </>
       ) : (
-        <FloatingCardWrapper>
-          <div style={{ padding: "16px", width: "100%" }}>{renderFilters()}</div>
-        </FloatingCardWrapper>
+        <>
+          <FloatingCardWrapper>
+            <div style={{ padding: "16px", width: "100%" }}>{renderFilters()}</div>
+          </FloatingCardWrapper>
+
+          <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
+
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              padding: "16px",
+              marginTop: "16px",
+              marginBottom: "32px", // ✅ ADD THIS
+            }}
+          >
+            <Image
+              src={bannerEproprietar}
+              alt="Beneficii eproprietar"
+              style={{
+                width: "100%",
+                maxWidth: "340px", // ✅ smaller on mobile
+                height: "auto",
+                borderRadius: "8px",
+              }}
+            />
+          </div>
+        </>
       )}
     </Container>
   );
