@@ -1198,7 +1198,14 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </ThumbnailContainer>
 
             <ThumbnailContainer>
-              <Typography variant="h6">Apartment Sketch / Floor Plan</Typography>
+              <Box display="flex" alignItems="center" mb={1}>
+                <Typography variant="h6">
+                  Apartment Sketch / Floor Plan
+                </Typography>
+                <FormHelpTooltip
+                  title={`📐 Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.`}
+                />
+              </Box>
 
               <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
                 {sketchPreview ? (
@@ -1238,6 +1245,19 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                       ))}
                     </PreviewContainer>
                   )}
+
+                  <Box mt={2} p={2} bgcolor="#fff7e6" border="1px dashed #ffa726" borderRadius={2}>
+                    <Typography variant="body2" fontWeight="500">
+                      📝 Sugestie:
+                    </Typography>
+                    <Typography variant="body2">
+                      DACA NU AI GĂSIT SCHIȚA IMOBILULUI ÎN DOSARUL TĂU CU ACTE, NICI ÎN MODELE CREATE DE NOI, TE SFĂTUIM SĂ FACI O SCHIȚĂ DE MÂNĂ, O FOTOGRAFIEZI ȘI O ADAUGI LA ANUNȚ.
+                    </Typography>
+                    <Typography variant="body2" mt={1} fontWeight="600" color="green">
+                      ✅ Ai șanse cu 70% mai mari să vinzi dacă publici schița de imobil!
+                    </Typography>
+                  </Box>
+
                 </ModalContent>
               </Modal>
 
@@ -1248,7 +1268,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               )}
             </ThumbnailContainer>
 
-            <Typography variant="h6">Add Images</Typography>
+            <Box display="flex" alignItems="center" mb={1}>
+              <Typography variant="h6">Add Images</Typography>
+              <FormHelpTooltip
+                title={`📸 Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!`}
+              />
+            </Box>
 
             <DropArea
               $isDragging={isDragging}
@@ -1278,6 +1303,15 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 />
               ))}
             </PreviewContainer>
+
+            <Box display="flex" alignItems="center" mb={1}>
+              <Typography variant="h6">
+                Add videos
+              </Typography>
+              <FormHelpTooltip
+                title={`🎥 Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței. Clipurile video cresc șansele de vânzare cu până la 70%!`}
+              />
+            </Box>
 
             <DropArea
               $isDragging={isDraggingVideos}
