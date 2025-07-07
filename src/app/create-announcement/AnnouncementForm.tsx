@@ -16,6 +16,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
+import FormHelpTooltip from "./FormHelpTooltip";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
@@ -990,36 +991,79 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             {/* Street */}
-            <StyledTextField
-              label="Street"
-              name="street"
-              value={formData.street}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            <Box width="100%">
+              <Box display="flex" alignItems="center">
+                <Typography variant="subtitle1">
+                  Street
+                </Typography>
+                <FormHelpTooltip title="Adaugă strada exactă. Nu include numere de telefon, emailuri sau linkuri." />
+              </Box>
+              <StyledTextField
+                label="Street"
+                name="street"
+                value={formData.street}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ marginBottom: "16px" }}
+              />
+            </Box>
 
             {/* Title */}
-            <StyledTextField
-              label="Title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            <Box width="100%">
+              <Box display="flex" alignItems="center">
+                <Typography variant="subtitle1">
+                  Title
+                </Typography>
+                <FormHelpTooltip title="Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule, numere de telefon, emailuri sau linkuri." />
+              </Box>
+              <StyledTextField
+                label="Title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ marginBottom: "16px" }}
+              />
+            </Box>
 
             {/* Description */}
-            <StyledTextField
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              multiline
-              rows={4}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            <Box width="100%">
+              <Box display="flex" alignItems="center">
+                <Typography variant="subtitle1">
+                  Descriere
+                </Typography>
+                <FormHelpTooltip
+                    title={`🏡 Vrei să atragi cumpărători serioși și să reduci timpul de vânzare? Secretul stă în descrierea anunțului tău!
+
+                  ✨ Detalii complete și reale: Menționează suprafața, numărul de camere, compartimentarea, etajul și anul construcției.
+
+                  ✅ Fii sincer – evită exagerările (ex.: "lux extrem" vs. "apartament modern, renovat în 2024").
+
+                  🪟 Elemente care fac diferența: Balcon, parcare, grădină? Menționează tot ce poate influența decizia.
+
+                  📍 Locatie clară: Zona, strada, apropierea de transport, școli, magazine etc.
+
+                  🎨 Stare și design: Renovări recente? Mobilat modern? Oferă detalii care atrag interesul.
+
+                  💡 De ce să fii sincer? Ofertele realiste atrag clienții potriviți și economisesc timp.
+
+                  📌 Atenție: Informațiile incomplete pot întârzia vânzarea.
+
+                  🚀 Hai să transformăm anunțul tău într-un magnet pentru clienți!`}
+                  />
+              </Box>
+
+              <StyledTextField
+                label="Description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                multiline
+                rows={4}
+                fullWidth
+                sx={{ marginBottom: "16px" }}
+              />
+            </Box>
 
             {/* Phone Number */}
             <PhoneInputField
