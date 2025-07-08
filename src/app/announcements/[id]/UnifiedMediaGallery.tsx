@@ -131,8 +131,9 @@ const NextArrow = (props: any) => (
 
 const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
   const [fullscreen, setFullscreen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0); // Global index in media[]
+  const [mainSlide, setMainSlide] = useState(0); // Filtered view index
+  const [fullscreenSlide, setFullscreenSlide] = useState(0); // Fullscreen slider index
   const [selectedType, setSelectedType] = useState<
     "all" | "image" | "video" | "floorplan"
   >("all");
@@ -146,7 +147,7 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
       ? media
       : media.filter((item) => item.type === selectedType);
 
-  const settings = {
+  const sliderSettings = {
     dots: true,
     infinite: true,
     speed: 500,
@@ -156,14 +157,16 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
     swipe: true,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
-    beforeChange: (_: number, next: number) => setCurrentSlide(next),
   };
 
   return (
     <>
       <GalleryContainer>
         <GalleryWrapper>
-          <Slider {...settings}>
+          <Slider
+            {...sliderSettings}
+            beforeChange={(_, next) => setMainSlide(next)}
+          >
             {filteredMedia.map((item, index) => (
               <MediaContainer
                 key={index}
@@ -173,6 +176,7 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
                       (m) => m.src === item.src && m.type === item.type
                     );
                     setSelectedIndex(globalIndex);
+                    setFullscreenSlide(globalIndex);
                     setFullscreen(true);
                   }
                 }}
@@ -207,7 +211,9 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
             px={1}
             borderRadius="4px"
           >
-            {currentSlide + 1} / {filteredMedia.length}
+            {fullscreen
+              ? `${fullscreenSlide + 1} / ${media.length}`
+              : `${mainSlide + 1} / ${filteredMedia.length}`}
           </Typography>
         </GalleryWrapper>
 
@@ -215,7 +221,10 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           {hasImages && (
             <CategoryButton
               selected={selectedType === "image"}
-              onClick={() => setSelectedType("image")}
+              onClick={() => {
+                setSelectedType("image");
+                setMainSlide(0);
+              }}
             >
               <Photo />
             </CategoryButton>
@@ -223,7 +232,10 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           {hasFloorplans && (
             <CategoryButton
               selected={selectedType === "floorplan"}
-              onClick={() => setSelectedType("floorplan")}
+              onClick={() => {
+                setSelectedType("floorplan");
+                setMainSlide(0);
+              }}
             >
               <Layers />
             </CategoryButton>
@@ -231,25 +243,34 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           {hasVideos && (
             <CategoryButton
               selected={selectedType === "video"}
-              onClick={() => setSelectedType("video")}
+              onClick={() => {
+                setSelectedType("video");
+                setMainSlide(0);
+              }}
             >
               <VideoLibrary />
             </CategoryButton>
           )}
           <CategoryButton
             selected={selectedType === "all"}
-            onClick={() => setSelectedType("all")}
+            onClick={() => {
+              setSelectedType("all");
+              setMainSlide(0);
+            }}
           >
             <Collections />
           </CategoryButton>
         </CategoryRow>
       </GalleryContainer>
 
-      {/* Fullscreen Dialog renders ALL media to avoid duplication bug */}
+      {/* Fullscreen Dialog */}
       <Dialog
         fullScreen
         open={fullscreen}
-        onClose={() => setFullscreen(false)}
+        onClose={() => {
+          setFullscreen(false);
+          setFullscreenSlide(0);
+        }}
       >
         <Box
           width="100%"
@@ -259,7 +280,11 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           justifyContent="center"
         >
           <Box width="100%" maxWidth="900px">
-            <Slider {...settings} initialSlide={selectedIndex}>
+            <Slider
+              {...sliderSettings}
+              initialSlide={selectedIndex}
+              beforeChange={(_, next) => setFullscreenSlide(next)}
+            >
               {media.map((item, index) => (
                 <MediaContainer key={index}>
                   {item.type === "video" ? (
