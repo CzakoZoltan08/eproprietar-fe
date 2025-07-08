@@ -291,7 +291,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     numberOfKitchens: "",
     balcony: "",
     parking: "",
-    thumbnail: null as File | string | null, // Thumbnail file can be File or string (URL)
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
@@ -300,8 +299,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const isApartment = formData.announcementType === "Apartament";
 
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
-  const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -400,8 +397,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         numberOfKitchens: currentAnnouncement.numberOfKitchens?.toString() || "",
         balcony: currentAnnouncement.balcony || "",
         parking: currentAnnouncement.parking || "",
-        // ─── B) Prefill existing thumbnail URL as string ───
-        thumbnail: currentAnnouncement.imageUrl || null,
         // We leave `formData.images` empty: newly selected Files go here
         images: [],
         // We leave `formData.videos` empty: newly selected Files go here
@@ -409,11 +404,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         // ─── C) Prefill existing sketch URL as string ───
         sketch: currentAnnouncement.sketchUrl || null,
       });
-
-      // ─── D) Prefill thumbnail preview ───
-      if (currentAnnouncement.imageUrl) {
-        setThumbnailPreview(currentAnnouncement.imageUrl);
-      }
 
       // ─── E) Prefill sketch preview ───
       if (currentAnnouncement.sketchUrl) {
@@ -459,26 +449,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setFormData({ ...formData, [name as string]: value });
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-  
-    if (file) {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        if (img.width > 1920 || img.height > 1080) {
-          setError("Image resolution cannot exceed 1920x1080.");
-          return;
-        }
-  
-        setFormData({ ...formData, thumbnail: file });
-        setThumbnailPreview(img.src);
-        setError('');
-      };
-    }
-  };
-  
   const validateImageFiles = (files: FileList | File[]) => {
     let validImages: File[] = Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -678,7 +648,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const uploadMedia = async (announcementId: string) => {
-    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
+    const totalImages = formData.images.length;
     const totalVideos = formData.videos.length;
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
@@ -695,8 +665,28 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         uploaded: prev.uploaded + 1,
       }));
 
+    let thumbnailUrl = "";
+
+    if (formData.images.length > 0) {
+      const thumbnailImage = formData.images[0];
+      const df = new FormData();
+      df.append("file", thumbnailImage);
+      df.append("type", "image");
+
+      const uploadResp = await createImageOrVideo(df, announcementId);
+      if (uploadResp?.optimized_url) {
+        thumbnailUrl = uploadResp.optimized_url;
+        await updateAnnouncement(announcementId, {
+          imageUrl: thumbnailUrl,
+        });
+      }
+      incrementImage();
+    }
+
+    const remainingImages = formData.images.slice(1);
+
     // 1) Upload any brand-new images (File objects in formData.images)
-    const imageUploads = formData.images.map((imageFile) =>
+    const imageUploads = remainingImages.map((imageFile) =>
       (async () => {
         const df = new FormData();
         df.append("file", imageFile);
@@ -705,30 +695,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         incrementImage();
       })()
     );
-
-    // 2) Upload the thumbnail (could be File or existing string URL)
-    if (formData.thumbnail) {
-      const df = new FormData();
-      if (formData.thumbnail instanceof File) {
-        df.append("file", formData.thumbnail);
-      } else if (typeof formData.thumbnail === "string") {
-        // Fetch the existing URL → convert to Blob → File
-        const resp = await fetch(formData.thumbnail);
-        const blob = await resp.blob();
-        const name = `thumbnail‐${Date.now()}.jpg`;
-        const file = new File([blob], name, { type: blob.type });
-        df.append("file", file);
-      }
-      df.append("type", "image");
-
-      const uploadResp = await createImageOrVideo(df, announcementId);
-      if (uploadResp?.optimized_url) {
-        await updateAnnouncement(announcementId, {
-          imageUrl: uploadResp.optimized_url,
-        });
-      }
-      incrementImage();
-    }
 
     // 3) Upload the sketch (could be File or existing string URL)
     if (formData.sketch) {
@@ -784,16 +750,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       return;
     }
   
-    if (!formData.thumbnail) {
-      setError("You must upload a thumbnail image.");
-      return;
-    }
-  
     setLoading(true);
     setError("");
   
     try {
-      const { thumbnail, sketch, ...data } = formData;
+      const { sketch, ...data } = formData;
 
       const selectedUser = user && user.role === 'admin'
         ? usersList.find(u => u.id === formData.userId)
@@ -1181,29 +1142,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               </>
             )}
 
-            {/* Thumbnail Upload */}
-            <ThumbnailContainer>
-              <Typography variant="h6">Thumbnail Image</Typography>
-              
-              <ThumbnailPreviewWrapper onClick={() => thumbnailFileInputRef.current?.click()}>
-                {thumbnailPreview ? (
-                  <ThumbnailPreviewImage src={thumbnailPreview} alt="Thumbnail Preview" />
-                ) : (
-                  <Typography sx={{ color: "#aaa", textAlign: "center" }}>
-                    No Image
-                  </Typography>
-                )}
-              </ThumbnailPreviewWrapper>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-                ref={thumbnailFileInputRef}
-              />
-            </ThumbnailContainer>
-
+            {/* Sketch */}
             <ThumbnailContainer>
               <Box display="flex" alignItems="center" mb={1}>
                 <Typography variant="h6">

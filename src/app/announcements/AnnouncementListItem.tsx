@@ -190,8 +190,13 @@ const AnnouncementListItem = ({
         <Image
           src={item.imageUrl || DEFAULT_IMAGE_URL}
           alt={item.imageUrl || "EProprietar"}
-          width={IMAGE_WIDTH}
-          height={IMAGE_HEIGHT}
+          fill
+          style={{
+            objectFit: "cover",
+            borderRadius: "8px",
+          }}
+          sizes="(max-width: 768px) 100vw, 250px"
+          priority={false}
         />
       </ImageContainer>
 

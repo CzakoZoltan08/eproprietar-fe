@@ -76,7 +76,6 @@ const INITIAL_DATA = {
   description: "",
   stage: "",
   endDate: "",
-  thumbnail: null as File | null,
   logo: null as File | null,
   images: [] as File[],
   videos: [] as File[],
@@ -131,7 +130,6 @@ const ResidentialAnnouncementForm = () => {
   const uploadMedia = async (announcementId: string) => {
     const totalImages =
       formData.images.length +
-      (formData.thumbnail ? 1 : 0) +
       (formData.logo ? 1 : 0);
 
     const totalVideos = formData.videos.length;
@@ -145,7 +143,25 @@ const ResidentialAnnouncementForm = () => {
     const incrementVideo = () =>
       setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
 
-    const imageUploads = formData.images.map((image) =>
+    let thumbnailUrl = "";
+
+    if (formData.images.length > 0) {
+      const firstImage = formData.images[0];
+      const fd = new FormData();
+      fd.append("file", firstImage);
+      fd.append("type", "image");
+
+      const response = await createImageOrVideo(fd, announcementId);
+      if (response?.optimized_url) {
+        thumbnailUrl = response.optimized_url;
+        await updateAnnouncement(announcementId, {
+          imageUrl: thumbnailUrl,
+        });
+      }
+      incrementImage();
+    }
+
+    const imageUploads = formData.images.slice(1).map((image) =>
       (async () => {
         const fd = new FormData();
         fd.append("file", image);
@@ -155,26 +171,6 @@ const ResidentialAnnouncementForm = () => {
         incrementImage();
       })()
     );
-
-    if (formData.thumbnail) {
-      const thumbUpload = (async () => {
-        const fd = new FormData();
-        if (formData.thumbnail) {
-          fd.append("file", formData.thumbnail);
-        }
-        fd.append("type", "image");
-
-        const response = await createImageOrVideo(fd, announcementId);
-        if (response?.optimized_url) {
-          await updateAnnouncement(announcementId, {
-            imageUrl: response.optimized_url,
-          });
-        }
-        incrementImage();
-      })();
-
-      imageUploads.push(thumbUpload);
-    }
 
     if (formData.logo) {
       const logoUpload = (async () => {
@@ -214,7 +210,7 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const handleSubmit = async () => {
-    const { thumbnail, logo, images, videos, ...cleanFormData } = formData;
+    const { logo, images, videos, ...cleanFormData } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
       contactPhone,
@@ -406,8 +402,6 @@ const ResidentialAnnouncementForm = () => {
               handleChange={handleDateChange}
             />
             <MediaUploader
-              thumbnail={formData.thumbnail}
-              setThumbnail={(file) => setFormData((prev) => ({ ...prev, thumbnail: file }))}
               logo={formData.logo}
               setLogo={(file) => setFormData((prev) => ({ ...prev, logo: file }))}
               images={formData.images}

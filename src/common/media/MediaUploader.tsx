@@ -12,8 +12,6 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 type MediaUploaderProps = {
-  thumbnail: File | null;
-  setThumbnail: (file: File | null) => void;
   logo?: File | null;
   setLogo?: (file: File | null) => void;
   images: File[];
@@ -47,14 +45,13 @@ const PreviewContainer = styled.div`
 `;
 
 const PreviewImage = styled.img`
-  width: 100%;
-  height: 0;
-  padding-bottom: 100%;
+  width: 90px;
+  height: 90px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
-  position: relative;
+
   &:hover {
     opacity: 0.7;
   }
@@ -112,8 +109,6 @@ const ThumbnailPreviewImage = styled.img`
 `;
 
 const MediaUploader: React.FC<MediaUploaderProps> = ({
-  thumbnail,
-  setThumbnail,
   logo,
   setLogo,
   images = [],
@@ -126,7 +121,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
@@ -150,15 +144,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setVideoPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [videos]);
-
-  useEffect(() => {
-    if (thumbnail) {
-      const url = URL.createObjectURL(thumbnail);
-      setThumbnailPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setThumbnailPreview(null);
-  }, [thumbnail]);
 
   useEffect(() => {
     if (logo) {
@@ -199,21 +184,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   };
 
   // Handlers...
-  const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      if (img.width > 1920 || img.height > 1080) {
-        setError("Thumbnail resolution cannot exceed 1920x1080.");
-        return;
-      }
-      setThumbnail(file);
-      setError("");
-    };
-  };
-
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !setLogo) return;
@@ -287,25 +257,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   return (
     <Box width="100%" maxWidth={isXs ? "100%" : 600} mx="auto" mt={4} px={isXs ? 1 : 0}>
-      {/* Thumbnail */}
-      <ThumbnailWrapper>
-        <Typography variant="h6">Thumbnail Image</Typography>
-        <ThumbnailBox onClick={() => thumbnailInputRef.current?.click()}>
-          {thumbnailPreview ? (
-            <ThumbnailPreviewImage src={thumbnailPreview} />
-          ) : (
-            <Typography color="textSecondary">Tap to upload</Typography>
-          )}
-        </ThumbnailBox>
-        <input
-          type="file"
-          accept="image/*"
-          ref={thumbnailInputRef}
-          style={{ display: "none" }}
-          onChange={handleThumbnailChange}
-        />
-      </ThumbnailWrapper>
-
       {/* Logo */}
       <ThumbnailWrapper>
         <Typography variant="h6">Agency/Developer Logo (optional)</Typography>
