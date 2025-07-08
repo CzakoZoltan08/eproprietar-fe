@@ -6,6 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { ArrowLeft, ArrowRight, Pause, PlayArrow } from "@mui/icons-material";
 import { Box, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
+import UnifiedMediaGallery, { MediaItem } from "./UnifiedMediaGallery";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
@@ -58,37 +59,12 @@ const MediaContainer = styled(Box)<{ $flexdirection: string }>`
   width: 100%;
 `;
 
-const ResponsiveBox = styled(Box)`
-  flex: 1 1 0;                 /* ↪ allow shrinking and growing */
-  min-width: 0;                /* ↪ necessary for flex items to shrink below content width */
-  max-width: 100%;             /* ↪ don’t exceed parent width */
-  overflow: hidden;
-
-  @media (max-width: 600px) {
-    flex-basis: 100%;          /* ↪ on small screens each takes full width */
-    max-width: 100%;
-  }
-`;
-
-
-const GalleryContainer = styled.div`
+const GalleryAlignmentWrapper = styled.div`
+  display: flex;
+  justify-content: center;
   width: 100%;
-  max-width: 800px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  position: relative;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    height: auto; /* Allows it to scale dynamically */
-  }
-
-  @media (max-width: 480px) {
-    max-width: 100vw; /* Ensures no horizontal scrolling */
-    padding: 0 8px;
-    overflow-x: hidden;
-  }
 `;
+
 
 // 🔹 Custom navigation arrows with better styling
 const ArrowButton = styled.button<{ $left?: boolean }>`
@@ -574,29 +550,24 @@ const AnnouncementDetailPage: React.FC = () => {
 
   const images = currentAnnouncement?.images ?? [];
   const videos = currentAnnouncement?.videos ?? [];
+  const sketchUrl = currentAnnouncement?.sketchUrl;
+
+  const media: MediaItem[] = [
+    ...images.map((img) => ({ type: "image" as const, src: img.original })),
+    ...videos.map((vid) => ({ type: "video" as const, src: vid.original, format: vid.format })),
+    ...(sketchUrl ? [{ type: "floorplan" as const, src: sketchUrl }] : []),
+  ];
 
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <Box flex={1} display="flex" flexDirection="column" gap={1}>
-        <MediaContainer $flexdirection={isMobile ? "column" : "row"}>
-          <ResponsiveBox>
-            <GalleryContainerImage>
-              {images.length > 0 ? (
-                <ImageGallery images={images} />
-              ) : (
-                <Box>No images available</Box>
-              )}
-            </GalleryContainerImage>
-          </ResponsiveBox>
-
-          {videos.length > 0 && (
-            <ResponsiveBox>
-              <GalleryContainer>
-                <VideoGallery videos={videos} />
-              </GalleryContainer>
-            </ResponsiveBox>
+        <GalleryAlignmentWrapper>
+          {media.length > 0 ? (
+            <UnifiedMediaGallery media={media} />
+          ) : (
+            <Box>No media available</Box>
           )}
-        </MediaContainer>
+        </GalleryAlignmentWrapper>
 
         {currentAnnouncement && currentAnnouncement.description && <DescriptionCard />}
         
