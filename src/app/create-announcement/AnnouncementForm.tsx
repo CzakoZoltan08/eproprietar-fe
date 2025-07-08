@@ -24,6 +24,7 @@ import { ProviderType } from "@/constants/provider-types.enum";
 import RadioButtonsGroup from "@/common/radio/RadioGroup";
 import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
+import UploadInfoBox from "./UploadInfoBox";
 import { observer } from "mobx-react";
 import sketch1 from "../../assets/sketches/1 camera varianta 2.svg";
 import sketch10 from "../../assets/sketches/garsoniera.svg";
@@ -139,9 +140,12 @@ const RadioGroupContainer = styled.div`
   margin-bottom: 16px;
 `;
 
-const DropArea = styled.div<{ $isDragging: boolean }>`
-  border: 2px dashed ${({ $isDragging }) => ($isDragging ? "#007BFF" : "#ccc")};
-  background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
+const DropArea = styled.div<{ $isDragging: boolean; $hasError?: boolean }>`
+  border: 2px dashed
+    ${({ $isDragging, $hasError }) =>
+      $hasError ? "#f44336" : $isDragging ? "#007BFF" : "#ccc"};
+  background-color: ${({ $isDragging }) =>
+    $isDragging ? "#f0f8ff" : "transparent"};
   padding: 20px;
   text-align: center;
   width: 85%;
@@ -314,6 +318,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const params = useParams();
   const searchParams = useSearchParams();
   const isEdit = params?.id && pathname.includes("/edit-announcement");
+
+  const isImageError = error.toLowerCase().includes("image") || error.toLowerCase().includes("jpeg") || error.toLowerCase().includes("webp");
+  const isVideoError = error.toLowerCase().includes("video") || error.toLowerCase().includes("mp4") || error.toLowerCase().includes("100mb");
 
   // Load current user
   useEffect(() => {
@@ -1275,8 +1282,16 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               />
             </Box>
 
+            <UploadInfoBox
+              maxFiles={MAX_IMAGES}
+              maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
+              allowedTypes={["JPG", "PNG", "WEBP"]}
+              uploadedCount={formData.images.length}
+            />
+
             <DropArea
               $isDragging={isDragging}
+              $hasError={isImageError}
               onClick={handleClick}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -1313,8 +1328,15 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               />
             </Box>
 
+            <UploadInfoBox
+              maxFiles={MAX_VIDEOS}
+              maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
+              uploadedCount={formData.videos.length}
+            />
+
             <DropArea
               $isDragging={isDraggingVideos}
+              $hasError={isVideoError}
               onClick={handleVideoClick}
               onDragOver={handleVideoDragOver}
               onDragLeave={handleVideoDragLeave}
@@ -1343,7 +1365,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </PreviewContainer>
 
             {error && (
-              <Typography color="error">{error}</Typography>
+              <Typography color="error" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
             )}
 
 
