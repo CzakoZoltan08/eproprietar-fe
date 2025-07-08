@@ -1,4 +1,3 @@
-// UnifiedMediaGallery.tsx
 "use client";
 
 import {
@@ -31,6 +30,7 @@ const GalleryContainer = styled.div`
   width: 100%;
   max-width: 800px;
   position: relative;
+  margin: 0 auto;
 `;
 
 const GalleryWrapper = styled.div`
@@ -102,6 +102,7 @@ const CategoryRow = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: center;
 `;
 
 const CategoryButton = styled(IconButton)<{ selected: boolean }>`
@@ -168,7 +169,10 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
                 key={index}
                 onClick={() => {
                   if (item.type !== "video") {
-                    setSelectedIndex(index);
+                    const globalIndex = media.findIndex(
+                      (m) => m.src === item.src && m.type === item.type
+                    );
+                    setSelectedIndex(globalIndex);
                     setFullscreen(true);
                   }
                 }}
@@ -207,7 +211,6 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           </Typography>
         </GalleryWrapper>
 
-        {/* Category buttons below the gallery, bottom-left aligned */}
         <CategoryRow>
           {hasImages && (
             <CategoryButton
@@ -242,8 +245,12 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
         </CategoryRow>
       </GalleryContainer>
 
-      {/* Fullscreen Dialog */}
-      <Dialog fullScreen open={fullscreen} onClose={() => setFullscreen(false)}>
+      {/* Fullscreen Dialog renders ALL media to avoid duplication bug */}
+      <Dialog
+        fullScreen
+        open={fullscreen}
+        onClose={() => setFullscreen(false)}
+      >
         <Box
           width="100%"
           height="100%"
@@ -253,7 +260,7 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
         >
           <Box width="100%" maxWidth="900px">
             <Slider {...settings} initialSlide={selectedIndex}>
-              {filteredMedia.map((item, index) => (
+              {media.map((item, index) => (
                 <MediaContainer key={index}>
                   {item.type === "video" ? (
                     <StyledVideo controls>
