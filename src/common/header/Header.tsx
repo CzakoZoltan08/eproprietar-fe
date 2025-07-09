@@ -16,7 +16,7 @@ import { useStore } from "@/hooks/useStore";
 
 const MENU_STRUCTURE = [
   {
-    label: "Vânzare",
+    label: "Vânzări",
     transactionType: "Vanzare",
     filters: [
       { label: "Apartamente", type: "apartament" },
@@ -25,13 +25,14 @@ const MENU_STRUCTURE = [
       { label: "3 camere", type: "apartament", rooms: 3 },
       { label: "4 camere", type: "apartament", rooms: 4 },
       { label: "5 camere", type: "apartament", rooms: 5 },
-      { label: "Case", type: "casa" },
+      { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
+      { label: "Cabane/Case la tara", type: "case_la_tara" },
     ],
   },
   {
     label: "Închiriere",
-    transactionType: "Inchiriere",
+    transactionType: "Inchirieri",
     filters: [
       { label: "Apartamente", type: "apartament" },
       { label: "1 cameră", type: "apartament", rooms: 1 },
@@ -39,8 +40,9 @@ const MENU_STRUCTURE = [
       { label: "3 camere", type: "apartament", rooms: 3 },
       { label: "4 camere", type: "apartament", rooms: 4 },
       { label: "5 camere", type: "apartament", rooms: 5 },
-      { label: "Case", type: "casa" },
+      { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
+      { label: "Cabane/Case la tara", type: "case_la_tara" },
     ],
   },
 ];
@@ -249,14 +251,16 @@ const Header = () => {
           onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}
           color="inherit"
         >
-          Ansambluri Rezidențiale
+          {"Bloc nou/"}<br />
+          {"Ansambluri Rezidențiale"}
         </Button>
 
         <Button
           onClick={() => router.push("/announcements?providerType=agency&status=active")}
           color="inherit"
         >
-          Exclusivitate - Agentii - Comision 0
+          {"Anunțuri agenții cu exclusivitate"}<br />
+          {"0% comision pentru cumpărător!!!"}
         </Button>
 
         <RightSection>
@@ -292,11 +296,13 @@ const Header = () => {
           ))}
 
           <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}>
-            Ansambluri Rezidențiale
+            {"Bloc nou/"}<br />
+            {"Ansambluri Rezidențiale"}
           </div>
 
           <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=agency&status=active")}>
-            Exclusivitate - Agentii - Comision 0
+            {"Anunțuri agenții cu exclusivitate"}<br />
+            {"0% comision pentru cumpărător!!!"}
           </div>
         </DrawerContent>
       </Drawer>
