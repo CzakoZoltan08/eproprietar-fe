@@ -230,6 +230,8 @@ export class AnnouncementApi {
     const {
       minSurface,
       maxSurface,
+      minLandSurface,
+      maxLandSurface,
       price,
       city,
       county,
@@ -245,6 +247,10 @@ export class AnnouncementApi {
       [QueryKeys.FILTER_SURFACE]: this.buildSurfaceFilter(
         typeof minSurface === "number" ? minSurface : undefined,
         typeof maxSurface === "number" ? maxSurface : undefined
+      ),
+      [QueryKeys.FILTER_LAND_SURFACE]: this.buildSurfaceFilter(
+        typeof minLandSurface === "number" ? minLandSurface : undefined,
+        typeof maxLandSurface === "number" ? maxLandSurface : undefined
       ),
       [QueryKeys.FILTER_PRICE]: typeof price === "string" ? price : undefined,
       [QueryKeys.FILTER_CITY]: city

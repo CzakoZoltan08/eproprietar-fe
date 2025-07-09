@@ -280,6 +280,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     description: "",
     price: "",
     surface: "",
+    landSurface: "",
     city: "",
     county: "",
     street: "",
@@ -386,6 +387,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         description: currentAnnouncement.description || "",
         price: currentAnnouncement.price?.toString() || "",
         surface: currentAnnouncement.surface?.toString() || "",
+        landSurface: currentAnnouncement.landSurface?.toString() || "",
         city: currentAnnouncement.city || "",
         county: currentAnnouncement.county || "",
         street: currentAnnouncement.street || "",
@@ -770,6 +772,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         numberOfKitchens: Number(data.numberOfKitchens),
         floor: Number(data.floor),
         surface: Number(data.surface),
+        landSurface: Number(data.landSurface),
         status: user && user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
@@ -1065,6 +1068,19 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               fullWidth
               sx={{ marginBottom: "16px" }}
             />
+
+            {/* Land Surface - only for houses */}
+            {formData.announcementType === "Casa" && (
+              <TextField
+                label="Land Surface (sqm)"
+                name="landSurface"
+                value={formData.landSurface}
+                onChange={handleInputChange}
+                type="number"
+                fullWidth
+                sx={{ marginBottom: "16px" }}
+              />
+            )}
 
             {isApartment && (
               <>

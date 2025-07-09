@@ -130,6 +130,11 @@ export const Main = () => {
       handleQueryParams(queryParams, key!.toString(), value)
     );
 
+    if (["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE)) {
+      handleQueryParams(queryParams, "minLandSurface", filters.LAND_SURFACE_MIN);
+      handleQueryParams(queryParams, "maxLandSurface", filters.LAND_SURFACE_MAX);
+    }
+
     router.push(`${Endpoints.ANNOUNCEMENTS}?${queryParams.toString()}`);
   };
 
@@ -257,6 +262,32 @@ export const Main = () => {
         }
         sx={{ flex: "1 1 30%" }}
       />
+
+      {["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE) && (
+        <>
+          <SelectDropdown
+            name="minLandSurface"
+            label="Suprafață teren minimă"
+            options={minSurfaceOptions}
+            value={filters.LAND_SURFACE_MIN}
+            handleChange={(event) =>
+              setFilters({ ...filters, LAND_SURFACE_MIN: Number(event.target.value) })
+            }
+            sx={{ flex: "1 1 30%" }}
+          />
+
+          <SelectDropdown
+            name="maxLandSurface"
+            label="Suprafață teren maximă"
+            options={maxSurfaceOptions}
+            value={filters.LAND_SURFACE_MAX}
+            handleChange={(event) =>
+              setFilters({ ...filters, LAND_SURFACE_MAX: Number(event.target.value) })
+            }
+            sx={{ flex: "1 1 30%" }}
+          />
+        </>
+      )}
 
       <SelectDropdown
         name="minPrice"

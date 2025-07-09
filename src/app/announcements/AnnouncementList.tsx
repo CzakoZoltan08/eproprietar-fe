@@ -92,6 +92,16 @@ const AnnouncementList = ({
       initialFilters.maxSurface = parseInt(maxSurface, 10);
     }
 
+    const minLandSurface = searchParams.get("minLandSurface");
+    const maxLandSurface = searchParams.get("maxLandSurface");
+
+    if (minLandSurface) {
+      initialFilters.minLandSurface = parseInt(minLandSurface, 10);
+    }
+    if (maxLandSurface) {
+      initialFilters.maxLandSurface = parseInt(maxLandSurface, 10);
+    }
+
     if (searchParams.get("city")) {
       initialFilters.city = `$in:${searchParams.get("city")}`;
     }

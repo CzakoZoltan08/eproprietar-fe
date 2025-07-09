@@ -11,6 +11,7 @@ export interface PropertyAnnouncementModel {
   street?: string;
   price: number;
   rooms: number;
+  landSurface?: number; // Add this line
   surface: number;
   currency: string;
   schema?: string;

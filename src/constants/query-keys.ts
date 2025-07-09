@@ -2,6 +2,7 @@ export const QueryKeys = {
     PAGE: "page",
     LIMIT: "limit",
     FILTER_SURFACE: "filter.surface",
+    FILTER_LAND_SURFACE: "filter.landSurface",
     FILTER_PRICE: "filter.price",
     FILTER_CITY: "filter.city",
     FILTER_COUNTY: "filter.county",
