@@ -25,7 +25,6 @@ const sanitizeFilters = (filters: Record<string, any>) =>
 const AnnouncementList = ({
   paginated = true,
   defaultFilters = {},
-  title = "",
   source = "paginated",
 }: {
   paginated: boolean;
@@ -71,8 +70,15 @@ const AnnouncementList = ({
       initialFilters.transactionType = searchParams.get("transactionType")!;
     }
 
-    if (searchParams.get("price")) {
-      initialFilters.price = `$lte:${searchParams.get("price")}`;
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+
+    if (minPrice && maxPrice) {
+      initialFilters.price = `$between:${minPrice},${maxPrice}`;
+    } else if (minPrice) {
+      initialFilters.price = `$gte:${minPrice}`;
+    } else if (maxPrice) {
+      initialFilters.price = `$lte:${maxPrice}`;
     }
 
     const minSurface = searchParams.get("minSurface");

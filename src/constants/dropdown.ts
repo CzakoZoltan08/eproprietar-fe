@@ -1,4 +1,4 @@
 export const DROPDOWN_RANGES = {
     PRICE: { START: 5000, END: 500000, STEP: 5000 },
-    SURFACE: { START: 10, END: 500, STEP: 15 },
+    SURFACE: { START: 10, END: 500, STEP: 10 },
 };

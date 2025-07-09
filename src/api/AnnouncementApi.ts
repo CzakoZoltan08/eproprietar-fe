@@ -246,9 +246,7 @@ export class AnnouncementApi {
         typeof minSurface === "number" ? minSurface : undefined,
         typeof maxSurface === "number" ? maxSurface : undefined
       ),
-      [QueryKeys.FILTER_PRICE]: price
-        ? `${FilterOperators.LESS_THAN_EQUAL}:${price}`
-        : undefined,
+      [QueryKeys.FILTER_PRICE]: typeof price === "string" ? price : undefined,
       [QueryKeys.FILTER_CITY]: city
         ? `${FilterOperators.IN}:${city}`
         : undefined,

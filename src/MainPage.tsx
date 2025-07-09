@@ -38,7 +38,6 @@ const TRANSACTION_TABS = [
 
 export const Main = () => {
   const {
-    announcementStore: { fetchPaginatedAnnouncements },
     userStore: { getCurrentUser, user },
   } = useStore();
 
@@ -116,7 +115,8 @@ export const Main = () => {
 
     [
       ["page", "1"],
-      ["price", filters.PRICE],
+      ["minPrice", filters.MIN_PRICE],
+      ["maxPrice", filters.MAX_PRICE],
       ["minSurface", filters.MIN_SURFACE],
       ["maxSurface", filters.MAX_SURFACE],
       isCabaneType
@@ -193,7 +193,7 @@ export const Main = () => {
         width: isDesktop ? "100%" : "90%",
       }}
     >
-      {filters.TYPE === "Cabane/Case la tara" ? (
+      {["Cabane/Case la tara", "Terenuri"].includes(filters.TYPE) ? (
         <AutocompleteCounties
           onChange={(event, value) =>
             setFilters({ ...filters, COUNTY: value?.toString() ?? "" })
@@ -259,12 +259,23 @@ export const Main = () => {
       />
 
       <SelectDropdown
-        name="price"
-        label={MESSAGES.SEARCH_PRICE_LABEL}
+        name="minPrice"
+        label="Preț minim"
         options={priceOptions}
-        value={filters.PRICE}
+        value={filters.MIN_PRICE}
         handleChange={(event) =>
-          setFilters({ ...filters, PRICE: Number(event.target.value) })
+          setFilters({ ...filters, MIN_PRICE: Number(event.target.value) })
+        }
+        sx={{ flex: "1 1 30%" }}
+      />
+
+      <SelectDropdown
+        name="maxPrice"
+        label="Preț maxim"
+        options={priceOptions}
+        value={filters.MAX_PRICE}
+        handleChange={(event) =>
+          setFilters({ ...filters, MAX_PRICE: Number(event.target.value) })
         }
         sx={{ flex: "1 1 30%" }}
       />
