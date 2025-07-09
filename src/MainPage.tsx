@@ -31,10 +31,15 @@ function getDropdownValuesNumberRange(start: number, end: number, step: number) 
   }));
 }
 
+const TRANSACTION_TABS = [
+  { id: "vanzare", label: "Vânzare", value: "Vânzare" },
+  { id: "inchiriere", label: "Închiriere", value: "Închiriere" },
+];
+
 export const Main = () => {
   const {
     announcementStore: { fetchPaginatedAnnouncements },
-    userStore : { getCurrentUser, user }
+    userStore: { getCurrentUser, user },
   } = useStore();
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -125,8 +130,6 @@ export const Main = () => {
       handleQueryParams(queryParams, key!.toString(), value)
     );
 
-    // 🛑 DO NOT CALL fetchPaginatedAnnouncements HERE
-    // ✅ Just update the URL
     router.push(`${Endpoints.ANNOUNCEMENTS}?${queryParams.toString()}`);
   };
 
@@ -134,7 +137,49 @@ export const Main = () => {
     return null;
   }
 
-  const citiesAutcompleteWidth = isDesktop ? "" : "100%";
+  const renderTransactionTabs = () => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start", // ← ensures left alignment
+        gap: "16px",
+        marginBottom: "16px",
+        flexWrap: "wrap",
+        fontWeight: 800,
+        fontSize: "0.875rem",
+        fontFamily: '"Roboto", sans-serif',
+        lineHeight: "1.75",
+        width: "100%", // ← makes sure it spans full width of parent
+      }}
+    >
+      {TRANSACTION_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() =>
+            setFilters((prev) => ({
+              ...prev,
+              TRANSACTION_TYPE: tab.value,
+            }))
+          }
+          style={{
+            padding: "10px 20px",
+            borderRadius: "24px",
+            border: "1px solid #ccc",
+            backgroundColor:
+              filters.TRANSACTION_TYPE === tab.value ? "#1976d2" : "#fff",
+            color:
+              filters.TRANSACTION_TYPE === tab.value ? "#fff" : "#333",
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "background-color 0.3s",
+          }}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const renderFilters = () => (
     <div
@@ -143,7 +188,7 @@ export const Main = () => {
         flexDirection: isDesktop ? "row" : "column",
         flexWrap: "nowrap",
         gap: "16px",
-        alignItems: isDesktop ? "center" : "stretch", // center vertically on desktop
+        alignItems: isDesktop ? "center" : "stretch",
         justifyContent: "space-between",
         width: isDesktop ? "100%" : "90%",
       }}
@@ -229,7 +274,7 @@ export const Main = () => {
         text="Caută"
         onClick={onSearch}
         fullWidth={!isDesktop}
-        size="large" // ensures 56px height
+        size="large"
         sx={{
           flex: "1 1 30%",
         }}
@@ -250,6 +295,7 @@ export const Main = () => {
               gap: "16px",
             }}
           >
+            {renderTransactionTabs()}
             {renderFilters()}
           </SearchContainer>
 
@@ -261,7 +307,7 @@ export const Main = () => {
               alt="Beneficii eproprietar"
               style={{
                 width: "100%",
-                maxWidth: "600px", // ✅ limit width
+                maxWidth: "600px",
                 height: "auto",
               }}
             />
@@ -270,7 +316,10 @@ export const Main = () => {
       ) : (
         <>
           <FloatingCardWrapper>
-            <div style={{ padding: "16px", width: "100%" }}>{renderFilters()}</div>
+            <div style={{ padding: "16px", width: "100%" }}>
+              {renderTransactionTabs()}
+              {renderFilters()}
+            </div>
           </FloatingCardWrapper>
 
           <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
@@ -282,7 +331,7 @@ export const Main = () => {
               justifyContent: "center",
               padding: "16px",
               marginTop: "16px",
-              marginBottom: "32px", // ✅ ADD THIS
+              marginBottom: "32px",
             }}
           >
             <Image
@@ -290,7 +339,7 @@ export const Main = () => {
               alt="Beneficii eproprietar"
               style={{
                 width: "100%",
-                maxWidth: "340px", // ✅ smaller on mobile
+                maxWidth: "340px",
                 height: "auto",
                 borderRadius: "8px",
               }}
