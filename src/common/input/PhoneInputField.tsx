@@ -64,7 +64,7 @@ const PhoneInputField = ({
       const match = input.match(ROMANIAN_PHONE_REGEX);
 
       if (!match && hasInputBeenTouched) {
-        setError("Format invalid");
+        setError("Format de telefon invalid");
       } else {
         setError("");
       }

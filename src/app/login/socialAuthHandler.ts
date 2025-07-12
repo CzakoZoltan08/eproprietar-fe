@@ -1,50 +1,57 @@
+import { Auth, AuthProvider, signInWithPopup } from "firebase/auth";
+
 import { StorageKeys } from "@/constants/storageKeys";
-import { signInWithPopup } from "firebase/auth";
+
+type UserApi = {
+  getUserByEmail: (email: string) => Promise<any>;
+  createUser: (user: any) => Promise<any>;
+};
+
+type UserStore = {
+  setCurrentUser: (user: any) => void;
+};
 
 export const handleSocialAuth = async (
-  auth: any,
-  provider: any,
-  userApi: any,
-  userStore: any,
+  auth: Auth,
+  provider: AuthProvider,
+  userApi: UserApi,
+  userStore: UserStore,
   authProviderName: string
-) => {
+): Promise<void> => {
   try {
     const result = await signInWithPopup(auth, provider);
-
-    // Ensure that email is not empty
     const email = result.user.email?.trim();
+
     if (!email) {
-      throw new Error("Login failed: Email is required.");
+      throw new Error("Autentificarea a eșuat: email-ul este obligatoriu.");
     }
 
-    // Create user model
+    const fullName = result.user.displayName || "";
+    const [firstName = "", ...rest] = fullName.trim().split(" ");
+    const lastName = rest.join(" ");
+
     const userModel = {
       email,
-      firstName: result.user.displayName?.split(" ")[0] || "",
-      lastName: result.user.displayName?.split(" ")[1] || "",
+      firstName,
+      lastName,
       firebaseId: result.user.uid,
       authProvider: authProviderName,
-      role: "user"
+      role: "user",
     };
 
-    // Retrieve or create user
     let userByEmail = await userApi.getUserByEmail(email);
+
     if (!userByEmail) {
       userByEmail = await userApi.createUser(userModel);
     }
 
-    // Ensure user was successfully created or retrieved
     if (!userByEmail) {
-      // Remove token since user could not be created/retrieved
-      throw new Error("Login failed: User could not be created or retrieved.");
+      throw new Error("Autentificarea a eșuat: utilizatorul nu a putut fi creat sau recuperat.");
     }
 
-    // Set user in store
     userStore.setCurrentUser(userByEmail);
-
   } catch (error) {
     console.error(`${authProviderName} login failed:`, error);
-
     throw error;
   }
 };

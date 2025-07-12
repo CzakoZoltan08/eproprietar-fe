@@ -6,13 +6,21 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { JSX } from "react";
 import YahooIcon from "@mui/icons-material/Mail";
 
-const buttonIcons: { [key: string]: JSX.Element } = {
+type AuthStyleKey = "google" | "facebook" | "yahoo";
+
+type SocialConfig = {
+  name: string;
+  provider: any;
+  styleKey: AuthStyleKey;
+};
+
+const buttonIcons: Record<AuthStyleKey, JSX.Element> = {
   google: <GoogleIcon />,
   facebook: <FacebookIcon />,
   yahoo: <YahooIcon />,
 };
 
-const buttonStyles = {
+const buttonStyles: Record<AuthStyleKey, any> = {
   google: {
     backgroundColor: "rgb(234, 67, 53)",
     "&:hover": { backgroundColor: "rgb(219, 50, 40)" },
@@ -27,32 +35,35 @@ const buttonStyles = {
   },
 };
 
+type SocialLoginButtonsProps = {
+  socialAuthConfigs: SocialConfig[];
+  onSocialLogin: (provider: any, name: string) => void;
+};
+
 const SocialLoginButtons = ({
   socialAuthConfigs,
   onSocialLogin,
-}: {
-  socialAuthConfigs: {
-    name: string;
-    provider: any;
-    styleKey: keyof typeof buttonStyles;
-  }[];
-  onSocialLogin: (provider: any, name: string) => void;
-}) => {
+}: SocialLoginButtonsProps) => {
   return (
     <Box>
       <Divider>or</Divider>
-      <Box display="flex" flexDirection="column" gap={2} sx={{ marginTop: 2, marginBottom: 2 }}>
-        {socialAuthConfigs.map((config) => (
-          <CommonButton
-            key={config.name}
-            onClick={() => onSocialLogin(config.provider, config.name)}
-            text={`Sign in with ${config.name}`}
-            size="large"
-            fullWidth
-            startIcon={buttonIcons[config.styleKey]}
-            sx={buttonStyles[config.styleKey]}
-          />
-        ))}
+      <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 2, mb: 2 }}>
+        {socialAuthConfigs.map((config) => {
+          const Icon = buttonIcons[config.styleKey];
+          const style = buttonStyles[config.styleKey];
+
+          return (
+            <CommonButton
+              key={config.name}
+              onClick={() => onSocialLogin(config.provider, config.name)}
+              text={`Sign in with ${config.name}`}
+              size="large"
+              fullWidth
+              startIcon={Icon}
+              sx={style}
+            />
+          );
+        })}
       </Box>
     </Box>
   );

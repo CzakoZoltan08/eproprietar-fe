@@ -454,11 +454,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const validateImageFiles = (files: FileList | File[]) => {
     let validImages: File[] = Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setError("Only JPEG, PNG, or WebP images are allowed.");
+        setError("Sunt permise doar imagini JPEG, PNG sau WebP.");
         return false;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        setError(`Image ${file.name} exceeds 5MB limit.`);
+        setError(`Imaginea ${file.name} depășește limita de 5MB.`);
         return false;
       }
       
@@ -478,7 +478,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     const validImages = validateImageFiles(files);
 
     if (formData.images.length + validImages.length > MAX_IMAGES) {
-      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
       return;
     }
 
@@ -500,7 +500,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
     const validImages = validateImageFiles(files);
     if (formData.images.length + validImages.length > MAX_IMAGES) {
-      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
       return;
     }
     
@@ -546,12 +546,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const validateVideoFiles = (files: FileList | File[]) => {
     let validVideos: File[] = Array.from(files).filter((file) => {
       if (!file.type.startsWith("video/")) {
-        setError("Only video files are allowed.");
+        setError("Sunt permise doar fișiere video.");
         return false;
       }
 
       if (file.size > MAX_VIDEO_SIZE) {
-        setError(`File ${file.name} exceeds 100MB limit.`);
+        setError(`Fișierul ${file.name} depășește limita de 100MB.`);
+
         return false;
       }
       
@@ -567,7 +568,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       
       const validVideos = validateVideoFiles(files);
       if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-        setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
+        setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
         return;
       }
 
@@ -590,7 +591,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     
     const validVideos = validateVideoFiles(files);
     if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-      setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
+      setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
       return;
     }
 
@@ -738,17 +739,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const onSubmit = async () => {
     if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
-      setError("Please fill in all required fields.");
+      setError("Te rugăm să completezi toate câmpurile obligatorii.");
       return;
     }
   
     if (!contactPhone) {
-      setError("Contact phone number is required.");
+      setError("Numărul de telefon este obligatoriu.");
       return;
     }
 
     if (!formData.sketch) {
-      setError("You must select or upload a sketch image.");
+      setError("Trebuie să selectezi sau să încarci o schiță.");
       return;
     }
   
@@ -840,7 +841,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
     } catch (error) {
       console.error("Error saving announcement:", error);
-      setError("An error occurred while saving the announcement.");
+      setError("A apărut o eroare la salvarea anunțului.");
     } finally {
       setLoading(false);
     }
@@ -854,7 +855,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
             <>
               <Typography mt={2}>
-                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+                Se încarcă imaginile: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
               </Typography>
               {imageUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -866,7 +867,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               )}
 
               <Typography mt={2}>
-                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+                Se încarcă videoclipurile: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
               </Typography>
               {videoUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -880,17 +881,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               {(imageUploadProgress.uploaded < imageUploadProgress.total ||
                 videoUploadProgress.uploaded < videoUploadProgress.total) && (
                 <Typography mt={2} fontStyle="italic">
-                  Finishing uploads, please wait...
+                  Finalizare încărcare, te rugăm să aștepți...
                 </Typography>
               )}
             </>
           ) : (
-            <Typography mt={2}>Creating your announcement...</Typography>
+            <Typography mt={2}>Se creează anunțul...</Typography>
           )}
         </>
       ) : (
         <>
-          <SubtitleAdvice>{isEdit ? "Edit Announcement" : "Create Announcement"}</SubtitleAdvice>
+          <SubtitleAdvice>{isEdit ? "Editează Anunțul" : "Creează Anunțul"}</SubtitleAdvice>
 
           {error && (
             <Typography color="error" sx={{ marginBottom: "16px", textAlign: "center" }}>
@@ -900,12 +901,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
           {user && user.role === 'admin' && (
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="user-select-label">Assign To User</InputLabel>
+              <InputLabel id="user-select-label">Atribuie unui utilizator</InputLabel>
               <Select
                 labelId="user-select-label"
                 name="userId"
                 value={formData.userId}
-                label="Assign To User"
+                label="Atribuie unui utilizator"
                 onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value as string }))}
               >
                 {usersList.map(u => (
@@ -925,7 +926,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 value={formData.announcementType}
                 id="announcementType"
                 onChange={handleSelectChange}
-                label="Announcement Type"
+                label="Tip Proprietate"
               />
 
               {/* Transaction Type */}
@@ -934,13 +935,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 value={formData.transactionType}
                 id="transactionType"
                 onChange={handleSelectChange}
-                label="Transaction Type"
+                label="Tip Tranzacție"
               />
             </RadioGroupContainer>
           
             {/* County */}
             <AutocompleteCounties
-              label="County"
+              label="Județ"
               customWidth="100%"
               value={formData.county}
               onChange={(event, value) => {
@@ -953,7 +954,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* City */}
             <AutocompleteCities
-              label="City"
+              label="Oraș"
               customWidth="100%"
               value={formData.city}
               onChange={(e, value) =>
@@ -965,12 +966,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <Box width="100%">
               <Box display="flex" alignItems="center">
                 <Typography variant="subtitle1">
-                  Street
+                  Stradă
                 </Typography>
                 <FormHelpTooltip title="Adaugă strada exactă. Nu include numere de telefon, emailuri sau linkuri." />
               </Box>
               <StyledTextField
-                label="Street"
+                label="Stradă"
                 name="street"
                 value={formData.street}
                 onChange={handleInputChange}
@@ -983,12 +984,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <Box width="100%">
               <Box display="flex" alignItems="center">
                 <Typography variant="subtitle1">
-                  Title
+                  Titlu
                 </Typography>
                 <FormHelpTooltip title="Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule, numere de telefon, emailuri sau linkuri." />
               </Box>
               <StyledTextField
-                label="Title"
+                label="Titlu"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
@@ -1025,7 +1026,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               </Box>
 
               <StyledTextField
-                label="Description"
+                label="Descriere"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
@@ -1038,7 +1039,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* Phone Number */}
             <PhoneInputField
-              label="Contact Phone Number"
+              label="Număr de Telefon"
               name="contactPhone"
               value={contactPhone}
               onChange={(phoneValue) => setContactPhone(phoneValue)}
@@ -1048,7 +1049,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* Price */}
             <TextField
-              label="Price (€)"
+              label="Preț (€)"
               name="price"
               value={formData.price}
               onChange={handleInputChange}
@@ -1060,7 +1061,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* Surface */}
             <TextField
-              label="Surface (sqm)"
+              label="Suprafață (sqm)"
               name="surface"
               value={formData.surface}
               onChange={handleInputChange}
@@ -1072,7 +1073,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             {/* Land Surface - only for houses */}
             {formData.announcementType === "Casa" && (
               <TextField
-                label="Land Surface (sqm)"
+                label="Suprafață teren (sqm)"
                 name="landSurface"
                 value={formData.landSurface}
                 onChange={handleInputChange}
@@ -1086,7 +1087,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               <>
                 {/* Number of Rooms */}
                 <SelectDropdown
-                  label="Number of Rooms"
+                  label="Număr camere"
                   options={roomOptions}
                   name="rooms"
                   value={formData.rooms}
@@ -1095,7 +1096,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Number of Baths */}
                 <SelectDropdown
-                  label="Number of Baths"
+                  label="Număr băi"
                   options={roomOptions}
                   name="baths"
                   value={formData.baths}
@@ -1104,7 +1105,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Number of Kitchens */}
                 <SelectDropdown
-                  label="Number of Kitchens"
+                  label="Număr bucătării"
                   options={roomOptions}
                   name="numberOfKitchens"
                   value={formData.numberOfKitchens}
@@ -1113,7 +1114,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Partitioning */}
                 <SelectDropdown
-                  label="Partitioning"
+                  label="Compartimentare"
                   options={apartamentPartitionings}
                   name="partitioning"
                   value={formData.partitioning}
@@ -1122,7 +1123,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Comfort Level */}
                 <SelectDropdown
-                  label="Comfort Level"
+                  label="Nivel confort"
                   options={comfortLevels}
                   name="comfortLevel"
                   value={formData.comfortLevel}
@@ -1131,7 +1132,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Floor */}
                 <SelectDropdown
-                  label="Floor"
+                  label="Etaj"
                   options={apartmentFloors}
                   name="floor"
                   value={formData.floor}
@@ -1140,7 +1141,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Balcony */}
                 <SelectDropdown
-                  label="Balcony"
+                  label="Balcon"
                   options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
                   name="balcony"
                   value={formData.balcony}
@@ -1149,7 +1150,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Parking */}
                 <SelectDropdown
-                  label="Parking"
+                  label="Parcare"
                   options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
                   name="parking"
                   value={formData.parking}
@@ -1162,7 +1163,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <ThumbnailContainer>
               <Box display="flex" alignItems="center" mb={1}>
                 <Typography variant="h6">
-                  Apartment Sketch / Floor Plan
+                  Schița apartamentului / Plan
                 </Typography>
                 <FormHelpTooltip
                   title={`📐 Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.`}
@@ -1171,10 +1172,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
               <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
                 {sketchPreview ? (
-                  <ThumbnailPreviewImage src={sketchPreview} alt="Sketch Preview" />
+                  <ThumbnailPreviewImage src={sketchPreview} alt="Previzualizare schiță" />
                 ) : (
                   <Typography sx={{ color: "#aaa", textAlign: "center" }}>
-                    Click to upload or select
+                    Click pentru a încărca sau a selecta
                   </Typography>
                 )}
               </ThumbnailPreviewWrapper>
@@ -1182,8 +1183,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               <Modal open={openModal} onClose={() => setOpenModal(false)}>
                 <ModalContent>
                   <Tabs value={tabIndex} onChange={(_, newIndex) => setTabIndex(newIndex)}>
-                    <Tab label="Upload" />
-                    <Tab label="Choose Sample" />
+                    <Tab label="Încarcă" />
+                    <Tab label="Alege model" />
                   </Tabs>
 
                   {tabIndex === 0 && (
@@ -1201,8 +1202,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                     <PreviewContainer>
                       {PREDEFINED_SKETCHES.map((src, index) => (
                         <PreviewFile key={index} onClick={() => handlePredefinedSketchClick(src.src)}>
-                          <Typography variant="body2">Sketch {index + 1}</Typography>
-                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Sketch ${index + 1}`} />
+                          <Typography variant="body2">Schiță {index + 1}</Typography>
+                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Schiță ${index + 1}`} />
                         </PreviewFile>
                       ))}
                     </PreviewContainer>
@@ -1231,7 +1232,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </ThumbnailContainer>
 
             <Box display="flex" alignItems="center" mb={1}>
-              <Typography variant="h6">Add Images</Typography>
+              <Typography variant="h6">Adaugă imagini</Typography>
               <FormHelpTooltip
                 title={`📸 Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!`}
               />
@@ -1252,7 +1253,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              Drag & Drop images here or click to browse
+              Trage imaginile aici sau apasă pentru a selecta
             </DropArea>
             <input
               type="file"
@@ -1276,7 +1277,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             <Box display="flex" alignItems="center" mb={1}>
               <Typography variant="h6">
-                Add videos
+                Adaugă videoclipuri
               </Typography>
               <FormHelpTooltip
                 title={`🎥 Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței. Clipurile video cresc șansele de vânzare cu până la 70%!`}
@@ -1297,7 +1298,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               onDragLeave={handleVideoDragLeave}
               onDrop={handleVideoDrop}
             >
-              Drag & Drop videos here or click to browse
+              Trage videoclipurile aici sau apasă pentru a selecta
             </DropArea>
             <input
               type="file"
@@ -1330,7 +1331,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
           {/* Submit Button */}
           <PrimaryButton
-            text={isEdit ? "Update Announcement" : "Create Announcement"}
+            text={isEdit ? "Actualizează Anunțul" : "Creează Anunțul"}
             onClick={onSubmit}
             sx={{ marginTop: "20px" }}
           />

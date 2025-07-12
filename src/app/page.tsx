@@ -8,7 +8,7 @@ import { Main } from "@/MainPage";
 export default function Home() {
   return (
     <Layout>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Se încarcă pagina principală...</div>}>
         <Main />
       </Suspense>
     </Layout>

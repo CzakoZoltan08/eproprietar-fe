@@ -38,7 +38,6 @@ const Spinner = styled("div")(() => ({
   },
 }));
 
-
 const LeftSide = () => {
   const {
     emailAuthStore: { loginWithEmailAndPassword, errorMessage },
@@ -67,7 +66,7 @@ const LeftSide = () => {
   });
 
   const [requestError, setRequestError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // <-- FIXED
+  const [isLoading, setIsLoading] = useState(false);
 
   const socialAuthConfigs = [
     {
@@ -101,25 +100,25 @@ const LeftSide = () => {
       setRequestError("");
       const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
       if (!sanitizedPhoneNumber.startsWith("+")) {
-        throw new Error("Phone number must include the country code (e.g., +40).");
+        throw new Error("Numărul de telefon trebuie să includă prefixul internațional (ex: +40).");
       }
       await setupRecaptcha(auth, "recaptcha-container");
       const result = await sendOtp(auth, sanitizedPhoneNumber);
       setConfirmationResult(result);
       setIsOtpSent(true);
     } catch (error: any) {
-      console.error("Error sending OTP:", error);
-      setRequestError(error.message || "Failed to send OTP. Please try again.");
+      console.error("Eroare la trimiterea codului OTP:", error);
+      setRequestError(error.message || "Nu s-a putut trimite codul. Încearcă din nou.");
     }
   };
 
   const handleVerifyOtp = async () => {
     try {
-      if (!confirmationResult) throw new Error("No OTP confirmation result found.");
+      if (!confirmationResult) throw new Error("Rezultatul confirmării OTP lipsește.");
       await verifyPhoneOtp(confirmationResult, otp);
       router.replace("/");
     } catch (error) {
-      setRequestError("Failed to verify OTP. Please try again.");
+      setRequestError("Verificarea codului a eșuat. Te rugăm să încerci din nou.");
     }
   };
 
@@ -140,43 +139,43 @@ const LeftSide = () => {
 
       const auth = getAuth();
       const user = auth.currentUser;
-      if (!user) throw new Error("User not found after login.");
+      if (!user) throw new Error("Utilizatorul nu a fost găsit după autentificare.");
 
       const token = await getIdToken(user);
-      if (!token) throw new Error("Failed to retrieve authentication token.");
+      if (!token) throw new Error("Nu s-a putut obține tokenul de autentificare.");
 
       const userByEmail = await userApi.getUserByEmail(user.email || "");
-      if (!userByEmail) throw new Error("User not found in the system.");
+      if (!userByEmail) throw new Error("Utilizatorul nu există în sistem.");
 
       userStore.setCurrentUser(userByEmail);
       setIsLoading(false);
       router.replace("/");
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Autentificarea a eșuat:", error);
       setIsLoading(false);
-      setRequestError("Email or password is incorrect!");
+      setRequestError("Email sau parolă incorecte!");
     }
   };
 
   const providerMap: Record<string, AuthProvider> = {
-    Google:   AuthProvider.GOOGLE,    // "google.com"
-    Facebook: AuthProvider.FACEBOOK,  // "facebook.com"
-    Yahoo:    AuthProvider.YAHOO,     // "yahoo.com"
+    Google: AuthProvider.GOOGLE,
+    Facebook: AuthProvider.FACEBOOK,
+    Yahoo: AuthProvider.YAHOO,
   };
 
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
     try {
       const enumName = providerMap[authProviderName];
       if (!enumName) {
-        throw new Error("Unknown social provider: " + authProviderName);
+        throw new Error("Provider necunoscut: " + authProviderName);
       }
 
       setIsLoading(true);
-      
+
       await handleSocialAuth(auth, provider, userApi, userStore, enumName);
       router.replace("/");
     } catch (error) {
-      console.error(`${authProviderName} login failed`, error);
+      console.error(`Autentificare ${authProviderName} eșuată`, error);
       setIsLoading(false);
     }
   };
@@ -192,7 +191,7 @@ const LeftSide = () => {
     margin: "0 auto",
     backgroundColor: "var(--color-white)",
     borderRadius: "8px",
-    position: "relative", // For overlay positioning
+    position: "relative",
   };
 
   return (
@@ -223,7 +222,7 @@ const LeftSide = () => {
           requestError={requestError || errorMessage}
           onChange={onChange}
           onSubmit={onSubmit}
-          isLoading={isLoading} // optional: to disable button
+          isLoading={isLoading}
         />
         <SocialLoginButtons
           socialAuthConfigs={socialAuthConfigs}

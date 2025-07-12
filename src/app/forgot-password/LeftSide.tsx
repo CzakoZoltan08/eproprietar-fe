@@ -14,21 +14,22 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 import validationSchema from "./forgotPasswordValidationSchema";
 
-// Constants
+// Constante
 const INITIAL_DATA = { email: "" };
 const ERROR_MESSAGES = {
-  EMAIL_INVALID: "Email must be a valid email address!",
-  EMAIL_REQUIRED: "The email address is required!",
-  REQUEST_ERROR: "Request Error",
+  EMAIL_INVALID: "Emailul trebuie să fie valid!",
+  EMAIL_REQUIRED: "Adresa de email este obligatorie!",
+  REQUEST_ERROR: "Eroare la trimiterea cererii",
 };
 const ROUTES = { LOGIN: "/login" };
-const PLACEHOLDERS = { EMAIL: "Enter email" };
+const PLACEHOLDERS = { EMAIL: "Introdu adresa de email" };
 const LABELS = { EMAIL: "Email", RESET_PASSWORD: "Resetează parola" };
 
 const LeftSide = () => {
   const {
     authStore: { resetPassword },
   } = useStore();
+
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [formErrors, setFormErrors] = useState(INITIAL_DATA);
   const [, setIsRegisterWithEmail] = useState(false);

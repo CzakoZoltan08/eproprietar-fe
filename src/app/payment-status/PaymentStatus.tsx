@@ -16,7 +16,6 @@ const PaymentStatusPage = () => {
 
   useEffect(() => {
     if (success && orderId) {
-      // You can also fetch the announcement if needed
       const announcementType = searchParams.get("type") ?? "normal";
       const basePath = announcementType === "ensemble" ? "announcements/ensemble" : "announcements";
       setAnnouncementUrl(`/${basePath}/${orderId}`);
@@ -30,7 +29,7 @@ const PaymentStatusPage = () => {
     return (
       <Box textAlign="center" mt={10}>
         <CircularProgress />
-        <Typography mt={2}>Verifying your payment...</Typography>
+        <Typography mt={2}>Se verifică plata...</Typography>
       </Box>
     );
   }
@@ -40,28 +39,28 @@ const PaymentStatusPage = () => {
       {success ? (
         <>
           <Typography variant="h4" gutterBottom>
-            🎉 Payment successful!
+            🎉 Plata a fost efectuată cu succes!
           </Typography>
           <Typography variant="body1" mb={4}>
-            Your announcement has been published and is now visible on the platform.
+            Anunțul tău a fost publicat și este acum vizibil pe platformă.
           </Typography>
           <Link href={announcementUrl}>
             <Button variant="contained" color="primary">
-              View Your Announcement
+              Vezi anunțul tău
             </Button>
           </Link>
         </>
       ) : (
         <>
           <Typography variant="h5" color="error">
-            ❌ Payment failed or was cancelled
+            ❌ Plata a eșuat sau a fost anulată
           </Typography>
           <Typography mt={2}>
-            Please try again or contact support if the issue persists.
+            Te rugăm să încerci din nou sau contactează suportul dacă problema persistă.
           </Typography>
           <Link href="/create-announcement">
             <Button variant="outlined" sx={{ mt: 3 }}>
-              Go Back to Create Announcement
+              Înapoi la crearea anunțului
             </Button>
           </Link>
         </>

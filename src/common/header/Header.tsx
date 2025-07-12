@@ -27,7 +27,7 @@ const MENU_STRUCTURE = [
       { label: "5 camere", type: "apartament", rooms: 5 },
       { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
-      { label: "Cabane/Case la tara", type: "case_la_tara" },
+      { label: "Cabane/Case la țară", type: "case_la_tara" },
     ],
   },
   {
@@ -42,7 +42,7 @@ const MENU_STRUCTURE = [
       { label: "5 camere", type: "apartament", rooms: 5 },
       { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
-      { label: "Cabane/Case la tara", type: "case_la_tara" },
+      { label: "Cabane/Case la țară", type: "case_la_tara" },
     ],
   },
 ];

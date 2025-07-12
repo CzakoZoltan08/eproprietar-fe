@@ -18,8 +18,8 @@ const UploadInfoBox: React.FC<UploadInfoBoxProps> = ({
 }) => {
   return (
     <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 1 }}>
-      Uploaded {uploadedCount} / {maxFiles} files • Max size: {maxSizeMB}MB
-      {allowedTypes && ` • Allowed: ${allowedTypes.join(", ")}`}
+      Încărcate {uploadedCount} / {maxFiles} fișiere • Dimensiune maximă: {maxSizeMB}MB
+      {allowedTypes && ` • Formate permise: ${allowedTypes.join(", ")}`}
     </Typography>
   );
 };

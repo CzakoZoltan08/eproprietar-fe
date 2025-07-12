@@ -75,14 +75,14 @@ const Badge = styled(Chip)<{ $topOffset?: number }>`
 `;
 
 const mockFeaturesMap: Record<string, string[]> = {
-  ["free"]: ["Basic listing", "Visible for 3 days", "No image uploads"],
-  ["7_days"]: ["Up to 3 images", "Visible for 7 days", "Standard listing placement"],
-  ["15_days"]: ["Up to 5 images", "Visible for 15 days", "Highlighted in listings"],
-  ["20_days"]: ["Up to 10 images", "Visible for 20 days", "Highlighted in all listings"],
-  ["unlimited"]: ["Unlimited visibility", "Unlimited image uploads", "Priority placement", "Featured badge"],
-  "3_months": ["Visible for 3 months", "Up to 10 images", "Boosted placement"],
-  "6_months": ["Visible for 6 months", "Up to 15 images", "Priority placement"],
-  "12_months": ["Visible for 12 months", "Unlimited images", "Top placement", "Premium badge"],
+  ["free"]: ["Listare de bază", "Vizibil 3 zile", "Fără încărcare de imagini"],
+  ["7_days"]: ["Până la 3 imagini", "Vizibil 7 zile", "Afișare standard în listări"],
+  ["15_days"]: ["Până la 5 imagini", "Vizibil 15 zile", "Evidențiat în listări"],
+  ["20_days"]: ["Până la 10 imagini", "Vizibil 20 zile", "Evidențiat în toate listările"],
+  ["unlimited"]: ["Vizibilitate nelimitată", "Încărcare nelimitată de imagini", "Poziționare prioritară", "Insignă de promovare"],
+  "3_months": ["Vizibil 3 luni", "Până la 10 imagini", "Poziționare îmbunătățită"],
+  "6_months": ["Vizibil 6 luni", "Până la 15 imagini", "Poziționare prioritară"],
+  "12_months": ["Vizibil 12 luni", "Imagini nelimitate", "Poziționare top", "Insignă premium"],
 };
 
 const PriceWithDiscount = ({ item }: { item: any }) => (
@@ -103,12 +103,12 @@ const PriceWithDiscount = ({ item }: { item: any }) => (
     )}
     {item.durationDays && (
       <Typography variant="body2" mt={1} color={COLOR_TEXT}>
-        Duration: {item.durationDays} days
+        Durată: {item.durationDays} zile
       </Typography>
     )}
     {item.discountValidTo && (
       <Typography variant="caption" sx={{ color: COLOR_RED_BUTTON, fontWeight: 600 }}>
-        Discount valid until: {new Date(item.discountValidTo).toLocaleDateString()}
+        Reducere valabilă până la: {new Date(item.discountValidTo).toLocaleDateString()}
       </Typography>
     )}
     {item.description && (
@@ -276,7 +276,7 @@ const SelectPackagePage = () => {
       <Box px={3} py={4} textAlign="center">
         <CircularProgress />
         <Typography variant="body2" mt={2}>
-          Finalizing your announcement in the background...
+          Se finalizează anunțul în fundal...
         </Typography>
       </Box>
     );
@@ -287,10 +287,9 @@ const SelectPackagePage = () => {
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
       <Typography variant="h5" fontWeight={700} mb={2} color="primary">
-        Choose your listing package
+        Alege pachetul de promovare
       </Typography>
 
-      {/* Pass `single={packages.length === 1}` to adjust the grid when only one package */}
       <PackageGrid $single={packages.length === 1}>
         {packages.map((pkg) => (
           <StyledCard
@@ -308,7 +307,7 @@ const SelectPackagePage = () => {
       {promotions.length > 0 && (
         <>
           <Typography variant="h5" fontWeight={700} mt={6} mb={2} color="primary">
-            Add Promotion (Optional)
+            Adaugă promovare (opțional)
           </Typography>
           <PackageGrid $single={promotions.length === 1}>
             {promotions.map((promo) => (
@@ -335,7 +334,7 @@ const SelectPackagePage = () => {
           {!isFree && (
             <Box mt={6}>
               <Typography variant="h5" fontWeight={700} mb={2} color="primary">
-                Fill in your invoicing details
+                Completează detaliile pentru facturare
               </Typography>
               <Tabs
                 value={tab}
@@ -344,15 +343,15 @@ const SelectPackagePage = () => {
                 textColor="primary"
                 sx={{ mb: 3 }}
               >
-                <Tab label="Individual" />
-                <Tab label="Company" />
+                <Tab label="Persoană fizică" />
+                <Tab label="Companie" />
               </Tabs>
 
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Full Name"
+                    label="Nume complet"
                     name="name"
                     onChange={handleChange}
                     value={form.name}
@@ -372,7 +371,7 @@ const SelectPackagePage = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="RegCom"
+                        label="Nr. Reg. Comerțului"
                         name="regCom"
                         onChange={handleChange}
                         value={form.regCom}
@@ -383,7 +382,7 @@ const SelectPackagePage = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Address"
+                    label="Adresă"
                     name="address"
                     onChange={handleChange}
                     value={form.address}
@@ -392,7 +391,7 @@ const SelectPackagePage = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="City"
+                    label="Oraș"
                     name="city"
                     onChange={handleChange}
                     value={form.city}
@@ -401,7 +400,7 @@ const SelectPackagePage = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Country"
+                    label="Țară"
                     name="country"
                     onChange={handleChange}
                     value={form.country}
@@ -424,10 +423,10 @@ const SelectPackagePage = () => {
               <CommonButton
                 text={
                   loading
-                    ? "Processing…"
+                    ? "Se procesează..."
                     : isFree
-                    ? "Publish for Free"
-                    : "Continue to Payment"
+                    ? "Publică gratuit"
+                    : "Continuă către plată"
                 }
                 onClick={handleSubmit}
                 sx={{

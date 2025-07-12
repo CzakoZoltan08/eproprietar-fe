@@ -37,12 +37,12 @@ const Styled = {
     background: #fff;
     padding: 16px;
     gap: 16px;
-    max-width: 800px; /* Prevent excessive width on large screens */
+    max-width: 800px;
     margin: auto;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-x: hidden;
     
     @media (max-width: 768px) {
-      max-width: 100%; /* Ensure it fits within mobile screens */
+      max-width: 100%;
       padding: 12px;
     }
   `,
@@ -218,7 +218,7 @@ const ResidentialAnnouncementForm = () => {
 
     if (errors && typeof errors === "object") {
       setFormErrors(errors as typeof INITIAL_DATA & { contactPhone?: string });
-      setError("Please correct the highlighted fields.");
+      setError("Te rugăm să corectezi câmpurile evidențiate.");
       return;
     }
 
@@ -227,7 +227,7 @@ const ResidentialAnnouncementForm = () => {
       setError(null);
 
       if (!user?.id || !user.firebaseId) {
-        throw new Error("User not authenticated.");
+        throw new Error("Utilizator neautentificat.");
       }
 
       if (contactPhone && contactPhone !== user.phoneNumber) {
@@ -253,8 +253,8 @@ const ResidentialAnnouncementForm = () => {
 
       window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
     } catch (err: any) {
-      console.error("Error creating announcement:", err);
-      setError("Something went wrong. Please try again.");
+      console.error("Eroare la crearea anunțului:", err);
+      setError("A apărut o problemă. Încearcă din nou.");
     } finally {
       setLoading(false);
     }
@@ -268,7 +268,7 @@ const ResidentialAnnouncementForm = () => {
           {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
             <>
               <Typography mt={2}>
-                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+                Se încarcă imaginile: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
               </Typography>
               {imageUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -280,7 +280,7 @@ const ResidentialAnnouncementForm = () => {
               )}
 
               <Typography mt={2}>
-                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+                Se încarcă videoclipurile: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
               </Typography>
               {videoUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -294,12 +294,12 @@ const ResidentialAnnouncementForm = () => {
               {(imageUploadProgress.uploaded < imageUploadProgress.total ||
                 videoUploadProgress.uploaded < videoUploadProgress.total) && (
                 <Typography mt={2} fontStyle="italic">
-                  Finishing uploads, please wait...
+                  Finalizăm încărcările, te rugăm să aștepți...
                 </Typography>
               )}
             </>
           ) : (
-            <Typography mt={2}>Creating your announcement...</Typography>
+            <Typography mt={2}>Se creează anunțul tău...</Typography>
           )}
         </>
       ) : (
@@ -313,11 +313,11 @@ const ResidentialAnnouncementForm = () => {
               value={formData.announcementType}
               id="announcementType"
               onChange={handleInputChange}
-              label="Tipul căutării"
+              label="Tipul proprietății"
               error={formErrors.announcementType}
             />
             <TextField
-              label="Număr de telefon pentru contact"
+              label="Telefon de contact"
               name="contactPhone"
               value={contactPhone}
               onChange={(e) => {
@@ -335,9 +335,8 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.contactPhone}
               fullWidth
             />
-            {/* County */}
             <AutocompleteCounties
-              label="County"
+              label="Județ"
               customWidth="100%"
               value={formData.county}
               onChange={(event, value) => {
@@ -349,13 +348,13 @@ const ResidentialAnnouncementForm = () => {
             />
             <AutocompleteCities
               onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
-              label="Localizare (oraș/comună)"
+              label="Localitate (oraș/comună)"
               customWidth="100%"
               error={formErrors.city}
               value={formData.city}
             />
             <TextField
-              label="Detalii localizare (stradă)"
+              label="Stradă"
               name="street"
               value={formData.street}
               onChange={handleInputChange}
@@ -363,9 +362,9 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.street}
               fullWidth
             />
-            <Tooltip title="Titlu anunț: fii creativ, dar corect">
+            <Tooltip title="Scrie un titlu atractiv și clar">
               <TextField
-                label="Titlu Anunț"
+                label="Titlul anunțului"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
@@ -386,7 +385,7 @@ const ResidentialAnnouncementForm = () => {
               rows={4}
             />
             <TextField
-              label="Stadiul ansamblului"
+              label="Stadiu construcție"
               name="stage"
               value={formData.stage}
               onChange={handleInputChange}
@@ -396,7 +395,7 @@ const ResidentialAnnouncementForm = () => {
             />
             <PrimaryDatePicker
               name="endDate"
-              label="Termen de finalizare"
+              label="Data finalizării"
               value={formData.endDate}
               error={formErrors.endDate || ""}
               handleChange={handleDateChange}

@@ -92,7 +92,7 @@ export default function CreateAnnounce() {
         alignItems="center"
         gap={3}
       >
-        <StyledSubtitle variant="h3">Adauga acum anunțul tău</StyledSubtitle>
+        <StyledSubtitle variant="h3">Adaugă acum anunțul tău</StyledSubtitle>
         <StyledSubtitleAdvice variant="h4">
           Urmează pașii, e mai simplu ca niciodată!
         </StyledSubtitleAdvice>

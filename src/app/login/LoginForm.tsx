@@ -45,21 +45,21 @@ const LoginForm = ({
   requestError,
   onChange,
   onSubmit,
-  isLoading = false, // <-- added with default
+  isLoading = false,
 }: {
   formData: { email: string; password: string };
   formErrors: { email: string; password: string };
   requestError: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
-  isLoading?: boolean; // <-- make it optional
+  isLoading?: boolean;
 }) => {
   const router = useRouter();
 
   return (
     <Box>
       <Typography variant="h4" sx={styles.title}>
-        Log in
+        Autentificare
       </Typography>
 
       <Box sx={styles.formContainer}>
@@ -72,7 +72,7 @@ const LoginForm = ({
             helperText={formErrors.email}
           />
           <InputField
-            label="Password"
+            label="Parolă"
             name="password"
             value={formData.password}
             onChange={onChange}
@@ -83,9 +83,9 @@ const LoginForm = ({
           <Box mt={2}>
             <PrimaryButton
               onClick={onSubmit}
-              text={isLoading ? "Logging in..." : "Log in"}
+              text={isLoading ? "Se autentifică..." : "Autentificare"}
               size="large"
-              disabled={isLoading} // <-- disable during loading
+              disabled={isLoading}
             />
           </Box>
           {requestError && <span style={styles.errorText}>{requestError}</span>}
@@ -97,14 +97,14 @@ const LoginForm = ({
             style={styles.link}
             onClick={() => router.push("/forgot-password")}
           >
-            Forgot Password
+            Ai uitat parola?
           </Typography>
           <Typography
             variant="subtitle1"
             style={styles.link}
             onClick={() => router.push("/register")}
           >
-            Register
+            Creează cont
           </Typography>
         </Box>
       </Box>

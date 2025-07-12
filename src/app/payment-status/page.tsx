@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 export default function PaymentStatusPage() {
   return (
-    <Suspense fallback={<div>Loading payment status...</div>}>
+    <Suspense fallback={<div>Se încarcă statusul plății...</div>}>
       <PaymentStatus />
     </Suspense>
   );
