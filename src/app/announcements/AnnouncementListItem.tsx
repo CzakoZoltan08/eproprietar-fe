@@ -207,16 +207,18 @@ const AnnouncementListItem = ({
             {item.rooms && <span>{formatRooms(item.rooms)}&nbsp;</span>}
             {item.surface}
             <span>mp</span>
+            <br />
+            <br />
+            {item.price} <span>Euro</span>
           </Subtitle>
 
           <Price>
-            {item.price} EUR
-            <br />
             <PriceMP>
-              {calculatePricePerSquareMeter(item.price, item.surface)}{" "}
-              {Currency.EUR}/{Unit.SQUARE_METER}
+              {calculatePricePerSquareMeter(item.price, item.surface)} {Currency.EUR}/{Unit.SQUARE_METER}
             </PriceMP>
           </Price>
+
+
         </FlexRowToColumn>
 
         <Description>{item.description}</Description>
