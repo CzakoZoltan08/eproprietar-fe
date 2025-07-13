@@ -64,6 +64,7 @@ const PreviewVideo = styled.video`
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
+
   &:hover {
     opacity: 0.7;
   }
@@ -205,6 +206,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     }
     setImages([...images, ...valid]);
     setError("");
+
+    // ✅ Reset input so re-selecting the same file works
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
   };
 
   const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -217,6 +223,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     }
     setVideos([...videos, ...valid]);
     setError("");
+
+    // ✅ Reset input so re-selecting the same file works
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
@@ -238,6 +249,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       return;
     }
     setImages([...images, ...valid]);
+    setError("");
   };
 
   const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -249,6 +261,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       return;
     }
     setVideos([...videos, ...valid]);
+    setError("");
   };
 
   return (
@@ -273,9 +286,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       </ThumbnailWrapper>
 
       {/* Imagini */}
-      <Typography mt={4} variant="h6">
-        Imagini
-      </Typography>
+      <Typography mt={4} variant="h6">Imagini</Typography>
       <UploadInfoBox
         maxFiles={MAX_IMAGES}
         maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
@@ -309,9 +320,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       </PreviewContainer>
 
       {/* Videoclipuri */}
-      <Typography mt={4} variant="h6">
-        Videoclipuri
-      </Typography>
+      <Typography mt={4} variant="h6">Videoclipuri</Typography>
       <UploadInfoBox
         maxFiles={MAX_VIDEOS}
         maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
@@ -344,7 +353,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         ))}
       </PreviewContainer>
 
-      {/* Eroare */}
       {error && (
         <Typography color="error" mt={2} align="center">
           {error}

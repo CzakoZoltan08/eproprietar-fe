@@ -651,7 +651,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const uploadMedia = async (announcementId: string) => {
-    const totalImages = formData.images.length;
+    const totalImages = formData.images.length + (formData.sketch ? 1 : 0);
     const totalVideos = formData.videos.length;
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
@@ -670,6 +670,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
     let thumbnailUrl = "";
 
+    // ─── 1. Upload first image as thumbnail ───
     if (formData.images.length > 0) {
       const thumbnailImage = formData.images[0];
       const df = new FormData();
@@ -686,20 +687,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       incrementImage();
     }
 
+    // ─── 2. Upload remaining images ───
     const remainingImages = formData.images.slice(1);
+    for (const imageFile of remainingImages) {
+      const df = new FormData();
+      df.append("file", imageFile);
+      df.append("type", "image");
+      await createImageOrVideo(df, announcementId);
+      incrementImage();
+    }
 
-    // 1) Upload any brand-new images (File objects in formData.images)
-    const imageUploads = remainingImages.map((imageFile) =>
-      (async () => {
-        const df = new FormData();
-        df.append("file", imageFile);
-        df.append("type", "image");
-        await createImageOrVideo(df, announcementId);
-        incrementImage();
-      })()
-    );
-
-    // 3) Upload the sketch (could be File or existing string URL)
+    // ─── 3. Upload sketch (if it's a new File or predefined URL) ───
     if (formData.sketch) {
       const df2 = new FormData();
       if (formData.sketch instanceof File) {
@@ -722,20 +720,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       incrementImage();
     }
 
-    // 4) Upload any brand-new videos (File objects in formData.videos)
-    const videoUploads = formData.videos.map((videoFile) =>
-      (async () => {
-        const df3 = new FormData();
-        df3.append("file", videoFile);
-        df3.append("type", "video");
-        await createImageOrVideo(df3, announcementId);
-        incrementVideo();
-      })()
-    );
+    // ─── 4. Upload videos reliably using loop ───
+    for (const videoFile of formData.videos) {
+      const df3 = new FormData();
+      df3.append("file", videoFile);
+      df3.append("type", "video");
+      await createImageOrVideo(df3, announcementId);
+      incrementVideo();
+    }
 
-    // 5) Wait for all uploads to finish
-    await Promise.all([Promise.all(imageUploads), Promise.all(videoUploads)]);
-  };  
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+  };
 
   const onSubmit = async () => {
     if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
@@ -794,6 +789,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
         // 3a. Upload media on top of the existing announcement’s ID
         await uploadMedia(currentAnnouncement.id);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
         // 4a. Redirect or show a “success” page for editing
         // (choose whatever makes sense: maybe go back to listing or details page)

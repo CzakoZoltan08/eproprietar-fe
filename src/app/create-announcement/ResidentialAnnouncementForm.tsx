@@ -1,7 +1,6 @@
 "use client";
 
 import * as breakpoints from "@/constants/breakpoints";
-import * as palette from "@/constants/colors";
 
 import {
   Box,
@@ -128,10 +127,7 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const uploadMedia = async (announcementId: string) => {
-    const totalImages =
-      formData.images.length +
-      (formData.logo ? 1 : 0);
-
+    const totalImages = formData.images.length + (formData.logo ? 1 : 0);
     const totalVideos = formData.videos.length;
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
@@ -139,12 +135,12 @@ const ResidentialAnnouncementForm = () => {
 
     const incrementImage = () =>
       setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
-
     const incrementVideo = () =>
       setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
 
     let thumbnailUrl = "";
 
+    // ─── 1. Upload first image as thumbnail ───
     if (formData.images.length > 0) {
       const firstImage = formData.images[0];
       const fd = new FormData();
@@ -161,52 +157,40 @@ const ResidentialAnnouncementForm = () => {
       incrementImage();
     }
 
-    const imageUploads = formData.images.slice(1).map((image) =>
-      (async () => {
-        const fd = new FormData();
-        fd.append("file", image);
-        fd.append("type", "image");
-
-        await createImageOrVideo(fd, announcementId);
-        incrementImage();
-      })()
-    );
-
-    if (formData.logo) {
-      const logoUpload = (async () => {
-        const fd = new FormData();
-        if (formData.logo) {
-          fd.append("file", formData.logo);
-        }
-        fd.append("type", "image");
-
-        const response = await createImageOrVideo(fd, announcementId);
-        if (response?.optimized_url) {
-          await updateAnnouncement(announcementId, {
-            logoUrl: response.optimized_url,
-          });
-        }
-        incrementImage();
-      })();
-
-      imageUploads.push(logoUpload);
+    // ─── 2. Upload remaining images ───
+    for (const image of formData.images.slice(1)) {
+      const fd = new FormData();
+      fd.append("file", image);
+      fd.append("type", "image");
+      await createImageOrVideo(fd, announcementId);
+      incrementImage();
     }
 
-    const videoUploads = formData.videos.map((video) =>
-      (async () => {
-        const fd = new FormData();
-        fd.append("file", video);
-        fd.append("type", "video");
+    // ─── 3. Upload logo ───
+    if (formData.logo) {
+      const fd = new FormData();
+      fd.append("file", formData.logo);
+      fd.append("type", "image");
 
-        await createImageOrVideo(fd, announcementId);
-        incrementVideo();
-      })()
-    );
+      const response = await createImageOrVideo(fd, announcementId);
+      if (response?.optimized_url) {
+        await updateAnnouncement(announcementId, {
+          logoUrl: response.optimized_url,
+        });
+      }
+      incrementImage();
+    }
 
-    return Promise.all([
-      Promise.all(imageUploads),
-      Promise.all(videoUploads),
-    ]);
+    // ─── 4. Upload videos using reliable for...of loop ───
+    for (const video of formData.videos) {
+      const fd = new FormData();
+      fd.append("file", video);
+      fd.append("type", "video");
+      await createImageOrVideo(fd, announcementId);
+      incrementVideo();
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
   };
 
   const handleSubmit = async () => {
@@ -250,6 +234,8 @@ const ResidentialAnnouncementForm = () => {
       const newAnnouncement = await createAnnouncement(payload);
       localStorage.setItem("announcementRealId", newAnnouncement.id);
       await uploadMedia(newAnnouncement.id);
+
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
       window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
     } catch (err: any) {
