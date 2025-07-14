@@ -37,6 +37,7 @@ export interface PropertyAnnouncementModel {
   phoneContact?: string;
   sketchUrl?: string;
   createdAt: string;
+  isPromoted?: boolean;
 }
 
 export class CreateAnnouncementDto {

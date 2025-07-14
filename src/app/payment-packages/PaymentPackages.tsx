@@ -287,7 +287,7 @@ const SelectPackagePage = () => {
   return (
     <Box maxWidth="960px" mx="auto" px={3} py={4}>
       <Typography variant="h5" fontWeight={700} mb={2} color="primary">
-        Alege pachetul de promovare
+        Alege pachetul pentru anunțul tău
       </Typography>
 
       <PackageGrid $single={packages.length === 1}>
