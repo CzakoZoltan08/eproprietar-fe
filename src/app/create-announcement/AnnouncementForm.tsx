@@ -297,6 +297,14 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     sketch: null as File | string | null,
   });
 
+  type MediaItem = {
+    file?: File;
+    url?: string;
+  };
+
+  const [imageItems, setImageItems] = useState<MediaItem[]>([]);
+  const [videoItems, setVideoItems] = useState<MediaItem[]>([]);
+
   const isApartment = formData.announcementType === "Apartament";
 
   const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
@@ -319,6 +327,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const isImageError = error.toLowerCase().includes("image") || error.toLowerCase().includes("jpeg") || error.toLowerCase().includes("webp");
   const isVideoError = error.toLowerCase().includes("video") || error.toLowerCase().includes("mp4") || error.toLowerCase().includes("100mb");
+
+  const [originalMediaCounts, setOriginalMediaCounts] = useState({ images: 0, videos: 0 });
+
 
   // Load current user
   useEffect(() => {
@@ -379,7 +390,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       ) || serviceTypes[0];
 
       setFormData({
-        userId: currentAnnouncement.user?.id || user?.id || "",
+        userId: currentAnnouncement.user?.id ?? "", // only use announcement user ID,
         announcementType: normalizedType || propertyTypes[0],
         providerType: formData.providerType,
         transactionType: normalizedTrans,
@@ -434,8 +445,31 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
         setContactPhone(currentAnnouncement.user.phoneNumber);
       }
+
+      if (Array.isArray(currentAnnouncement.images)) {
+        setImageItems(currentAnnouncement.images.map((img) => ({ url: img.original })));
+      }
+
+      if (Array.isArray(currentAnnouncement.videos)) {
+        setVideoItems(currentAnnouncement.videos.map((vid) => ({ url: vid.original })));
+      }
+
+      setOriginalMediaCounts({
+        images: currentAnnouncement.images?.length ?? 0,
+        videos: currentAnnouncement.videos?.length ?? 0,
+      });
     }
   }, [currentAnnouncement, isEdit]);
+
+  useEffect(() => {
+    if (!currentAnnouncement?.user?.id || usersList.length === 0) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      userId: currentAnnouncement.user?.id ?? "",
+    }));
+  }, [currentAnnouncement?.user?.id, usersList]);
+
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -470,27 +504,15 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-
-    if (!files) {
-      return;
-    }
+    if (!files) return;
 
     const validImages = validateImageFiles(files);
+    const newItems = validImages.map((file) => ({ file }));
 
-    if (formData.images.length + validImages.length > MAX_IMAGES) {
-      setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
-      return;
-    }
+    setImageItems((prev) => [...prev, ...newItems]);
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...validImages],
-    }));
-    setImagePreviews((prev) => [
-      ...prev,
-      ...validImages.map((file) => URL.createObjectURL(file)),
-    ]);
-    setError('');
+    // 👇 important: reset input value so selecting same files again works
+    event.target.value = "";
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -531,16 +553,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const handleImageRemove = (index: number) => {
-    setFormData((prev) => {
-      const updatedImages = [...prev.images];
-      updatedImages.splice(index, 1);
-      return { ...prev, images: updatedImages };
-    });
-    setImagePreviews((prev) => {
-      const updatedPreviews = [...prev];
-      updatedPreviews.splice(index, 1);
-      return updatedPreviews;
-    });
+    setImageItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateVideoFiles = (files: FileList | File[]) => {
@@ -564,24 +577,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      
-      const validVideos = validateVideoFiles(files);
-      if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-        setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
-        return;
-      }
+    if (!files) return;
 
-      setFormData((prev) => ({
-        ...prev,
-        videos: [...prev.videos, ...validVideos],
-      }));
-      setVideoPreviews((prev) => [
-        ...prev,
-        ...validVideos.map((file) => URL.createObjectURL(file)),
-      ]);
-      setError('');
-    }
+    const validVideos = validateVideoFiles(files);
+    const newItems = validVideos.map((file) => ({ file }));
+
+    setVideoItems((prev) => [...prev, ...newItems]);
   };
 
   const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -622,16 +623,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const handleVideoRemove = (index: number) => {
-    setFormData((prev) => {
-      const updatedVideos = [...prev.videos];
-      updatedVideos.splice(index, 1);
-      return { ...prev, videos: updatedVideos };
-    });
-    setVideoPreviews((prev) => {
-      const updatedPreviews = [...prev];
-      updatedPreviews.splice(index, 1);
-      return updatedPreviews;
-    });
+    setVideoItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSketchChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -650,9 +642,18 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setOpenModal(false);
   };
 
-  const uploadMedia = async (announcementId: string) => {
-    const totalImages = formData.images.length + (formData.sketch ? 1 : 0);
-    const totalVideos = formData.videos.length;
+  const uploadMedia = async (
+    announcementId: string,
+    reuploadExisting: boolean
+  ) => {
+    const totalImages =
+      imageItems.filter((i) => i.file).length +
+      (reuploadExisting ? imageItems.filter((i) => i.url).length : 0) +
+      (formData.sketch ? 1 : 0);
+
+    const totalVideos =
+      videoItems.filter((i) => i.file).length +
+      (reuploadExisting ? videoItems.filter((i) => i.url).length : 0);
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
     setVideoUploadProgress({ uploaded: 0, total: totalVideos });
@@ -662,74 +663,101 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         ...prev,
         uploaded: prev.uploaded + 1,
       }));
+
     const incrementVideo = () =>
       setVideoUploadProgress((prev) => ({
         ...prev,
         uploaded: prev.uploaded + 1,
       }));
 
-    let thumbnailUrl = "";
+    const uploadAll = async (
+      items: MediaItem[],
+      type: 'image' | 'video',
+      increment: () => void
+    ) => {
+      for (const item of items) {
+        if (!item.file && !reuploadExisting) continue; // ⛔ skip existing if not deleting
 
-    // ─── 1. Upload first image as thumbnail ───
-    if (formData.images.length > 0) {
-      const thumbnailImage = formData.images[0];
-      const df = new FormData();
-      df.append("file", thumbnailImage);
-      df.append("type", "image");
+        const form = new FormData();
 
-      const uploadResp = await createImageOrVideo(df, announcementId);
-      if (uploadResp?.optimized_url) {
-        thumbnailUrl = uploadResp.optimized_url;
+        if (item.file) {
+          form.append('file', item.file);
+        } else if (item.url && reuploadExisting) {
+          const res = await fetch(item.url);
+          const blob = await res.blob();
+          const ext = blob.type.split('/')[1] || 'jpg';
+          const file = new File([blob], `existing-${Date.now()}.${ext}`, {
+            type: blob.type,
+          });
+          form.append('file', file);
+        } else {
+          continue;
+        }
+
+        form.append('type', type);
+        await createImageOrVideo(form, announcementId);
+        increment();
+      }
+    };
+
+    // 1. Upload first image as thumbnail (new or existing)
+    const firstImage = imageItems[0];
+    if (firstImage) {
+      const form = new FormData();
+      if (firstImage.file) {
+        form.append('file', firstImage.file);
+      } else if (firstImage.url && reuploadExisting) {
+        const res = await fetch(firstImage.url);
+        const blob = await res.blob();
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const file = new File([blob], `thumbnail-${Date.now()}.${ext}`, {
+          type: blob.type,
+        });
+        form.append('file', file);
+      } else {
+        return;
+      }
+
+      form.append('type', 'image');
+      const result = await createImageOrVideo(form, announcementId);
+      if (result?.optimized_url) {
         await updateAnnouncement(announcementId, {
-          imageUrl: thumbnailUrl,
+          imageUrl: result.optimized_url,
         });
       }
       incrementImage();
     }
 
-    // ─── 2. Upload remaining images ───
-    const remainingImages = formData.images.slice(1);
-    for (const imageFile of remainingImages) {
-      const df = new FormData();
-      df.append("file", imageFile);
-      df.append("type", "image");
-      await createImageOrVideo(df, announcementId);
-      incrementImage();
-    }
+    // 2. Upload remaining images
+    await uploadAll(imageItems.slice(1), 'image', incrementImage);
 
-    // ─── 3. Upload sketch (if it's a new File or predefined URL) ───
+    // 3. Upload sketch
     if (formData.sketch) {
-      const df2 = new FormData();
+      const form = new FormData();
       if (formData.sketch instanceof File) {
-        df2.append("file", formData.sketch);
-      } else if (typeof formData.sketch === "string") {
-        const resp2 = await fetch(formData.sketch);
-        const blob2 = await resp2.blob();
-        const name2 = `sketch‐${Date.now()}.jpg`;
-        const file2 = new File([blob2], name2, { type: blob2.type });
-        df2.append("file", file2);
+        form.append('file', formData.sketch);
+      } else if (typeof formData.sketch === 'string') {
+        const res = await fetch(formData.sketch);
+        const blob = await res.blob();
+        const file = new File([blob], `sketch-${Date.now()}.jpg`, {
+          type: blob.type,
+        });
+        form.append('file', file);
       }
-      df2.append("type", "image");
-
-      const uploadResp2 = await createImageOrVideo(df2, announcementId);
-      if (uploadResp2?.optimized_url) {
+      form.append('type', 'image');
+      const result = await createImageOrVideo(form, announcementId);
+      if (result?.optimized_url) {
         await updateAnnouncement(announcementId, {
-          sketchUrl: uploadResp2.optimized_url,
+          sketchUrl: result.optimized_url,
         });
       }
       incrementImage();
     }
 
-    // ─── 4. Upload videos reliably using loop ───
-    for (const videoFile of formData.videos) {
-      const df3 = new FormData();
-      df3.append("file", videoFile);
-      df3.append("type", "video");
-      await createImageOrVideo(df3, announcementId);
-      incrementVideo();
-    }
+    // 4. Upload videos
+    await uploadAll(videoItems, 'video', incrementVideo);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   };
 
   const onSubmit = async () => {
@@ -784,11 +812,21 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         // ─── EDITING AN EXISTING ANNOUNCEMENT ──
         // 2a. Call updateAnnouncement instead of createAnnouncement
         announcementDraft.status = 'active';
-        announcementDraft.deleteMedia = true; // Ensure we delete old media
+        // ✅ Only delete media if new ones were added
+        const hasNewImages = imageItems.some((i) => i.file);
+        const hasNewVideos = videoItems.some((i) => i.file);
+        const imagesWereRemoved = imageItems.length < originalMediaCounts.images;
+        const videosWereRemoved = videoItems.length < originalMediaCounts.videos;
+
+        const shouldDeleteMedia =
+          hasNewImages || hasNewVideos || imagesWereRemoved || videosWereRemoved;
+
+        announcementDraft.deleteMedia = shouldDeleteMedia;
+
         await updateAnnouncement(currentAnnouncement.id, announcementDraft);
 
         // 3a. Upload media on top of the existing announcement’s ID
-        await uploadMedia(currentAnnouncement.id);
+        await uploadMedia(currentAnnouncement.id, shouldDeleteMedia);
 
         await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
@@ -802,7 +840,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
 
         // 4. Upload media in the background
-        await uploadMedia(newAnnouncement.id);
+        await uploadMedia(newAnnouncement.id, true);
 
         const isAdmin = user?.role === 'admin';
 
@@ -1239,7 +1277,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               maxFiles={MAX_IMAGES}
               maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
               allowedTypes={["JPG", "PNG", "WEBP"]}
-              uploadedCount={formData.images.length}
+              uploadedCount={imageItems.length}
             />
 
             <DropArea
@@ -1262,12 +1300,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             <PreviewContainer>
-              {imagePreviews.map((src, index) => (
+              {imageItems.map((item, index) => (
                 <PreviewImage
                   key={index}
-                  src={src}
-                  alt={`Preview ${index}`}
-                  onClick={() => handleImageRemove(index)} // Remove image on click
+                  src={item.url || URL.createObjectURL(item.file!)}
+                  alt={`Image ${index}`}
+                  onClick={() => handleImageRemove(index)}
                 />
               ))}
             </PreviewContainer>
@@ -1284,7 +1322,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <UploadInfoBox
               maxFiles={MAX_VIDEOS}
               maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
-              uploadedCount={formData.videos.length}
+              uploadedCount={videoItems.length}
             />
 
             <DropArea
@@ -1307,12 +1345,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             <PreviewContainer>
-              {videoPreviews.map((src, index) => (
+              {videoItems.map((item, index) => (
                 <PreviewVideo
                   key={index}
-                  src={src}
+                  src={item.url || URL.createObjectURL(item.file!)}
                   controls
-                  onClick={() => handleVideoRemove(index)} // Remove video on click
+                  onClick={() => handleVideoRemove(index)}
                 />
               ))}
             </PreviewContainer>
