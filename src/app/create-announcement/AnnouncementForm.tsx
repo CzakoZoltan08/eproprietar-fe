@@ -26,6 +26,7 @@ import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
 import UploadInfoBox from "./UploadInfoBox";
 import { observer } from "mobx-react";
+import { reaction } from "mobx";
 import sketch1 from "../../assets/sketches/1 camera varianta 2.svg";
 import sketch10 from "../../assets/sketches/garsoniera.svg";
 import sketch11 from "../../assets/sketches/2.1camere.svg";
@@ -59,7 +60,6 @@ import sketch8 from "../../assets/sketches/1cam.svg";
 import sketch9 from "../../assets/sketches/garsoniera 1.svg";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
-import { reaction } from "mobx";
 
 const PREDEFINED_SKETCHES = [
   sketch1,
@@ -251,11 +251,11 @@ const StyledTextField = styled(TextField)`
   width: 100%; /* Take the full width of InputContainer */
 `;
 
-const MAX_VIDEOS = 3;
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEOS = 1;
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 150MB
 
-const MAX_IMAGES = 20;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGES = 15;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
@@ -492,7 +492,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         return false;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        setError(`Imaginea ${file.name} depășește limita de 5MB.`);
+        setError(`Imaginea ${file.name} depășește limita de 10MB.`);
         return false;
       }
       
