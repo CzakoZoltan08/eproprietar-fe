@@ -59,6 +59,7 @@ import sketch8 from "../../assets/sketches/1cam.svg";
 import sketch9 from "../../assets/sketches/garsoniera 1.svg";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
+import { reaction } from "mobx";
 
 const PREDEFINED_SKETCHES = [
   sketch1,
@@ -259,10 +260,9 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const {
-    userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
-    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement, sendAnnouncementCreationMail, getAnnouncementById },
-    pricingStore : { freePlanId, getAnnouncementPackages },
-    announcementStore: { createPaymentSession },
+    userStore,
+    announcementStore,
+    pricingStore
   } = useStore();
 
   const sketchFileInputRef = useRef<HTMLInputElement>(null);
@@ -272,7 +272,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const [formData, setFormData] = useState({
-    userId: user?.id || "",
+    userId: userStore.user?.id || "",
     announcementType: "",
     providerType: item,
     transactionType: "",
@@ -307,7 +307,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const isApartment = formData.announcementType === "Apartament";
 
-  const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
+  const [contactPhone, setContactPhone] = useState<string>(userStore.user?.phoneNumber || "");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -333,18 +333,18 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   // Load current user
   useEffect(() => {
-    if (!user?.id) {
-      getCurrentUser();
-    } else if (user.role === 'admin') {
-      fetchAllUsers();
+    if (!userStore.user?.id) {
+      userStore.getCurrentUser();
+    } else if (userStore.user.role === 'admin') {
+      userStore.fetchAllUsers();
     }
-  }, [user]);
+  }, [userStore.user?.role]);
 
   useEffect(() => {
-    if (user?.id) {
-      getAnnouncementPackages(user.id);
+    if (userStore.user?.id) {
+      pricingStore.getAnnouncementPackages(userStore.user.id);
     }
-  }, [user]);
+  }, [userStore.user]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -358,7 +358,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   useEffect(() => {
     if (isEdit && params?.id) {
       const id = Array.isArray(params.id) ? params.id[0] : params.id;
-      getAnnouncementById(id);
+      announcementStore.getAnnouncementById(id);
     }
   }, [isEdit, params?.id]);
 
@@ -376,100 +376,100 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   // Load current announcement for editing
   useEffect(() => {
-    if (isEdit && currentAnnouncement) {
-      // ─── A) Map basic fields ───
-      const normalizedType = propertyTypes.find(
-        (type) =>
-          type.toLowerCase() ===
-          currentAnnouncement.announcementType?.toLowerCase()
-      );
-      const normalizedTrans = serviceTypes.find(
-        (type) =>
-          type.toLowerCase() ===
-          currentAnnouncement.transactionType?.toLowerCase()
-      ) || serviceTypes[0];
+    const disposer = reaction(
+      () => ({
+        announcement: announcementStore.currentAnnouncement,
+        users: userStore.users,
+      }),
+      ({ announcement, users }) => {
+        if (!isEdit || !announcement) return;
 
-      setFormData({
-        userId: currentAnnouncement.user?.id ?? "", // only use announcement user ID,
-        announcementType: normalizedType || propertyTypes[0],
-        providerType: formData.providerType,
-        transactionType: normalizedTrans,
-        title: currentAnnouncement.title || "",
-        description: currentAnnouncement.description || "",
-        price: currentAnnouncement.price?.toString() || "",
-        surface: currentAnnouncement.surface?.toString() || "",
-        landSurface: currentAnnouncement.landSurface?.toString() || "",
-        city: currentAnnouncement.city || "",
-        county: currentAnnouncement.county || "",
-        street: currentAnnouncement.street || "",
-        rooms: currentAnnouncement.rooms?.toString() || "",
-        baths: currentAnnouncement.baths?.toString() || "",
-        partitioning: currentAnnouncement.partitioning || "",
-        comfortLevel: currentAnnouncement.comfortLevel?.toString() || "",
-        floor: currentAnnouncement.floor?.toString() || "",
-        numberOfKitchens: currentAnnouncement.numberOfKitchens?.toString() || "",
-        balcony: currentAnnouncement.balcony || "",
-        parking: currentAnnouncement.parking || "",
-        // We leave `formData.images` empty: newly selected Files go here
-        images: [],
-        // We leave `formData.videos` empty: newly selected Files go here
-        videos: [],
-        // ─── C) Prefill existing sketch URL as string ───
-        sketch: currentAnnouncement.sketchUrl || null,
-      });
-
-      // ─── E) Prefill sketch preview ───
-      if (currentAnnouncement.sketchUrl) {
-        setSketchPreview(currentAnnouncement.sketchUrl);
-      }
-
-      // ─── F) Prefill images preview array ───
-      if (Array.isArray(currentAnnouncement.images)) {
-        // Assume each image is { original: string, thumbnail: string }
-        const existingImageUrls = currentAnnouncement.images.map(
-          (imgObj) => imgObj.original
+        const normalizedType = propertyTypes.find(
+          (type) =>
+            type.toLowerCase() ===
+            announcement.announcementType?.toLowerCase()
         );
-        setImagePreviews(existingImageUrls);
-      }
 
-      // ─── G) Prefill videos preview array ───
-      if (Array.isArray(currentAnnouncement.videos)) {
-        // Assume each video is { original: string, format: string }
-        const existingVideoUrls = currentAnnouncement.videos.map(
-          (vidObj) => vidObj.original
+        const normalizedTrans = serviceTypes.find(
+          (type) =>
+            type.toLowerCase() ===
+            announcement.transactionType?.toLowerCase()
+        ) || serviceTypes[0];
+
+        // Sketch
+        if (announcement.sketchUrl) {
+          setSketchPreview(announcement.sketchUrl);
+          setFormData({
+            userId: announcement.user?.id ?? "", // only use announcement user ID,
+            announcementType: normalizedType || propertyTypes[0],
+            providerType: formData.providerType,
+            transactionType: normalizedTrans,
+            title: announcement.title || "",
+            description: announcement.description || "",
+            price: announcement.price?.toString() || "",
+            surface: announcement.surface?.toString() || "",
+            landSurface: announcement.landSurface?.toString() || "",
+            city: announcement.city || "",
+            county: announcement.county || "",
+            street: announcement.street || "",
+            rooms: announcement.rooms?.toString() || "",
+            baths: announcement.baths?.toString() || "",
+            partitioning: announcement.partitioning || "",
+            comfortLevel: announcement.comfortLevel?.toString() || "",
+            floor: announcement.floor?.toString() || "",
+            numberOfKitchens: announcement.numberOfKitchens?.toString() || "",
+            balcony: announcement.balcony || "",
+            parking: announcement.parking || "",
+            // We leave `formData.images` empty: newly selected Files go here
+            images: [],
+            // We leave `formData.videos` empty: newly selected Files go here
+            videos: [],
+            // ─── C) Prefill existing sketch URL as string ───
+            sketch: announcement.sketchUrl || null,
+          });
+        }
+
+        // Videos
+        if (Array.isArray(announcement.videos)) {
+          const videoUrls = announcement.videos.map((v) => v.original);
+          setVideoItems(videoUrls.map((url) => ({ url })));
+          setVideoPreviews(videoUrls);
+        }
+
+        // Images
+        const filteredImages = (announcement.images ?? []).filter(
+          (img) => img.original !== announcement.sketchUrl
         );
-        setVideoPreviews(existingVideoUrls);
+        setImageItems(filteredImages.map((img) => ({ url: img.original })));
+        setImagePreviews(filteredImages.map((img) => img.original));
+
+        // userId
+        const announcementUserId = announcement.user?.id;
+        if (announcementUserId && users.some((u) => u.id === announcementUserId)) {
+          setFormData((prev) => ({
+            ...prev,
+            userId: announcementUserId,
+          }));
+        }
+
+        // Phone
+        if (!contactPhone && announcement.user?.phoneNumber) {
+          setContactPhone(announcement.user.phoneNumber);
+        }
+
+        setOriginalMediaCounts({
+          images: filteredImages.length,
+          videos: announcement.videos?.length ?? 0,
+        });
+      },
+      {
+        fireImmediately: true, // important!
+        delay: 0, // optional: ensures it's async but not delayed
       }
+    );
 
-      // ─── H) Prefill contact phone ───
-      if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
-        setContactPhone(currentAnnouncement.user.phoneNumber);
-      }
-
-      if (Array.isArray(currentAnnouncement.images)) {
-        setImageItems(currentAnnouncement.images.map((img) => ({ url: img.original })));
-      }
-
-      if (Array.isArray(currentAnnouncement.videos)) {
-        setVideoItems(currentAnnouncement.videos.map((vid) => ({ url: vid.original })));
-      }
-
-      setOriginalMediaCounts({
-        images: currentAnnouncement.images?.length ?? 0,
-        videos: currentAnnouncement.videos?.length ?? 0,
-      });
-    }
-  }, [currentAnnouncement, isEdit]);
-
-  useEffect(() => {
-    if (!currentAnnouncement?.user?.id || usersList.length === 0) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      userId: currentAnnouncement.user?.id ?? "",
-    }));
-  }, [currentAnnouncement?.user?.id, usersList]);
-
+    return () => disposer();
+  }, [isEdit, contactPhone]);
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -695,7 +695,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         }
 
         form.append('type', type);
-        await createImageOrVideo(form, announcementId);
+        await announcementStore.createImageOrVideo(form, announcementId);
         increment();
       }
     };
@@ -719,17 +719,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
 
       form.append('type', 'image');
-      const result = await createImageOrVideo(form, announcementId);
+      const result = await announcementStore.createImageOrVideo(form, announcementId);
       if (result?.optimized_url) {
-        await updateAnnouncement(announcementId, {
+        await announcementStore.updateAnnouncement(announcementId, {
           imageUrl: result.optimized_url,
         });
       }
       incrementImage();
     }
 
-    // 2. Upload remaining images
-    await uploadAll(imageItems.slice(1), 'image', incrementImage);
+    // 4. Upload videos
+    await uploadAll(videoItems, 'video', incrementVideo);
 
     // 3. Upload sketch
     if (formData.sketch) {
@@ -745,17 +745,22 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         form.append('file', file);
       }
       form.append('type', 'image');
-      const result = await createImageOrVideo(form, announcementId);
+      const result = await announcementStore.createImageOrVideo(form, announcementId);
       if (result?.optimized_url) {
-        await updateAnnouncement(announcementId, {
+        await announcementStore.updateAnnouncement(announcementId, {
           sketchUrl: result.optimized_url,
         });
       }
       incrementImage();
     }
 
-    // 4. Upload videos
-    await uploadAll(videoItems, 'video', incrementVideo);
+    // 2. Upload remaining images
+    // Filter out any item that points to the sketch (url === sketchPreview)
+    const remainingImages = imageItems
+      .slice(1)
+      .filter(item => item.url !== sketchPreview);
+
+    await uploadAll(remainingImages, 'image', incrementImage);
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   };
@@ -782,9 +787,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     try {
       const { sketch, ...data } = formData;
 
-      const selectedUser = user && user.role === 'admin'
-        ? usersList.find(u => u.id === formData.userId)
-        : user;
+      const selectedUser = userStore.user && userStore.user.role === 'admin'
+        ? userStore.users.find(u => u.id === formData.userId)
+        : userStore.user;
       if (!selectedUser || !selectedUser.id) throw new Error('User not found');
   
       const announcementDraft = {
@@ -797,18 +802,18 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         floor: Number(data.floor),
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
-        status: user && user.role === 'admin' ? 'active' : 'pending',
+        status: userStore.user && userStore.user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
         deleteMedia: false
       };
   
       // 1. Update phone number if changed
-      if (contactPhone !== user?.phoneNumber && user?.id) {
-        await updateUser(user.id, { phoneNumber: contactPhone });
+      if (contactPhone !== userStore.user?.phoneNumber && userStore.user?.id) {
+        await userStore.updateUser(userStore.user.id, { phoneNumber: contactPhone });
       }
 
-      if (isEdit && currentAnnouncement?.id) {
+      if (isEdit && announcementStore.currentAnnouncement?.id) {
         // ─── EDITING AN EXISTING ANNOUNCEMENT ──
         // 2a. Call updateAnnouncement instead of createAnnouncement
         announcementDraft.status = 'active';
@@ -817,38 +822,42 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         const hasNewVideos = videoItems.some((i) => i.file);
         const imagesWereRemoved = imageItems.length < originalMediaCounts.images;
         const videosWereRemoved = videoItems.length < originalMediaCounts.videos;
+        const originalSketch = announcementStore.currentAnnouncement?.sketchUrl;
+        const sketchChanged =
+          (formData.sketch instanceof File) ||
+          (typeof formData.sketch === 'string' && formData.sketch !== originalSketch);
 
         const shouldDeleteMedia =
-          hasNewImages || hasNewVideos || imagesWereRemoved || videosWereRemoved;
+          hasNewImages || hasNewVideos || imagesWereRemoved || videosWereRemoved || sketchChanged;
 
         announcementDraft.deleteMedia = shouldDeleteMedia;
 
-        await updateAnnouncement(currentAnnouncement.id, announcementDraft);
+        await announcementStore.updateAnnouncement(announcementStore.currentAnnouncement.id, announcementDraft);
 
         // 3a. Upload media on top of the existing announcement’s ID
-        await uploadMedia(currentAnnouncement.id, shouldDeleteMedia);
+        await uploadMedia(announcementStore.currentAnnouncement.id, shouldDeleteMedia);
 
         await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
         // 4a. Redirect or show a “success” page for editing
         // (choose whatever makes sense: maybe go back to listing or details page)
         // e.g.:
-        window.location.href = `/announcements/${currentAnnouncement.id}`;
+        window.location.href = `/announcements/${announcementStore.currentAnnouncement.id}`;
       } else {
 
         // 2. Actually create the announcement
-        const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+        const newAnnouncement = await announcementStore.createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
 
         // 4. Upload media in the background
         await uploadMedia(newAnnouncement.id, true);
 
-        const isAdmin = user?.role === 'admin';
+        const isAdmin = userStore.user?.role === 'admin';
 
         if (isAdmin) {
           // record free payment for admin
-          await createPaymentSession({
+          await announcementStore.createPaymentSession({
             orderId: newAnnouncement.id,
-            packageId: freePlanId ?? "",
+            packageId: pricingStore.freePlanId ?? "",
             amount: 0,
             originalAmount: 0,
             currency: 'RON',
@@ -865,7 +874,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
           const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!
           const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`; 
-          await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
+          await announcementStore.sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
 
           // redirect to admin detail view
             window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
@@ -934,7 +943,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </Typography>
           )}
 
-          {user && user.role === 'admin' && (
+          {userStore.user && userStore.user.role === 'admin' && (
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel id="user-select-label">Atribuie unui utilizator</InputLabel>
               <Select
@@ -944,7 +953,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 label="Atribuie unui utilizator"
                 onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value as string }))}
               >
-                {usersList.map(u => (
+                {userStore.users.map(u => (
                   <MenuItem key={u.id} value={u.id}>
                     {u.firstName} {u.lastName} ({u.email})
                   </MenuItem>
