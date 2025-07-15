@@ -643,17 +643,16 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const uploadMedia = async (
-    announcementId: string,
-    reuploadExisting: boolean
+    announcementId: string
   ) => {
     const totalImages =
       imageItems.filter((i) => i.file).length +
-      (reuploadExisting ? imageItems.filter((i) => i.url).length : 0) +
+      imageItems.filter((i) => i.url).length +
       (formData.sketch ? 1 : 0);
 
     const totalVideos =
       videoItems.filter((i) => i.file).length +
-      (reuploadExisting ? videoItems.filter((i) => i.url).length : 0);
+      (videoItems.filter((i) => i.url).length);
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
     setVideoUploadProgress({ uploaded: 0, total: totalVideos });
@@ -676,13 +675,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       increment: () => void
     ) => {
       for (const item of items) {
-        if (!item.file && !reuploadExisting) continue; // ⛔ skip existing if not deleting
+        if (!item.file) continue; // ⛔ skip existing if not deleting
 
         const form = new FormData();
 
         if (item.file) {
           form.append('file', item.file);
-        } else if (item.url && reuploadExisting) {
+        } else if (item.url) {
           const res = await fetch(item.url);
           const blob = await res.blob();
           const ext = blob.type.split('/')[1] || 'jpg';
@@ -706,7 +705,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       const form = new FormData();
       if (firstImage.file) {
         form.append('file', firstImage.file);
-      } else if (firstImage.url && reuploadExisting) {
+      } else if (firstImage.url) {
         const res = await fetch(firstImage.url);
         const blob = await res.blob();
         const ext = blob.type.split('/')[1] || 'jpg';
@@ -715,21 +714,22 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         });
         form.append('file', file);
       } else {
+        console.warn("⚠️ No valid file or URL for thumbnail", firstImage);
         return;
       }
 
       form.append('type', 'image');
       const result = await announcementStore.createImageOrVideo(form, announcementId);
+      
       if (result?.optimized_url) {
         await announcementStore.updateAnnouncement(announcementId, {
           imageUrl: result.optimized_url,
         });
+      } else {
+        console.warn("⚠️ Thumbnail uploaded, but no optimized_url returned");
       }
       incrementImage();
     }
-
-    // 4. Upload videos
-    await uploadAll(videoItems, 'video', incrementVideo);
 
     // 3. Upload sketch
     if (formData.sketch) {
@@ -750,17 +750,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         await announcementStore.updateAnnouncement(announcementId, {
           sketchUrl: result.optimized_url,
         });
+      } else {
+        console.warn("⚠️ Sketch upload succeeded but no optimized_url returned");
       }
       incrementImage();
     }
 
     // 2. Upload remaining images
-    // Filter out any item that points to the sketch (url === sketchPreview)
-    const remainingImages = imageItems
-      .slice(1)
-      .filter(item => item.url !== sketchPreview);
+    await uploadAll(imageItems.slice(1), 'image', incrementImage);
 
-    await uploadAll(remainingImages, 'image', incrementImage);
+    // 4. Upload videos
+    await uploadAll(videoItems, 'video', incrementVideo);
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   };
@@ -817,25 +817,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         // ─── EDITING AN EXISTING ANNOUNCEMENT ──
         // 2a. Call updateAnnouncement instead of createAnnouncement
         announcementDraft.status = 'active';
-        // ✅ Only delete media if new ones were added
-        const hasNewImages = imageItems.some((i) => i.file);
-        const hasNewVideos = videoItems.some((i) => i.file);
-        const imagesWereRemoved = imageItems.length < originalMediaCounts.images;
-        const videosWereRemoved = videoItems.length < originalMediaCounts.videos;
-        const originalSketch = announcementStore.currentAnnouncement?.sketchUrl;
-        const sketchChanged =
-          (formData.sketch instanceof File) ||
-          (typeof formData.sketch === 'string' && formData.sketch !== originalSketch);
-
-        const shouldDeleteMedia =
-          hasNewImages || hasNewVideos || imagesWereRemoved || videosWereRemoved || sketchChanged;
-
-        announcementDraft.deleteMedia = shouldDeleteMedia;
+        announcementDraft.deleteMedia = true;
 
         await announcementStore.updateAnnouncement(announcementStore.currentAnnouncement.id, announcementDraft);
 
         // 3a. Upload media on top of the existing announcement’s ID
-        await uploadMedia(announcementStore.currentAnnouncement.id, shouldDeleteMedia);
+        await uploadMedia(announcementStore.currentAnnouncement.id);
 
         await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
@@ -849,7 +836,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         const newAnnouncement = await announcementStore.createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
 
         // 4. Upload media in the background
-        await uploadMedia(newAnnouncement.id, true);
+        await uploadMedia(newAnnouncement.id);
 
         const isAdmin = userStore.user?.role === 'admin';
 
