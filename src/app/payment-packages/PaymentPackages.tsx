@@ -19,12 +19,10 @@ import {
   COLOR_BORDER_PRIMARY,
   COLOR_PRIMARY,
   COLOR_RED_BUTTON,
-  COLOR_RED_BUTTON_HOVER,
   COLOR_TEXT,
-  COLOR_WHITE,
 } from "@/constants/colors";
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import CheckIcon from "@mui/icons-material/Check";
 import { CommonButton } from "@/common/button/CommonButton";
@@ -34,18 +32,13 @@ import { useStore } from "@/hooks/useStore";
 
 const PackageGrid = styled.div<{ $single: boolean }>`
   display: grid;
-  /* If there's exactly one package, force a single 280px-wide column and center it.
-     Otherwise use the original auto-fit, minmax(280px,1fr) behavior. */
   grid-template-columns: ${({ $single }) =>
     $single ? "minmax(280px, 280px)" : "repeat(auto-fit, minmax(280px, 1fr))"};
   gap: 24px;
   margin-top: 32px;
-
-  /* When $single is true, center the only card horizontally */
   justify-content: ${({ $single }) => ($single ? "center" : "initial")};
 
   @media (max-width: 768px) {
-    /* On small screens, always use a single column */
     grid-template-columns: 1fr;
     justify-content: initial;
   }
@@ -79,7 +72,12 @@ const mockFeaturesMap: Record<string, string[]> = {
   ["7_days"]: ["Până la 3 imagini", "Vizibil 7 zile", "Afișare standard în listări"],
   ["15_days"]: ["Până la 5 imagini", "Vizibil 15 zile", "Evidențiat în listări"],
   ["20_days"]: ["Până la 10 imagini", "Vizibil 20 zile", "Evidențiat în toate listările"],
-  ["unlimited"]: ["Vizibilitate nelimitată", "Încărcare nelimitată de imagini", "Poziționare prioritară", "Insignă de promovare"],
+  ["unlimited"]: [
+    "Vizibilitate nelimitată",
+    "Încărcare nelimitată de imagini",
+    "Poziționare prioritară",
+    "Insignă de promovare",
+  ],
   "3_months": ["Vizibil 3 luni", "Până la 10 imagini", "Poziționare îmbunătățită"],
   "6_months": ["Vizibil 6 luni", "Până la 15 imagini", "Poziționare prioritară"],
   "12_months": ["Vizibil 12 luni", "Imagini nelimitate", "Poziționare top", "Insignă premium"],
@@ -131,8 +129,13 @@ const PriceWithDiscount = ({ item }: { item: any }) => (
 
 const SelectPackagePage = () => {
   const searchParams = useSearchParams();
-  const announcementId = searchParams.get("announcementId");
+  const pathname = usePathname();
+  const router = useRouter();
 
+  const announcementId = searchParams.get("announcementId");
+  const currentUrl = `${pathname}?${searchParams.toString()}`;
+
+  const [userLoading, setUserLoading] = useState(true);
   const [packages, setPackages] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
@@ -151,8 +154,7 @@ const SelectPackagePage = () => {
   const [loading, setLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [originalTotalPrice, setOriginalTotalPrice] = useState<number>(0);
-
-  const router = useRouter();
+  const [announcementLoading, setAnnouncementLoading] = useState(!announcementId);
 
   const {
     userStore: { user, getCurrentUser },
@@ -160,11 +162,33 @@ const SelectPackagePage = () => {
     announcementStore: { createPaymentSession },
   } = useStore();
 
+  // ✅ Load user
   useEffect(() => {
-    if (!user?.id) getCurrentUser();
-  }, [user?.id]);
+    const checkUser = async () => {
+      if (user === undefined) {
+        await getCurrentUser();
+      }
+      setUserLoading(false);
+    };
+    checkUser();
+  }, []);
 
-  // Fetch packages & promotions…
+  // ✅ Redirect to login after user loads
+  useEffect(() => {
+    if (!userLoading && user === null) {
+      const encoded = encodeURIComponent(currentUrl);
+      router.replace(`/login?returnTo=${encoded}`);
+    }
+  }, [user, userLoading]);
+
+  // ✅ Ensure announcement loading flag is cleared
+  useEffect(() => {
+    if (announcementId && announcementLoading) {
+      setAnnouncementLoading(false);
+    }
+  }, [announcementId]);
+
+  // ✅ Fetch packages/promotions
   useEffect(() => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
@@ -193,7 +217,6 @@ const SelectPackagePage = () => {
     fetchPricingData();
   }, [user?.id, searchParams]);
 
-  // **New useEffect**: If there is exactly one package, auto‐select it
   useEffect(() => {
     if (packages.length === 1) {
       setSelectedPackage(packages[0]);
@@ -256,10 +279,8 @@ const SelectPackagePage = () => {
       });
 
       if (res?.skipStripe) {
-        // no payment → go directly to status page
         router.push(`/payment-status?orderId=${announcementId}&success=true`);
       } else if (res?.checkoutUrl) {
-        // normal Stripe flow
         window.location.href = res.checkoutUrl;
       } else {
         console.error("Missing checkoutUrl or skipStripe flag");
@@ -271,7 +292,7 @@ const SelectPackagePage = () => {
     }
   };
 
-  if (!announcementId) {
+  if (userLoading || announcementLoading) {
     return (
       <Box px={3} py={4} textAlign="center">
         <CircularProgress />
@@ -349,93 +370,43 @@ const SelectPackagePage = () => {
 
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Nume complet"
-                    name="name"
-                    onChange={handleChange}
-                    value={form.name}
-                  />
+                  <TextField fullWidth label="Nume complet" name="name" onChange={handleChange} value={form.name} />
                 </Grid>
                 {tab === 1 && (
                   <>
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="CIF"
-                        name="cif"
-                        onChange={handleChange}
-                        value={form.cif}
-                      />
+                      <TextField fullWidth label="CIF" name="cif" onChange={handleChange} value={form.cif} />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Nr. Reg. Comerțului"
-                        name="regCom"
-                        onChange={handleChange}
-                        value={form.regCom}
-                      />
+                      <TextField fullWidth label="Nr. Reg. Comerțului" name="regCom" onChange={handleChange} value={form.regCom} />
                     </Grid>
                   </>
                 )}
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Adresă"
-                    name="address"
-                    onChange={handleChange}
-                    value={form.address}
-                  />
+                  <TextField fullWidth label="Adresă" name="address" onChange={handleChange} value={form.address} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Oraș"
-                    name="city"
-                    onChange={handleChange}
-                    value={form.city}
-                  />
+                  <TextField fullWidth label="Oraș" name="city" onChange={handleChange} value={form.city} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Țară"
-                    name="country"
-                    onChange={handleChange}
-                    value={form.country}
-                  />
+                  <TextField fullWidth label="Țară" name="country" onChange={handleChange} value={form.country} />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    onChange={handleChange}
-                    value={form.email}
-                  />
+                  <TextField fullWidth label="Email" name="email" onChange={handleChange} value={form.email} />
                 </Grid>
               </Grid>
             </Box>
           )}
-          <Box>
-            <Box textAlign="center" mt={4}>
-              <CommonButton
-                text={
-                  loading
-                    ? "Se procesează..."
-                    : isFree
-                    ? "Publică gratuit"
-                    : "Continuă către plată"
-                }
-                onClick={handleSubmit}
-                sx={{
-                  backgroundColor: COLOR_PRIMARY,
-                  color: "white",
-                  ":hover": { backgroundColor: COLOR_RED_BUTTON },
-                }}
-              />
-            </Box>
+          <Box textAlign="center" mt={4}>
+            <CommonButton
+              text={loading ? "Se procesează..." : isFree ? "Publică gratuit" : "Continuă către plată"}
+              onClick={handleSubmit}
+              sx={{
+                backgroundColor: COLOR_PRIMARY,
+                color: "white",
+                ":hover": { backgroundColor: COLOR_RED_BUTTON },
+              }}
+            />
           </Box>
         </>
       )}

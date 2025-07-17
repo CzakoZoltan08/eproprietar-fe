@@ -8,6 +8,7 @@ import {
   getAuth,
   getIdToken,
 } from "firebase/auth";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthContainer from "./AuthContainer";
 import { AuthProvider } from "@/constants/authProviders";
@@ -21,7 +22,6 @@ import { handleSocialAuth } from "./socialAuthHandler";
 import { observer } from "mobx-react";
 import { styled } from "@mui/material/styles";
 import { useMediaQuery } from "@/hooks/useMediaquery";
-import { useRouter } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 import validationSchema from "./authValidationSchema";
 
@@ -53,7 +53,11 @@ const LeftSide = () => {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useMediaQuery(SIZES_NUMBER_TINY_SMALL);
+
+  const rawReturnTo = searchParams.get("returnTo");
+  const returnTo = rawReturnTo?.startsWith("/") ? rawReturnTo : "/";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -116,7 +120,7 @@ const LeftSide = () => {
     try {
       if (!confirmationResult) throw new Error("Rezultatul confirmării OTP lipsește.");
       await verifyPhoneOtp(confirmationResult, otp);
-      router.replace("/");
+      router.replace(returnTo);
     } catch (error) {
       setRequestError("Verificarea codului a eșuat. Te rugăm să încerci din nou.");
     }
@@ -149,7 +153,7 @@ const LeftSide = () => {
 
       userStore.setCurrentUser(userByEmail);
       setIsLoading(false);
-      router.replace("/");
+      router.replace(returnTo);
     } catch (error) {
       console.error("Autentificarea a eșuat:", error);
       setIsLoading(false);
@@ -173,7 +177,7 @@ const LeftSide = () => {
       setIsLoading(true);
 
       await handleSocialAuth(auth, provider, userApi, userStore, enumName);
-      router.replace("/");
+      router.replace(returnTo);
     } catch (error) {
       console.error(`Autentificare ${authProviderName} eșuată`, error);
       setIsLoading(false);
