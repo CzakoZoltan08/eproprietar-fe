@@ -205,17 +205,75 @@ const AnnouncementList = ({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "3fr 1fr", // left column wider, right narrower
+          gridTemplateColumns: {
+            xs: "1fr",     // single column on mobile
+            md: "3fr 1fr", // list left, details right on desktop
+          },
           gap: "24px",
           alignItems: "start",
           marginBottom: "24px",
         }}
       >
-        {/* Left Column: render AnnouncementListItem directly (no Paper) */}
+        {/* Right Column: Paper with either details or explanation (shown first on mobile) */}
+        <Paper
+          elevation={2}
+          sx={{
+            p: 2,
+            order: { xs: 1, md: 2 }, // show first on mobile, second on desktop
+            maxHeight: { md: "calc(100vh - 150px)" },
+            overflowY: { md: "auto" },
+          }}
+        >
+          {selectedAnnouncement ? (
+            <>
+              <Typography
+                variant="h5"
+                sx={{ mb: 1, fontWeight: 600, color: COLOR_TEXT }}
+              >
+                {selectedAnnouncement.title}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                {selectedAnnouncement.price} EUR — {selectedAnnouncement.surface} mp
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body2" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
+                {selectedAnnouncement.description}
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Typography variant="h6" sx={{ mb: 2, color: COLOR_TEXT }}>
+                Ce înseamnă exclusivitate?
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: "normal", wordBreak: "break-word", color: COLOR_TEXT }}
+              >
+                Anunțurile marcate cu <strong>„exclusivitate”</strong> sunt promovate doar printr-o
+                singură agenție imobiliară, în baza unui contract de reprezentare exclusivă semnat cu
+                proprietarul.
+                <br /><br />
+                Pentru <strong>cumpărători</strong>, acest lucru înseamnă adesea <strong>0% comision</strong>,
+                deoarece agenția este plătită direct de către vânzător. De asemenea, oferă informații
+                corecte și un proces transparent.
+                <br /><br />
+                Pentru <strong>vânzători</strong>, exclusivitatea asigură o promovare profesionistă, un
+                singur punct de contact și mai multă implicare din partea agenției, care are tot interesul
+                să vândă rapid și la cel mai bun preț.
+                <br /><br />
+                Când vezi eticheta <strong>„exclusivitate”</strong>, înseamnă că ai parte de un proces
+                imobiliar mai clar, mai sigur și fără comisioane ascunse.
+              </Typography>
+            </>
+          )}
+        </Paper>
+
+        {/* Left Column: Announcement list */}
         <Box
           sx={{
-            maxHeight: "calc(100vh - 150px)",
-            overflowY: "auto",
+            order: { xs: 2, md: 1 }, // show second on mobile, first on desktop
+            maxHeight: { md: "calc(100vh - 150px)" },
+            overflowY: { md: "auto" },
           }}
         >
           {announcements.map((item, index) => (
@@ -245,41 +303,6 @@ const AnnouncementList = ({
             </Box>
           )}
         </Box>
-
-        {/* Right Column: use Paper for textual details */}
-        <Paper
-          elevation={2}
-          sx={{
-            p: 2,
-            maxHeight: "calc(100vh - 150px)",
-            overflowY: "auto",
-          }}
-        >
-          {selectedAnnouncement ? (
-            <>
-              <Typography
-                variant="h5"
-                sx={{ mb: 1, fontWeight: 600, color: COLOR_TEXT }}
-              >
-                {selectedAnnouncement.title}
-              </Typography>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {selectedAnnouncement.price} EUR — {selectedAnnouncement.surface} mp
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Typography variant="body2" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
-                {selectedAnnouncement.description}
-              </Typography>
-
-              {/* Adaugă aici câmpurile suplimentare (de ex. adresă, camere etc.) */}
-            </>
-          ) : (
-            <Typography variant="body2" color={COLOR_TEXT}>
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-            </Typography>
-          )}
-        </Paper>
       </Box>
     );
   }
