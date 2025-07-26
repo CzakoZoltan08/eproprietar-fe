@@ -994,30 +994,34 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             {/* Street */}
-            <Box width="100%">
-              <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1">
-                  Stradă
-                </Typography>
-                <FormHelpTooltip title="Adaugă strada exactă. Nu include numere de telefon, emailuri sau linkuri." />
-              </Box>
+            <Box width="100%" mb={2}>
+              <Typography variant="subtitle1">Stradă</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                Adaugă strada exactă. Nu include numere de telefon, emailuri sau linkuri.
+              </Typography>
               <StyledTextField
                 label="Stradă"
                 name="street"
                 value={formData.street}
                 onChange={handleInputChange}
                 fullWidth
-                sx={{ marginBottom: "16px" }}
               />
             </Box>
 
             {/* Title */}
             <Box width="100%">
-              <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1">
-                  Titlu
+              <Box width="100%" mb={2}>
+                <Typography variant="subtitle1">Titlu</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                  Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule, numere de telefon, emailuri sau linkuri.
                 </Typography>
-                <FormHelpTooltip title="Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule, numere de telefon, emailuri sau linkuri." />
+                <StyledTextField
+                  label="Titlu"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  fullWidth
+                />
               </Box>
               <StyledTextField
                 label="Titlu"
@@ -1030,32 +1034,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </Box>
 
             {/* Description */}
-            <Box width="100%">
-              <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1">
-                  Descriere
-                </Typography>
-                <FormHelpTooltip
-                    title={`🏡 Vrei să atragi cumpărători serioși și să reduci timpul de vânzare? Secretul stă în descrierea anunțului tău!
-
-                  ✨ Detalii complete și reale: Menționează suprafața, numărul de camere, compartimentarea, etajul și anul construcției.
-
-                  ✅ Fii sincer – evită exagerările (ex.: "lux extrem" vs. "apartament modern, renovat în 2024").
-
-                  🪟 Elemente care fac diferența: Balcon, parcare, grădină? Menționează tot ce poate influența decizia.
-
-                  📍 Locatie clară: Zona, strada, apropierea de transport, școli, magazine etc.
-
-                  🎨 Stare și design: Renovări recente? Mobilat modern? Oferă detalii care atrag interesul.
-
-                  💡 De ce să fii sincer? Ofertele realiste atrag clienții potriviți și economisesc timp.
-
-                  📌 Atenție: Informațiile incomplete pot întârzia vânzarea.
-
-                  🚀 Hai să transformăm anunțul tău într-un magnet pentru clienți!`}
-                  />
-              </Box>
-
+            <Box width="100%" mb={2}>
+              <Typography variant="subtitle1">Descriere</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                Vrei să atragi cumpărători serioși? Include detalii reale despre suprafață, camere, anul construcției, renovări, zonă și facilități. Evită exagerările.
+              </Typography>
               <StyledTextField
                 label="Descriere"
                 name="description"
@@ -1064,7 +1047,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 multiline
                 rows={4}
                 fullWidth
-                sx={{ marginBottom: "16px" }}
               />
             </Box>
 
@@ -1192,13 +1174,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* Sketch */}
             <ThumbnailContainer>
-              <Box display="flex" alignItems="center" mb={1}>
-                <Typography variant="h6">
-                  Schița apartamentului / Plan
+              <Box width="100%" textAlign="center">
+                <Typography variant="h6">Schița apartamentului / Plan</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                  Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.
                 </Typography>
-                <FormHelpTooltip
-                  title={`📐 Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.`}
-                />
               </Box>
 
               <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
@@ -1262,11 +1242,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               )}
             </ThumbnailContainer>
 
-            <Box display="flex" alignItems="center" mb={1}>
+            <Box width="100%" textAlign="center">
               <Typography variant="h6">Adaugă imagini</Typography>
-              <FormHelpTooltip
-                title={`📸 Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!`}
-              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!
+              </Typography>
             </Box>
 
             <UploadInfoBox
@@ -1306,13 +1286,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               ))}
             </PreviewContainer>
 
-            <Box display="flex" alignItems="center" mb={1}>
-              <Typography variant="h6">
-                Adaugă videoclipuri
+            <Box width="100%" textAlign="center">
+              <Typography variant="h6">Adaugă videoclipuri</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței. Clipurile video cresc șansele de vânzare cu până la 70%!
               </Typography>
-              <FormHelpTooltip
-                title={`🎥 Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței. Clipurile video cresc șansele de vânzare cu până la 70%!`}
-              />
             </Box>
 
             <UploadInfoBox
