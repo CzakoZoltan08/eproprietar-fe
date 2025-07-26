@@ -14,6 +14,7 @@ import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
 import HistoryStatsCard from "./HistoryStatsCard";
 import { Layout } from "@/common/layout/Layout";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import ShareButtonsCard from "@/common/shareButtons/ShareButtonsCard";
 import Slider from "react-slick";
 import TitleCard from "@/app/announcements/[id]/TitleCard";
 import { observer } from "mobx-react";
@@ -585,12 +586,11 @@ const AnnouncementDetailPage: React.FC = () => {
 
       {/* Right-side content (fixed width) */}
       <ContactContainer>
-        <Box display="flex" flexDirection="column" gap={1}>
           <ContactCardComponent />
           {currentAnnouncement?.createdAt && (
             <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />
           )}
-        </Box>
+          <ShareButtonsCard />
       </ContactContainer>
     </DetailsContainer>
   );
