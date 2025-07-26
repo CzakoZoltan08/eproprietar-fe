@@ -113,6 +113,18 @@ const EnsembleAnnouncementDetailsPage = () => {
               {announcement.description || "Fără descriere disponibilă."}
             </Typography>
           </Paper>
+
+          {/* Apartment Type (if present) */}
+          {announcement.apartmentTypeOther && (
+            <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, mt: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>Tipuri de apartamente</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+                {announcement.apartmentTypeOther}
+              </Typography>
+            </Paper>
+          )}
+          
         </Grid>
 
         {/* Right Column */}

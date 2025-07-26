@@ -90,4 +90,5 @@ export const announcementValidationSchema = Joi.object().keys({
 export const residentialAnnouncementValidationSchema = Joi.object().keys({
   ...sharedFields,
   ...additionalResidentialFields,
+    apartmentTypeOther: Joi.string().allow('').optional(),
 });

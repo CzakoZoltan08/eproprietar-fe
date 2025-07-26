@@ -5,7 +5,7 @@ export const typeOptions = [
   },
   {
     id: "casa",
-    value: "Case/Vile",
+    value: "Case/Vile/Duplexuri",
   },
   {
     id: "teren",
@@ -119,6 +119,8 @@ export const apartmentFloors = [
 ];
 
 export const propertyTypes = ["Apartament", "Casa", "Teren", "Comercial"];
+
+export const propertyTypesResidential = ["Apartament", "Casa"];
 
 export const serviceTypes = ["Vanzare", "Inchiriere"];
 

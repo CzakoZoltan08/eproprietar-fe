@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { ChangeEvent, useEffect, useState } from "react";
-import { propertyTypes, serviceTypes } from "@/constants/annountementConstants";
+import { propertyTypesResidential, serviceTypes } from "@/constants/annountementConstants";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
@@ -78,6 +78,7 @@ const INITIAL_DATA = {
   logo: null as File | null,
   images: [] as File[],
   videos: [] as File[],
+  apartmentTypeOther: "",
 };
 
 const ResidentialAnnouncementForm = () => {
@@ -86,7 +87,9 @@ const ResidentialAnnouncementForm = () => {
   const { createAnnouncement, updateAnnouncement, createImageOrVideo } = announcementStore;
 
   const [formData, setFormData] = useState(INITIAL_DATA);
-  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({ ...INITIAL_DATA });
+  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({
+  ...INITIAL_DATA,
+});
   const [loading, setLoading] = useState(false);
   const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
   const [error, setError] = useState<string | null>(null);
@@ -220,6 +223,7 @@ const ResidentialAnnouncementForm = () => {
 
       const payload = {
         ...cleanFormData,
+        ...(formData.apartmentTypeOther ? { apartmentTypeOther: formData.apartmentTypeOther } : {}),
         phoneContact: contactPhone,
         transactionType: serviceTypes[0],
         announcementType: formData.announcementType.toLowerCase(),
@@ -295,7 +299,7 @@ const ResidentialAnnouncementForm = () => {
 
           <Styled.FormBox>
             <RadioButtonsGroup
-              options={propertyTypes}
+              options={propertyTypesResidential}
               value={formData.announcementType}
               id="announcementType"
               onChange={handleInputChange}
@@ -370,6 +374,19 @@ const ResidentialAnnouncementForm = () => {
               multiline
               rows={4}
             />
+            {formData.announcementType?.toLowerCase() === "apartament" && (
+              <TextField
+                label="Tipuri de apartamente (ex: garsonieră, o cameră, două camere, etc.)"
+                name="apartmentTypeOther"
+                value={formData.apartmentTypeOther}
+                onChange={handleInputChange}
+                error={!!formErrors.apartmentTypeOther}
+                helperText={formErrors.apartmentTypeOther}
+                fullWidth
+                multiline
+                rows={4}
+              />
+            )}
             <TextField
               label="Stadiu construcție"
               name="stage"

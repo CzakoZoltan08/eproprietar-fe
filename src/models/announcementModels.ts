@@ -38,6 +38,7 @@ export interface PropertyAnnouncementModel {
   sketchUrl?: string;
   createdAt: string;
   isPromoted?: boolean;
+  apartmentTypeOther?: string;
 }
 
 export class CreateAnnouncementDto {
@@ -63,6 +64,7 @@ export class CreateAnnouncementDto {
   logoUrl?: string;
   phoneContact: string | undefined;
   sketchUrl?: string;
+  apartmentTypeOther?: string = '';
 }
 
 export interface FetchAnnouncementsModel {
