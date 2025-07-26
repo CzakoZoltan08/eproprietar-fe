@@ -27,35 +27,34 @@ const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
   flex-direction: ${(p) => p.$flexdirection};
   justify-content: space-between;
-  align-items: stretch;   /* ← stretch, not flex-start */
-  gap: 2px;
+  align-items: stretch;
+  gap: 0px; /* compact spacing */
   width: 100%;
 `;
 
-// Adjust your ContactContainer:
 const ContactContainer = styled.div`
-  flex: 0 0 300px;       /* ↪ never shrink below or grow beyond 300px */
+  flex: 0 0 300px;
   max-width: 300px;
-  
+  margin-left: 0;
+
   @media (max-width: 600px) {
-    flex: 1 1 100%;       /* ↪ full-width on small screens */
+    flex: 1 1 100%;
     max-width: 100%;
+    margin-top: 0;
   }
 `;
 
 const ColumnBox = styled(Box)`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0px; /* compact vertical spacing */
 `;
-
-// Near the top, replace your MediaContainer & ResponsiveBox with:
 
 const MediaContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
   flex-direction: ${(p) => p.$flexdirection};
-  flex-wrap: wrap;            /* ↪ allow items to wrap on narrow screens */
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 0px;
   width: 100%;
 `;
 
@@ -63,7 +62,17 @@ const GalleryAlignmentWrapper = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
+  margin: 0;
+  padding: 0;
 `;
+
+const VideoContainerLegacy = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  overflow: visible;
+`;
+
 
 
 // 🔹 Custom navigation arrows with better styling
@@ -569,16 +578,19 @@ const AnnouncementDetailPage: React.FC = () => {
           )}
         </GalleryAlignmentWrapper>
 
-        {currentAnnouncement && currentAnnouncement.description && <DescriptionCard />}
-        
         <CharacteristicsCard />
-        
-        {currentAnnouncement?.createdAt && <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />}
 
+        {currentAnnouncement?.description && <DescriptionCard />}
       </Box>
 
+      {/* Right-side content (fixed width) */}
       <ContactContainer>
-        <ContactCardComponent />
+        <Box display="flex" flexDirection="column" gap={1}>
+          <ContactCardComponent />
+          {currentAnnouncement?.createdAt && (
+            <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />
+          )}
+        </Box>
       </ContactContainer>
     </DetailsContainer>
   );
