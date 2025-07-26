@@ -188,8 +188,18 @@ const Header = () => {
   };
 
   const handleAddAnnouncementClick = () => {
-    if (!user) router.push("/login");
-    else router.push("/create-announcement");
+    if (user === undefined) {
+      // Still loading — wait or block click
+      console.warn("User is still loading...");
+      return;
+    }
+
+    if (!user) {
+      router.push("/login");
+    } else {
+      router.push("/create-announcement");
+    }
+
     setMobileOpen(false);
   };
 
