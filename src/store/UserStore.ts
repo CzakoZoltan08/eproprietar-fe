@@ -22,7 +22,7 @@ export class UserStore {
   getCurrentUser(): Promise<void> {
     return new Promise((resolve, reject) => {
       const auth = getAuth();
-  
+
       onAuthStateChanged(auth, async (user: any) => {
         if (user) {
           try {
@@ -32,12 +32,18 @@ export class UserStore {
             });
             resolve();
           } catch (error) {
+            runInAction(() => {
+              this.user = null;
+            });
             reject(error);
           }
         } else {
-          resolve(); // Resolve even if no user is authenticated
+          runInAction(() => {
+            this.user = null;
+          });
+          resolve();
         }
-      }, reject); // Reject if onAuthStateChanged encounters an error
+      }, reject);
     });
   }
 
