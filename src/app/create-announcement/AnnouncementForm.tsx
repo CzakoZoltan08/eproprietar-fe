@@ -384,10 +384,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       ({ announcement, users }) => {
         if (!isEdit || !announcement) return;
 
+        const normalize = (value: string) =>
+          value.toLowerCase().replace(/\s+/g, "_");
+
         const normalizedType = propertyTypes.find(
-          (type) =>
-            type.toLowerCase() ===
-            announcement.announcementType?.toLowerCase()
+          (type) => normalize(type) === normalize(announcement.announcementType ?? "")
         );
 
         const normalizedTrans = serviceTypes.find(

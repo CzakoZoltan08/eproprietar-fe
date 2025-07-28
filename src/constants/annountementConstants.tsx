@@ -118,7 +118,7 @@ export const apartmentFloors = [
   },
 ];
 
-export const propertyTypes = ["Apartament", "Casa", "Teren", "Comercial"];
+export const propertyTypes = ["Apartament", "Casa", "Teren", "Comercial", "Case la tara"];
 
 export const propertyTypesResidential = ["Apartament", "Casa"];
 
