@@ -34,8 +34,8 @@ const EnsembleAnnouncementDetailsPage = () => {
 
   if (!currentAnnouncement?.id) {
     return (
-      <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
-        <CircularProgress />
+      <Box sx={{ p: 1.5, display: "flex", justifyContent: "center" }}>
+        <CircularProgress size={24} />
       </Box>
     );
   }
@@ -43,9 +43,8 @@ const EnsembleAnnouncementDetailsPage = () => {
   const announcement = currentAnnouncement;
 
   return (
-    <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, maxWidth: "1300px", mx: "auto" }}>
-      {/* Carousel */}
-      <Box sx={{ mb: 2 }}>
+    <Box sx={{ px: 1.5, py: 2, maxWidth: "1300px", mx: "auto" }}>
+      <Box sx={{ mb: 1 }}>
         <AutoImageCarousel
           images={
             announcement.images?.length
@@ -55,104 +54,111 @@ const EnsembleAnnouncementDetailsPage = () => {
         />
       </Box>
 
-      {/* Title Section */}
       <Box
         sx={{
           textAlign: "center",
-          py: { xs: 3, md: 4 },
-          mb: { xs: 3, md: 4 },
+          py: 1.5,
+          mb: 2,
           background: "linear-gradient(to right, #f0f4ff, #ffffff)",
           borderBottom: "1px solid #ddd",
         }}
       >
         <Typography
-          variant="h5"
-          fontWeight={700}
+          variant="h6"
+          fontWeight={600}
           sx={{
             color: COLOR_TEXT,
+            borderBottom: "2px solid #448aff",
             display: "inline-block",
-            borderBottom: "4px solid #448aff",
-            pb: 1,
-            px: 2,
-            fontSize: { xs: "1.5rem", md: "2rem" },
+            pb: 0.5,
+            px: 1,
+            fontSize: "1.2rem",
           }}
         >
           {announcement.title}
         </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{ mt: 1, color: "#555", fontWeight: 400 }}
-        >
+        <Typography variant="subtitle2" sx={{ mt: 0.5, color: "#555" }}>
           {announcement.city}
         </Typography>
       </Box>
 
-      {/* Grid Content */}
-      <Grid container spacing={3}>
-        {/* Left Column */}
+      <Grid container spacing={1}>
         <Grid item xs={12} md={9}>
-          {/* Project Details */}
-          <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, mb: 3 }}>
-            <Typography variant="h6" fontWeight={600} mb={1}>Detalii proiect</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body1" mb={1}><strong>Oraș:</strong> {announcement.city}</Typography>
-            <Typography variant="body1" mb={1}><strong>Tip:</strong> {announcement.announcementType}</Typography>
-            <Typography variant="body1" mb={1}><strong>Camere:</strong> {announcement.rooms}</Typography>
-            <Typography variant="body1" mb={1}><strong>Suprafață:</strong> {announcement.surface} mp</Typography>
-            <Typography variant="body1" mb={1}><strong>Preț:</strong> {announcement.price} EUR</Typography>
+          <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
+            <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+              Detalii proiect
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+
+            {announcement.city && (
+              <Typography variant="body2"><strong>Oraș:</strong> {announcement.city}</Typography>
+            )}
+            {announcement.announcementType && (
+              <Typography variant="body2"><strong>Tip:</strong> {announcement.announcementType}</Typography>
+            )}
+            {announcement.rooms !== null && announcement.rooms !== undefined && announcement.rooms !== 0 && (
+              <Typography variant="body2"><strong>Camere:</strong> {announcement.rooms}</Typography>
+            )}
+            {announcement.surface !== null && announcement.surface !== undefined && announcement.surface !== 0 && (
+              <Typography variant="body2"><strong>Suprafață:</strong> {announcement.surface} mp</Typography>
+            )}
+            {announcement.price !== null && announcement.price !== undefined && announcement.price !== 0 && (
+              <Typography variant="body2"><strong>Preț:</strong> {announcement.price} EUR</Typography>
+            )}
             {announcement.endDate && (
-              <Typography variant="body1" mb={1}><strong>Finalizare:</strong> {new Date(announcement.endDate).toLocaleDateString()}</Typography>
+              <Typography variant="body2">
+                <strong>Finalizare:</strong> {new Date(announcement.endDate).toLocaleDateString()}
+              </Typography>
             )}
           </Paper>
 
-          {/* Description */}
-          <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2 }}>
-            <Typography variant="h6" fontWeight={600} mb={2}>Descriere</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+          <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
+            <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+              Descriere
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+            <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
               {announcement.description || "Fără descriere disponibilă."}
             </Typography>
           </Paper>
 
-          {/* Apartment Type (if present) */}
           {announcement.apartmentTypeOther && (
-            <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, mt: 3 }}>
-              <Typography variant="h6" fontWeight={600} mb={2}>Tipuri de apartamente</Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+            <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1 }}>
+              <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+                Tipuri de apartamente
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                 {announcement.apartmentTypeOther}
               </Typography>
             </Paper>
           )}
-          
         </Grid>
 
-        {/* Right Column */}
         <Grid item xs={12} md={3}>
-          {announcement.logoUrl || announcement.phoneContact ? (
-            <Box sx={{ position: { md: "sticky" }, top: 32, width: '100%' }}>
+          {(announcement.logoUrl || announcement.phoneContact) && (
+            <Box sx={{ position: { md: "sticky" }, top: 20 }}>
               <DeveloperContactCard
                 name={announcement.developerName || "Dezvoltator"}
                 phone={announcement.phoneContact || "N/A"}
                 logoUrl={announcement.logoUrl || "/default-logo.png"}
               />
             </Box>
-          ) : null}
+          )}
         </Grid>
       </Grid>
 
-      {/* Tags */}
       <Box
         sx={{
-          mt: { xs: 4, md: 6 },
+          mt: 2,
           display: "flex",
           flexWrap: "wrap",
-          gap: 1,
+          gap: 0.5,
           justifyContent: { xs: "center", md: "flex-start" },
         }}
       >
-        {announcement.city && <Chip label={announcement.city} />}
-        {announcement.announcementType && <Chip label={announcement.announcementType} />}
+        {announcement.city && <Chip label={announcement.city} size="small" />}
+        {announcement.announcementType && <Chip label={announcement.announcementType} size="small" />}
       </Box>
     </Box>
   );
