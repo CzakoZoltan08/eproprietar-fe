@@ -844,7 +844,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
     }
 
-    if (formData.announcementType === 'Spatii comerciale') {
+    if (formData.announcementType === 'Comercial') {
       if (!formData.commercialSpaceType) {
         alert('Câmpul "Tip spațiu" este obligatoriu.');
         return;
@@ -1376,7 +1376,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               </>
             )}
 
-            {formData.announcementType === "Spatii comerciale" && (
+            {formData.announcementType === "Comercial" && (
             <>
               {/* Tip spațiu (obligatoriu) */}
               <FormControl fullWidth required sx={{ mb: 2 }}>
