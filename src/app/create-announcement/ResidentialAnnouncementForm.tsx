@@ -95,6 +95,7 @@ const ResidentialAnnouncementForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
   const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -197,6 +198,7 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitted(true)
     const { logo, images, videos, ...cleanFormData } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
@@ -233,6 +235,24 @@ const ResidentialAnnouncementForm = () => {
         price: 0,
         status: "pending",
         user: { id: user.id, firebaseId: user.firebaseId },
+        streetFront: false, // Add default or form value as needed (boolean)
+        heightRegime: [], // Add default or form value as needed (string[])
+        urbanismDocuments: [], // Add default or form value as needed
+        utilities: {
+          curent: null,
+          apa: null,
+          canalizare: null,
+          gaz: null,   
+        },
+        commercialSpaceType: "",
+        usableSurface: 0,
+        builtSurface: 0,
+        spaceHeight: 0,
+        hasStreetWindow: false,
+        streetWindowLength: 0,
+        hasStreetEntrance: false,
+        hasLift: false,
+        vehicleAccess: [] as string[]
       };
 
       const newAnnouncement = await createAnnouncement(payload);
@@ -321,12 +341,13 @@ const ResidentialAnnouncementForm = () => {
                 );
                 setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : undefined }));
               }}
-              error={!!formErrors.contactPhone}
-              helperText={formErrors.contactPhone}
+              required
+              error={isSubmitted && !contactPhone}
+              helperText={isSubmitted && !contactPhone ? 'Acest câmp este obligatoriu' : ''}
               fullWidth
             />
             <AutocompleteCounties
-              label="Județ"
+              label="Județ *"
               customWidth="100%"
               value={formData.county}
               onChange={(event, value) => {
@@ -335,12 +356,15 @@ const ResidentialAnnouncementForm = () => {
                   county: value || "",
                 }));
               }}
+              error={isSubmitted && !formData.county}
+              helperText={isSubmitted && !formData.county ? 'Acest câmp este obligatoriu' : ''}
             />
             <AutocompleteCities
               onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
-              label="Localitate (oraș/comună)"
+              label="Localitate (oraș/comună) *"
               customWidth="100%"
-              error={formErrors.city}
+              error={isSubmitted && !formData.city}
+              helperText={isSubmitted && !formData.city ? 'Acest câmp este obligatoriu' : ''}
               value={formData.city}
             />
             <TextField
@@ -348,6 +372,7 @@ const ResidentialAnnouncementForm = () => {
               name="street"
               value={formData.street}
               onChange={handleInputChange}
+              required
               error={!!formErrors.street}
               helperText={formErrors.street}
               fullWidth
@@ -358,6 +383,7 @@ const ResidentialAnnouncementForm = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
+                required
                 error={!!formErrors.title}
                 helperText={formErrors.title}
                 fullWidth
@@ -368,6 +394,7 @@ const ResidentialAnnouncementForm = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
+              required
               error={!!formErrors.description}
               helperText={formErrors.description}
               fullWidth
@@ -392,6 +419,7 @@ const ResidentialAnnouncementForm = () => {
               name="stage"
               value={formData.stage}
               onChange={handleInputChange}
+              required
               error={!!formErrors.stage}
               helperText={formErrors.stage}
               fullWidth

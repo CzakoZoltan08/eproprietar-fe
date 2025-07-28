@@ -43,7 +43,8 @@ type AutocompleteDisabledOptionsProps = {
   value: string;
   customWidth?: string;
   backgroundColor?: string;
-  error?: string;
+  error?: boolean;
+  helperText?: string;
   ListboxComponent?: React.JSXElementConstructor<React.HTMLAttributes<HTMLElement>>; // ✅ FIXED TYPE
 };
 
@@ -56,6 +57,7 @@ const AutocompleteDisabledOptions = ({
   customWidth,
   backgroundColor,
   error,
+  helperText,
   ListboxComponent,
 }: AutocompleteDisabledOptionsProps) => (
   <>
@@ -73,6 +75,8 @@ const AutocompleteDisabledOptions = ({
           {...params}
           label={label}
           variant="filled"
+          error={error}
+          helperText={helperText}
           InputProps={{ ...params.InputProps, disableUnderline: true }}
         />
       )}

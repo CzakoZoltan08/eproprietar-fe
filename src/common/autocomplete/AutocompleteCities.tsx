@@ -11,20 +11,21 @@ const AutocompleteCities = ({
   customWidth,
   backgroundColor,
   error,
+  helperText,
   value,
 }: {
   onChange: (event: any, value: string | null) => void;
   label: string;
   customWidth?: string;
   backgroundColor?: string;
-  error?: string;
+  error?: boolean;
+  helperText?: string;
   value?: string;
 }) => {
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
-  // Debounced filter function
   const debouncedFilter = useMemo(
     () =>
       debounce((input: string) => {
@@ -36,22 +37,10 @@ const AutocompleteCities = ({
     []
   );
 
-  // Filter when input changes
   useEffect(() => {
     debouncedFilter(inputValue);
   }, [inputValue, debouncedFilter]);
 
-  // // Initial setup on mount
-  // useEffect(() => {
-  //   setCityOptions(uniqueCities);
-  //   if (!value && uniqueCities.length > 0) {
-  //     const defaultCity = uniqueCities[0];
-  //     setSelectedCity(defaultCity);
-  //     onChange(null, defaultCity);
-  //   }
-  // }, []);
-
-  // Sync with parent value
   useEffect(() => {
     if (value) {
       setSelectedCity(value);
@@ -65,13 +54,12 @@ const AutocompleteCities = ({
         setSelectedCity(newValue);
         onChange(event, newValue);
       }}
-      onInputChange={(event: any, newInputValue: React.SetStateAction<string>) => {
-        setInputValue(newInputValue);
-      }}
+      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       label={label}
       customWidth={customWidth}
       backgroundColor={backgroundColor}
       error={error}
+      helperText={helperText}
       value={selectedCity || ""}
       ListboxComponent={ListboxComponent}
     />

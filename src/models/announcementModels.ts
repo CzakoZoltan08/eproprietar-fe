@@ -39,6 +39,27 @@ export interface PropertyAnnouncementModel {
   createdAt: string;
   isPromoted?: boolean;
   apartmentTypeOther?: string;
+  streetFront: boolean;
+  heightRegime: string[];
+  streetFrontLength?: number; // in ml
+  landType?: string; // Constructii, Agricol, etc.
+  landPlacement?: string; // Intravilan, Extravilan
+  urbanismDocuments?: string[]; // PUZ, PUD, etc.
+  utilities?: {
+    curent: boolean | null;
+    apa: boolean | null;
+    canalizare: boolean | null;
+    gaz: boolean | null;
+  };
+  commercialSpaceType?: string;
+  usableSurface?: number;
+  builtSurface?: number;
+  spaceHeight?: number;
+  hasStreetWindow?: boolean;
+  streetWindowLength?: number;
+  hasStreetEntrance?: boolean;
+  hasLift?: boolean;
+  vehicleAccess?: string[];
 }
 
 export class CreateAnnouncementDto {
@@ -65,6 +86,33 @@ export class CreateAnnouncementDto {
   phoneContact: string | undefined;
   sketchUrl?: string;
   apartmentTypeOther?: string = '';
+  streetFront: boolean = false;
+  heightRegime: string[] = [];
+  streetFrontLength?: number;
+  landType?: string;
+  landPlacement?: string;
+  urbanismDocuments: string[] = [];
+  utilities: {
+    curent: boolean | null;
+    apa: boolean | null;
+    canalizare: boolean | null;
+    gaz: boolean | null;
+  } = {
+    curent: null,
+    apa: null,
+    canalizare: null,
+    gaz: null,
+  };
+  // ✅ Spatii comerciale
+  commercialSpaceType?: string = ''; // Tip spațiu - required
+  usableSurface?: number = 0; // Suprafață utilă
+  builtSurface?: number = 0; // Suprafață construită
+  spaceHeight?: number = 0;  // Înălțime spațiu
+  hasStreetWindow?: boolean = false; // Vitrină la stradă
+  streetWindowLength?: number = 0; // Front vitrină
+  hasStreetEntrance?: boolean = false; // Intrare din stradă
+  hasLift?: boolean = false; // Lift
+  vehicleAccess: string[] = []; // Acces auto
 }
 
 export interface FetchAnnouncementsModel {
@@ -78,4 +126,5 @@ export interface FetchAnnouncementsModel {
   };
   select?: string[];
   path?: string;
+  
 }

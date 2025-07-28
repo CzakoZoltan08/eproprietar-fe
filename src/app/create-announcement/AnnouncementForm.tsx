@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CircularProgress, FormControl, InputLabel, LinearProgress, MenuItem, Modal, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Checkbox, CircularProgress, FormControl, FormControlLabel, InputLabel, LinearProgress, MenuItem, Modal, Radio, RadioGroup, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
@@ -271,6 +271,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const [openModal, setOpenModal] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  const HEIGHT_REGIMES = ["S", "D", "P", "E", "E2", "E3", "E4", "E5", "M", "POD"];
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const [formData, setFormData] = useState({
     userId: userStore.user?.id || "",
     announcementType: "",
@@ -295,6 +299,27 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
+    streetFront: false,
+    heightRegime: [] as string[],
+    streetFrontLength: 0, // in ml
+    landType: "", // Constructii, Agricol, etc.
+    landPlacement: "", // Intravilan, Extravilan
+    urbanismDocuments: [] as string[], // Multi-select
+    utilities: {
+      curent: null as boolean | null,
+      apa: null as boolean | null,
+      canalizare: null as boolean | null,
+      gaz: null as boolean | null,
+    },
+    commercialSpaceType: "",
+    usableSurface: 0,
+    builtSurface: 0,
+    spaceHeight: 0,
+    hasStreetWindow: false,
+    streetWindowLength: 0,
+    hasStreetEntrance: false,
+    hasLift: false,
+    vehicleAccess: [] as string[]
   });
 
   type MediaItem = {
@@ -427,6 +452,27 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             videos: [],
             // ─── C) Prefill existing sketch URL as string ───
             sketch: announcement.sketchUrl || null,
+            heightRegime: announcement.heightRegime || [],
+            streetFront: announcement.streetFront || false,
+            landPlacement: announcement.landPlacement || "",
+            streetFrontLength: announcement.streetFrontLength || 0,
+            landType: announcement.landType || "",
+            urbanismDocuments: announcement.urbanismDocuments || [],
+            utilities: {
+              curent: announcement.utilities?.curent ?? null,
+              apa: announcement.utilities?.apa ?? null,
+              canalizare: announcement.utilities?.canalizare ?? null,
+              gaz: announcement.utilities?.gaz ?? null,   
+            },
+            builtSurface: announcement.builtSurface || 0,
+            commercialSpaceType: announcement.commercialSpaceType || "",
+            hasLift: announcement.hasLift || false,
+            usableSurface: announcement.usableSurface || 0,
+            spaceHeight: announcement.spaceHeight || 0,
+            hasStreetWindow: announcement.hasStreetWindow || false,
+            streetWindowLength: announcement.streetWindowLength || 0,
+            hasStreetEntrance: announcement.hasStreetEntrance || false,
+            vehicleAccess: announcement.vehicleAccess || [],
           });
         }
 
@@ -767,6 +813,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const onSubmit = async () => {
+    setIsSubmitted(true);
+
     if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
       setError("Te rugăm să completezi toate câmpurile obligatorii.");
       return;
@@ -780,6 +828,27 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     if (!formData.sketch) {
       setError("Trebuie să selectezi sau să încarci o schiță.");
       return;
+    }
+
+    if (formData.announcementType === "Casa" || formData.announcementType === "Case la tara") {
+      if (!formData.rooms || !formData.surface || !formData.landSurface) {
+        setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
+        return;
+      }
+    }
+
+    if (formData.announcementType === "Teren") {
+      if (!formData.landSurface || !formData.streetFrontLength) {
+        setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
+        return;
+      }
+    }
+
+    if (formData.announcementType === 'Spatii comerciale') {
+      if (!formData.commercialSpaceType) {
+        alert('Câmpul "Tip spațiu" este obligatoriu.');
+        return;
+      }
     }
   
     setLoading(true);
@@ -803,6 +872,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         floor: Number(data.floor),
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
+        streetFrontLength: data.streetFrontLength ?? 0,
         status: userStore.user && userStore.user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
@@ -973,7 +1043,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           
             {/* County */}
             <AutocompleteCounties
-              label="Județ"
+              label="Județ *"
               customWidth="100%"
               value={formData.county}
               onChange={(event, value) => {
@@ -982,16 +1052,20 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                   county: value || "",
                 }));
               }}
+              error={isSubmitted && !formData.county}
+              helperText={isSubmitted && !formData.county ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* City */}
             <AutocompleteCities
-              label="Oraș"
+              label="Oraș *"
               customWidth="100%"
               value={formData.city}
               onChange={(e, value) =>
                 setFormData((prev) => ({ ...prev, city: value || "" }))
               }
+              error={isSubmitted && !formData.city}
+              helperText={isSubmitted && !formData.city ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* Street */}
@@ -1006,6 +1080,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 value={formData.street}
                 onChange={handleInputChange}
                 fullWidth
+                required
+                error={isSubmitted && !formData.street}
+                helperText={isSubmitted && !formData.street ? 'Acest câmp este obligatoriu' : ''}
               />
             </Box>
 
@@ -1022,16 +1099,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                   value={formData.title}
                   onChange={handleInputChange}
                   fullWidth
+                  required
+                  error={isSubmitted && !formData.title}
+                  helperText={isSubmitted && !formData.title ? 'Acest câmp este obligatoriu' : ''}
                 />
               </Box>
-              <StyledTextField
-                label="Titlu"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                fullWidth
-                sx={{ marginBottom: "16px" }}
-              />
             </Box>
 
             {/* Description */}
@@ -1048,12 +1120,15 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 multiline
                 rows={4}
                 fullWidth
+                required
+                error={isSubmitted && !formData.description}
+                helperText={isSubmitted && !formData.description ? 'Acest câmp este obligatoriu' : ''}
               />
             </Box>
 
             {/* Phone Number */}
             <PhoneInputField
-              label="Număr de Telefon"
+              label="Număr de Telefon *"
               name="contactPhone"
               value={contactPhone}
               onChange={(phoneValue) => setContactPhone(phoneValue)}
@@ -1069,8 +1144,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               onChange={handleInputChange}
               type="number"
               fullWidth
-              required
               sx={{ marginBottom: "16px" }}
+              required
+              error={isSubmitted && !formData.price}
+              helperText={isSubmitted && !formData.price ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* Surface */}
@@ -1082,30 +1159,406 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               type="number"
               fullWidth
               sx={{ marginBottom: "16px" }}
+              required
+              error={isSubmitted && !formData.surface}
+              helperText={isSubmitted && !formData.surface ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* Land Surface - only for houses */}
-            {formData.announcementType === "Casa" && (
+            {(formData.announcementType === "Casa" || formData.announcementType === "Case la tara") && (
+              <>
+                {/* Suprafață teren */}
+                <TextField
+                  label="Suprafață teren (mp)"
+                  name="landSurface"
+                  value={formData.landSurface}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ marginBottom: "16px" }}
+                  required
+                  error={isSubmitted && !formData.landSurface}
+                  helperText={isSubmitted && !formData.landSurface ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Front la stradă */}
+                <Box width="100%" textAlign="center" mt={3}>
+                  <Typography variant="h6">Front la stradă</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Bifează dacă imobilul are deschidere directă la drum public. Aceasta este o caracteristică importantă în evaluarea proprietății.
+                  </Typography>
+                </Box>
+
+                <FormControl component="fieldset" sx={{ mt: 2 }}>
+                  <RadioButtonsGroup
+                    options={["Da", "Nu"]}
+                    value={formData.streetFront ? "Da" : "Nu"}
+                    id="streetFront"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        streetFront: e.target.value === "Da",
+                      }))
+                    }
+                    label=""
+                  />
+                </FormControl>
+
+                {/* Front la stradă (ml) - doar dacă streetFront === true */}
+                {formData.streetFront && (
+                  <TextField
+                    label="Front la stradă (ml)"
+                    name="streetFrontLength"
+                    type="number"
+                    value={formData.streetFrontLength || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        streetFrontLength: Number(e.target.value),
+                      }))
+                    }
+                    fullWidth
+                    sx={{ marginTop: 2 }}
+                  />
+                )}
+
+                {/* Regim înălțime */}
+                <Box width="100%" textAlign="center" mt={3}>
+                  <Typography variant="h6">Regim înălțime</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Selectează nivelurile de înălțime existente ale clădirii. Poți alege mai multe opțiuni dacă este cazul (ex: Subsol + Parter + Etaj).
+                  </Typography>
+                </Box>
+
+                <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+                  {HEIGHT_REGIMES.map((regime) => (
+                    <FormControlLabel
+                      key={regime}
+                      control={
+                        <Checkbox
+                          checked={formData.heightRegime.includes(regime)}
+                          onChange={() => {
+                            setFormData((prev) => {
+                              const selected = prev.heightRegime.includes(regime);
+                              return {
+                                ...prev,
+                                heightRegime: selected
+                                  ? prev.heightRegime.filter((r) => r !== regime)
+                                  : [...prev.heightRegime, regime],
+                              };
+                            });
+                          }}
+                        />
+                      }
+                      label={regime}
+                    />
+                  ))}
+                </Box>
+              </>
+            )}
+
+            {formData.announcementType === "Teren" && (
+              <>
+                {/* Address */}
+                <TextField
+                  label="La stradă / zonă"
+                  name="street"
+                  value={formData.street}
+                  onChange={handleInputChange}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.street}
+                  helperText={isSubmitted && !formData.street ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Suprafață teren */}
+                <TextField
+                  label="Suprafață teren (mp)"
+                  name="landSurface"
+                  value={formData.landSurface}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.landSurface}
+                  helperText={isSubmitted && !formData.landSurface ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Front la stradă */}
+                <TextField
+                  label="Front la stradă (ml)"
+                  name="streetFrontLength"
+                  value={formData.streetFrontLength}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.streetFrontLength}
+                  helperText={isSubmitted && !formData.streetFrontLength ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Tip teren */}
+                <SelectDropdown
+                  label="Tip teren"
+                  name="landType"
+                  value={formData.landType}
+                  options={["Constructii", "Agricol", "Pădure", "Pășune", "Livadă"].map((v) => ({ id: v, value: v }))}
+                  handleChange={handleSelectChange}
+                />
+
+                {/* Amplasare */}
+                <SelectDropdown
+                  label="Amplasare"
+                  name="landPlacement"
+                  value={formData.landPlacement}
+                  options={["Intravilan", "Extravilan"].map((v) => ({ id: v, value: v }))}
+                  handleChange={handleSelectChange}
+                />
+
+                {/* Urbanism */}
+                <Box mt={3}>
+                  <Typography variant="h6">Urbanism</Typography>
+                  <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+                    {["PUZ", "PUD", "Studiu GEO", "Certificat urbanism", "Autorizație construcție"].map((doc) => (
+                      <FormControlLabel
+                        key={doc}
+                        control={
+                          <Checkbox
+                            checked={formData.urbanismDocuments.includes(doc)}
+                            onChange={() => {
+                              setFormData((prev) => {
+                                const selected = prev.urbanismDocuments.includes(doc);
+                                return {
+                                  ...prev,
+                                  urbanismDocuments: selected
+                                    ? prev.urbanismDocuments.filter((d) => d !== doc)
+                                    : [...prev.urbanismDocuments, doc],
+                                };
+                              });
+                            }}
+                          />
+                        }
+                        label={doc}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Utilități generale */}
+                <Box mt={3}>
+                  <Typography variant="h6">Utilități generale</Typography>
+                  {(["curent", "apa", "canalizare", "gaz"] as Array<keyof typeof formData.utilities>).map((util) => (
+                    <FormControl key={util} component="fieldset" sx={{ mt: 1 }}>
+                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        {util.charAt(0).toUpperCase() + util.slice(1)}
+                      </Typography>
+                      <RadioButtonsGroup
+                        options={["Da", "Nu"]}
+                        id={util}
+                        value={formData.utilities[util] === true ? "Da" : formData.utilities[util] === false ? "Nu" : ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            utilities: {
+                              ...prev.utilities,
+                              [util]: e.target.value === "Da",
+                            },
+                          }))
+                        }
+                        label=""
+                      />
+                    </FormControl>
+                  ))}
+                </Box>
+              </>
+            )}
+
+            {formData.announcementType === "Spatii comerciale" && (
+            <>
+              {/* Tip spațiu (obligatoriu) */}
+              <FormControl fullWidth required sx={{ mb: 2 }}>
+                <InputLabel id="commercial-space-type-label">Tip spațiu</InputLabel>
+                <Select
+                  labelId="commercial-space-type-label"
+                  id="commercialSpaceType"
+                  value={formData.commercialSpaceType || ''}
+                  label="Tip spațiu"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      commercialSpaceType: e.target.value,
+                    }))
+                  }
+                  required
+                  error={isSubmitted && !formData.commercialSpaceType}
+                >
+                  {['comercial', 'birouri', 'industrial'].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option[0].toUpperCase() + option.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Suprafață utilă */}
               <TextField
-                label="Suprafață teren (sqm)"
-                name="landSurface"
-                value={formData.landSurface}
-                onChange={handleInputChange}
+                label="Suprafață utilă (mp)"
                 type="number"
                 fullWidth
-                sx={{ marginBottom: "16px" }}
+                sx={{ mb: 2 }}
+                value={formData.usableSurface || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    usableSurface: Number(e.target.value),
+                  }))
+                }
+                required
+                error={isSubmitted && !formData.usableSurface}
+                helperText={isSubmitted && !formData.usableSurface ? 'Acest câmp este obligatoriu' : ''}
               />
-            )}
+
+              {/* Suprafață construită */}
+              <TextField
+                label="Suprafață construită (mp)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.builtSurface || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    builtSurface: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Înălțime spațiu */}
+              <TextField
+                label="Înălțime spațiu (m)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.spaceHeight || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    spaceHeight: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Vitrină la stradă */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Vitrină la stradă</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasStreetWindow ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasStreetWindow: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Front vitrină la stradă */}
+              <TextField
+                label="Front vitrină la stradă (ml)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.streetWindowLength || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    streetWindowLength: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Intrare din stradă */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Intrare din stradă</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasStreetEntrance ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasStreetEntrance: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Lift */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Lift</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasLift ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasLift: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Acces auto */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Acces auto</Typography>
+                <Box display="flex" flexWrap="wrap" gap={1}>
+                  {['TIR', 'Autocar', 'Camioane', 'Autoturism'].map((vehicle) => (
+                    <FormControlLabel
+                      key={vehicle}
+                      control={
+                        <Checkbox
+                          checked={formData.vehicleAccess.includes(vehicle)}
+                          onChange={(e) => {
+                            setFormData((prev) => {
+                              const access = prev.vehicleAccess.includes(vehicle)
+                                ? prev.vehicleAccess.filter((v) => v !== vehicle)
+                                : [...prev.vehicleAccess, vehicle];
+                              return { ...prev, vehicleAccess: access };
+                            });
+                          }}
+                        />
+                      }
+                      label={vehicle}
+                    />
+                  ))}
+                </Box>
+              </FormControl>
+            </>
+          )}
 
             {isApartment && (
               <>
                 {/* Number of Rooms */}
                 <SelectDropdown
-                  label="Număr camere"
+                  label="Număr camere *"
                   options={roomOptions}
                   name="rooms"
                   value={formData.rooms}
                   handleChange={handleSelectChange}
+                  error={isSubmitted && !formData.rooms}
+                  helperText={isSubmitted && !formData.rooms ? 'Acest câmp este obligatoriu' : ''}
                 />
 
                 {/* Number of Baths */}
@@ -1342,7 +1795,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           {/* Submit Button */}
           <PrimaryButton
             text={isEdit ? "Actualizează Anunțul" : "Creează Anunțul"}
-            onClick={onSubmit}
+            onClick={() => onSubmit()}
             sx={{ marginTop: "20px" }}
           />
         </>

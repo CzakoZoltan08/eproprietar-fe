@@ -37,6 +37,8 @@ const CharacteristicsCard: React.FC = () => {
 
   const isValidString = (val?: string | null) => val && val.trim() !== "";
   const isValidNumber = (val?: number | null) => val !== undefined && val !== null && val !== 0;
+  const isValidBoolean = (val?: boolean | null) => val === true || val === false;
+  const isValidArray = (val?: string[] | null) => Array.isArray(val) && val.length > 0;
 
   return (
     <TitleCard style={{ padding: "16px 24px" }}>
@@ -56,6 +58,50 @@ const CharacteristicsCard: React.FC = () => {
           {isValidString(a?.partitioning) && (
             <InfoRow title="Compartimentare" value={a?.partitioning} />
           )}
+          {isValidBoolean(a?.streetFront) && (
+            <InfoRow title="Front la stradă" value={a?.streetFront ? "Da" : "Nu"} />
+          )}
+
+          {isValidArray(a?.heightRegime) && (
+            <InfoRow title="Regim înălțime" value={a?.heightRegime.join(", ")} />
+          )}
+
+          {isValidString(a?.commercialSpaceType) && (
+            <InfoRow title="Tip spațiu" value={a?.commercialSpaceType} />
+          )}
+
+          {isValidNumber(a?.usableSurface) && (
+            <InfoRow title="Suprafață utilă" value={`${a?.usableSurface} mp`} />
+          )}
+
+          {isValidNumber(a?.builtSurface) && (
+            <InfoRow title="Suprafață construită" value={`${a?.builtSurface} mp`} />
+          )}
+
+          {isValidNumber(a?.spaceHeight) && (
+            <InfoRow title="Înălțime spațiu" value={`${a?.spaceHeight} m`} />
+          )}
+
+          {isValidBoolean(a?.hasStreetWindow) && (
+            <InfoRow title="Vitrină la stradă" value={a.hasStreetWindow ? 'Da' : 'Nu'} />
+          )}
+
+          {isValidNumber(a?.streetWindowLength) && (
+            <InfoRow title="Front vitrină la stradă" value={`${a?.streetWindowLength} ml`} />
+          )}
+
+          {isValidBoolean(a?.hasStreetEntrance) && (
+            <InfoRow title="Intrare din stradă" value={a.hasStreetEntrance ? 'Da' : 'Nu'} />
+          )}
+
+          {isValidBoolean(a?.hasLift) && (
+            <InfoRow title="Lift" value={a.hasLift ? 'Da' : 'Nu'} />
+          )}
+
+          {isValidArray(a?.vehicleAccess) && (
+            <InfoRow title="Acces auto" value={a?.vehicleAccess?.join(', ')} />
+          )}
+
         </Column>
 
         <Column>
@@ -70,6 +116,40 @@ const CharacteristicsCard: React.FC = () => {
           )}
           {isValidString(a?.parking) && <InfoRow title="Parcare" value={a?.parking} />}
           {isValidString(a?.balcony) && <InfoRow title="Balcon" value={a?.balcony} />}
+          {/* Front la stradă (length in ml) */}
+          {isValidNumber(a?.streetFrontLength) && (
+            <InfoRow title="Front la stradă (ml)" value={`${a?.streetFrontLength} ml`} />
+          )}
+
+          {/* Tip teren */}
+          {isValidString(a?.landType) && (
+            <InfoRow title="Tip teren" value={a?.landType} />
+          )}
+
+          {/* Amplasare */}
+          {isValidString(a?.landPlacement) && (
+            <InfoRow title="Amplasare" value={a?.landPlacement} />
+          )}
+
+          {/* Urbanism */}
+          {isValidArray(a?.urbanismDocuments) && (
+            <InfoRow title="Urbanism" value={a?.urbanismDocuments?.join(', ')} />
+          )}
+
+          {/* Utilități generale */}
+          {a?.utilities && (
+            <>
+              {Object.entries(a.utilities).map(([key, val]) =>
+                isValidBoolean(val) ? (
+                  <InfoRow
+                    key={key}
+                    title={`Utilitate: ${key.charAt(0).toUpperCase() + key.slice(1)}`}
+                    value={val ? "Da" : "Nu"}
+                  />
+                ) : null
+              )}
+            </>
+          )}
         </Column>
       </TwoColumnFlex>
     </TitleCard>
