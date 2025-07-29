@@ -258,6 +258,10 @@ const MAX_IMAGES = 15;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+function normalizeAnnouncementType(type: string): string {
+  return type.toLowerCase() === "case la tara" ? "case_la_tara" : type.toLowerCase();
+}
+
 const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const {
     userStore,
@@ -826,7 +830,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     }
 
     if (formData.announcementType === "Casa" || formData.announcementType === "Case la tara") {
-      if (!formData.rooms || !formData.surface || !formData.landSurface) {
+      if (!formData.surface || !formData.landSurface) {
         setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
         return;
       }
@@ -859,7 +863,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   
       const announcementDraft = {
         ...data,
-        announcementType: data.announcementType.toLowerCase(),
+        announcementType: normalizeAnnouncementType(data.announcementType),
         price: Number(data.price),
         rooms: Number(data.rooms),
         baths: Number(data.baths),
@@ -867,7 +871,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         floor: Number(data.floor),
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
-        streetFrontLength: data.streetFrontLength ?? 0,
+        streetFrontLength: Number(data.streetFrontLength) ?? 0,
         status: userStore.user && userStore.user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
@@ -1067,6 +1071,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             {/* Street */}
+            {formData.announcementType !== "Teren" && (
             <Box width="100%" mb={2}>
               <Typography variant="subtitle1">Stradă</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
@@ -1082,7 +1087,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 error={isSubmitted && !formData.street}
                 helperText={isSubmitted && !formData.street ? 'Acest câmp este obligatoriu' : ''}
               />
-            </Box>
+            </Box>)}
 
             {/* Title */}
             <Box width="100%">
@@ -1627,7 +1632,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             {/* Sketch */}
             <ThumbnailContainer>
               <Box width="100%" textAlign="center">
-                <Typography variant="h6">Schița apartamentului / Plan</Typography>
+                <Typography variant="h6">Schiță / Plan</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                   Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.
                 </Typography>

@@ -28,6 +28,7 @@ const MENU_STRUCTURE = [
       { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
       { label: "Cabane/Case la țară", type: "case_la_tara" },
+      { label: "Comercial", type: "comercial" },
     ],
   },
   {
@@ -43,6 +44,7 @@ const MENU_STRUCTURE = [
       { label: "Case/Vile", type: "casa" },
       { label: "Terenuri", type: "teren" },
       { label: "Cabane/Case la țară", type: "case_la_tara" },
+      { label: "Comercial", type: "comercial" },
     ],
   },
 ];

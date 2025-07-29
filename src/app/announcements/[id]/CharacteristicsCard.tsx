@@ -58,13 +58,6 @@ const CharacteristicsCard: React.FC = () => {
           {isValidString(a?.partitioning) && (
             <InfoRow title="Compartimentare" value={a?.partitioning} />
           )}
-          {isValidBoolean(a?.streetFront) && (
-            <InfoRow title="Front la stradă" value={a?.streetFront ? "Da" : "Nu"} />
-          )}
-
-          {isValidArray(a?.heightRegime) && (
-            <InfoRow title="Regim înălțime" value={a?.heightRegime.join(", ")} />
-          )}
 
           {isValidString(a?.commercialSpaceType) && (
             <InfoRow title="Tip spațiu" value={a?.commercialSpaceType} />
@@ -82,26 +75,29 @@ const CharacteristicsCard: React.FC = () => {
             <InfoRow title="Înălțime spațiu" value={`${a?.spaceHeight} m`} />
           )}
 
-          {isValidBoolean(a?.hasStreetWindow) && (
-            <InfoRow title="Vitrină la stradă" value={a.hasStreetWindow ? 'Da' : 'Nu'} />
+          {a !== null && a.announcementType === "teren" && (
+            <>
+              {isValidBoolean(a?.streetFront) && (
+              <InfoRow title="Front la stradă" value={a?.streetFront ? "Da" : "Nu"} />
+                )}
+                {/* Front la stradă (length in ml) */}
+                {isValidNumber(a?.streetFrontLength) && (
+                  <InfoRow title="Front la stradă (ml)" value={`${a?.streetFrontLength} ml`} />
+                )}
+
+                {isValidArray(a?.heightRegime) && (
+                  <InfoRow title="Regim înălțime" value={a?.heightRegime.join(", ")} />
+                )}
+
+                {/* Tip teren */}
+                {isValidString(a?.landType) && (
+                  <InfoRow title="Tip teren" value={a?.landType} />
+                )}
+            </>
           )}
 
-          {isValidNumber(a?.streetWindowLength) && (
-            <InfoRow title="Front vitrină la stradă" value={`${a?.streetWindowLength} ml`} />
-          )}
-
-          {isValidBoolean(a?.hasStreetEntrance) && (
-            <InfoRow title="Intrare din stradă" value={a.hasStreetEntrance ? 'Da' : 'Nu'} />
-          )}
-
-          {isValidBoolean(a?.hasLift) && (
-            <InfoRow title="Lift" value={a.hasLift ? 'Da' : 'Nu'} />
-          )}
-
-          {isValidArray(a?.vehicleAccess) && (
-            <InfoRow title="Acces auto" value={a?.vehicleAccess?.join(', ')} />
-          )}
-
+          {isValidString(a?.parking) && <InfoRow title="Parcare" value={a?.parking} />}
+          {isValidString(a?.balcony) && <InfoRow title="Balcon" value={a?.balcony} />}
         </Column>
 
         <Column>
@@ -111,19 +107,13 @@ const CharacteristicsCard: React.FC = () => {
             <InfoRow title="Bucătării" value={a?.numberOfKitchens?.toString()} />
           )}
           {isValidNumber(a?.floor) && <InfoRow title="Etaj" value={a?.floor?.toString()} />}
-          {isValidNumber(a?.comfortLevel) && (
-            <InfoRow title="Confort" value={`Confort ${a?.comfortLevel}`} />
-          )}
-          {isValidString(a?.parking) && <InfoRow title="Parcare" value={a?.parking} />}
-          {isValidString(a?.balcony) && <InfoRow title="Balcon" value={a?.balcony} />}
-          {/* Front la stradă (length in ml) */}
-          {isValidNumber(a?.streetFrontLength) && (
-            <InfoRow title="Front la stradă (ml)" value={`${a?.streetFrontLength} ml`} />
-          )}
 
-          {/* Tip teren */}
-          {isValidString(a?.landType) && (
-            <InfoRow title="Tip teren" value={a?.landType} />
+          {a !== null && a.announcementType === "apartament" && (
+            <>
+              {isValidNumber(a?.comfortLevel) && (
+                <InfoRow title="Confort" value={`Confort ${a?.comfortLevel}`} />
+              )}
+            </>
           )}
 
           {/* Amplasare */}
@@ -134,6 +124,30 @@ const CharacteristicsCard: React.FC = () => {
           {/* Urbanism */}
           {isValidArray(a?.urbanismDocuments) && (
             <InfoRow title="Urbanism" value={a?.urbanismDocuments?.join(', ')} />
+          )}
+
+          {a !== null && a.announcementType === "comercial" && (
+            <>
+              {isValidBoolean(a?.hasStreetWindow) && (
+                <InfoRow title="Vitrină la stradă" value={a.hasStreetWindow ? 'Da' : 'Nu'} />
+              )}
+
+              {isValidNumber(a?.streetWindowLength) && (
+                <InfoRow title="Front vitrină la stradă" value={`${a?.streetWindowLength} ml`} />
+              )}
+
+              {isValidBoolean(a?.hasStreetEntrance) && (
+                <InfoRow title="Intrare din stradă" value={a.hasStreetEntrance ? 'Da' : 'Nu'} />
+              )}
+
+              {isValidBoolean(a?.hasLift) && (
+                <InfoRow title="Lift" value={a.hasLift ? 'Da' : 'Nu'} />
+              )}
+
+              {isValidArray(a?.vehicleAccess) && (
+                <InfoRow title="Acces auto" value={a?.vehicleAccess?.join(', ')} />
+              )}
+            </>
           )}
 
           {/* Utilități generale */}

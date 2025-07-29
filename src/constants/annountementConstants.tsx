@@ -12,7 +12,7 @@ export const typeOptions = [
     value: "Terenuri",
   },
   {
-    id: "spatii_comerciale",
+    id: "comercial",
     value: "Spații comerciale",
   },
   {
