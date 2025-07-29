@@ -824,11 +824,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       return;
     }
 
-    if (!formData.sketch) {
-      setError("Trebuie să selectezi sau să încarci o schiță.");
-      return;
-    }
-
     if (formData.announcementType === "Casa" || formData.announcementType === "Case la tara") {
       if (!formData.surface || !formData.landSurface) {
         setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
