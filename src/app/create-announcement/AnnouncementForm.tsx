@@ -332,7 +332,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const isApartment = formData.announcementType === "Apartament";
 
-  const [contactPhone, setContactPhone] = useState<string>(userStore.user?.phoneNumber || "");
+  const [contactPhone, setContactPhone] = useState<string>("");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -497,11 +497,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             ...prev,
             userId: announcementUserId,
           }));
-        }
-
-        // Phone
-        if (!contactPhone && announcement.user?.phoneNumber) {
-          setContactPhone(announcement.user.phoneNumber);
         }
 
         setOriginalMediaCounts({
@@ -880,8 +875,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       };
   
       // 1. Update phone number if changed
-      if (contactPhone !== userStore.user?.phoneNumber && userStore.user?.id) {
-        await userStore.updateUser(userStore.user.id, { phoneNumber: contactPhone });
+      const normalizePhone = (p: string) => p.replace(/^\+?4/, "").replace(/\s/g, "");
+      if (normalizePhone(contactPhone) !== normalizePhone(userStore.user?.phoneNumber || "")) {
+        if (userStore.user && typeof userStore.user.id === "string") {
+          await userStore.updateUser(userStore.user.id, { phoneNumber: contactPhone });
+        }
       }
 
       if (isEdit && announcementStore.currentAnnouncement?.id) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import HelperText from "@/common/error/HelperText";
 import InputLabel from "@mui/material/InputLabel";
@@ -14,7 +14,7 @@ type PhoneInputFieldProps = {
   onBlur?: () => void;
   label: string;
   error?: string;
-  setError: (error: string) => void;
+  setError?: (error: string) => void;
   isSmall?: boolean;
 };
 
@@ -34,10 +34,6 @@ const PhoneInputFieldWrapper = styled.div.withConfig({
   .form-control {
     width: 100%;
     height: ${(props) => (props.isSmall ? "35px" : "48px")};
-
-    &:focus {
-      box-shadow: unset;
-    }
   }
 
   .special-label {
@@ -59,15 +55,11 @@ const PhoneInputField = ({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [hasInputBeenTouched, setHasInputBeenTouched] = useState(false);
 
-  const validateRomanianPhone = (input: string, country: any) => {
-    if (country.countryCode === "ro") {
-      const match = input.match(ROMANIAN_PHONE_REGEX);
-
-      if (!match && hasInputBeenTouched) {
-        setError("Format de telefon invalid");
-      } else {
-        setError("");
-      }
+  const validatePhoneOnBlur = () => {
+    if (!setError) return;
+    const isRO = value.startsWith("40") || value.startsWith("+40");
+    if (isRO && !ROMANIAN_PHONE_REGEX.test(value)) {
+      setError("Format de telefon invalid");
     } else {
       setError("");
     }
@@ -89,9 +81,8 @@ const PhoneInputField = ({
         country={"ro"}
         value={value}
         countryCodeEditable={false}
-        onChange={(value, data, event, formattedValue) => {
-          validateRomanianPhone(value, data);
-          onChange(formattedValue);
+        onChange={(value) => {
+          onChange(value); // ✅ Only update value, not error
         }}
         inputProps={{
           onFocus: () => {
@@ -101,9 +92,11 @@ const PhoneInputField = ({
           },
           onBlur: () => {
             setIsInputFocused(false);
+            validatePhoneOnBlur(); // ✅ Validate only on blur
             onBlur && onBlur();
           },
           name,
+          autoComplete: "off",
         }}
         inputStyle={{
           fontSize: "16px",
