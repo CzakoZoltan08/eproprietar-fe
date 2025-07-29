@@ -71,28 +71,17 @@ const CharacteristicsCard: React.FC = () => {
             <InfoRow title="Suprafață construită" value={`${a?.builtSurface} mp`} />
           )}
 
-          {isValidNumber(a?.spaceHeight) && (
-            <InfoRow title="Înălțime spațiu" value={`${a?.spaceHeight} m`} />
+          {/* Front la stradă (length in ml) */}
+          {isValidNumber(a?.streetFrontLength) && (
+            <InfoRow title="Front la stradă (ml)" value={`${a?.streetFrontLength} ml`} />
           )}
 
           {a !== null && a.announcementType === "teren" && (
             <>
-              {isValidBoolean(a?.streetFront) && (
-              <InfoRow title="Front la stradă" value={a?.streetFront ? "Da" : "Nu"} />
-                )}
-                {/* Front la stradă (length in ml) */}
-                {isValidNumber(a?.streetFrontLength) && (
-                  <InfoRow title="Front la stradă (ml)" value={`${a?.streetFrontLength} ml`} />
-                )}
-
-                {isValidArray(a?.heightRegime) && (
-                  <InfoRow title="Regim înălțime" value={a?.heightRegime.join(", ")} />
-                )}
-
-                {/* Tip teren */}
-                {isValidString(a?.landType) && (
-                  <InfoRow title="Tip teren" value={a?.landType} />
-                )}
+                            {/* Tip teren */}
+              {isValidString(a?.landType) && (
+                <InfoRow title="Tip teren" value={a?.landType} />
+              )}
             </>
           )}
 
@@ -114,6 +103,18 @@ const CharacteristicsCard: React.FC = () => {
                 <InfoRow title="Confort" value={`Confort ${a?.comfortLevel}`} />
               )}
             </>
+          )}
+
+          {isValidNumber(a?.spaceHeight) && (
+            <InfoRow title="Înălțime spațiu" value={`${a?.spaceHeight} m`} />
+          )}
+
+          {isValidBoolean(a?.streetFront) && (
+            <InfoRow title="Front la stradă" value={a?.streetFront ? "Da" : "Nu"} />
+          )}
+
+          {isValidArray(a?.heightRegime) && (
+            <InfoRow title="Regim înălțime" value={a?.heightRegime.join(", ")} />
           )}
 
           {/* Amplasare */}
