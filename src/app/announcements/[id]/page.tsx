@@ -36,7 +36,7 @@ const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
 const ContactContainer = styled.div`
   flex: 0 0 300px;
   max-width: 300px;
-  margin-left: 0;
+  margin-left: 8px !important; /* Ensure it doesn't shrink */
 
   @media (max-width: 600px) {
     flex: 1 1 100%;
