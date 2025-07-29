@@ -33,7 +33,7 @@ const MENU_STRUCTURE = [
   },
   {
     label: "Închiriere",
-    transactionType: "Inchirieri",
+    transactionType: "Inchiriere",
     filters: [
       { label: "Apartamente", type: "apartament" },
       { label: "1 cameră", type: "apartament", rooms: 1 },
