@@ -263,7 +263,7 @@ const Header = () => {
           onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}
           color="inherit"
         >
-          {"Bloc nou/"}<br />
+          {"Bloc nou"}<br />
           {"Ansambluri Rezidențiale"}
         </Button>
 

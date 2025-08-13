@@ -66,13 +66,21 @@ export const Main = () => {
   }, [user?.id, getCurrentUser]);
 
   useEffect(() => {
-    setPriceOptions(
-      getDropdownValuesNumberRange(
-        DROPDOWN_RANGES.PRICE.START,
-        DROPDOWN_RANGES.PRICE.END,
-        DROPDOWN_RANGES.PRICE.STEP
-      )
-    );
+    const smallSteps = getDropdownValuesNumberRange(5000, 50000, 5000);      // 5k → 50k
+    const mediumSteps = getDropdownValuesNumberRange(60000, 500000, 10000);  // 60k → 500k
+    const bigSteps = getDropdownValuesNumberRange(600000, 900000, 100000);   // 600k → 900k
+    const millionSteps = Array.from({ length: 10 }, (_, i) => ({
+      id: (i + 1) * 1_000_000,
+      value: (i + 1) * 1_000_000,
+    })); // 1M → 10M
+
+    setPriceOptions([
+      ...smallSteps,
+      ...mediumSteps,
+      ...bigSteps,
+      ...millionSteps
+    ]);
+    
     setMinSurfaceOptions(
       getDropdownValuesNumberRange(
         DROPDOWN_RANGES.SURFACE.START,
@@ -216,6 +224,16 @@ export const Main = () => {
         />
       )}
 
+      {filters.TYPE === "Terenuri" && (
+          <AutocompleteCities
+          onChange={(event, value) =>
+            setFilters({ ...filters, CITY: value?.toString() ?? "" })
+          }
+          label={MESSAGES.SEARCH_CITY_LABEL}
+          customWidth={isDesktop ? undefined : "100%"}
+        />
+        )}
+
       <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
         <SelectDropdown
           name="type"
@@ -343,14 +361,13 @@ export const Main = () => {
 
           <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
 
-          <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
+          <div style={{ width: "90%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
             <Image
               src={bannerEproprietar}
               alt="Beneficii eproprietar"
               style={{
                 width: "100%",
-                maxWidth: "600px",
-                height: "auto",
+                maxHeight: "800px",
               }}
             />
           </div>
@@ -369,9 +386,6 @@ export const Main = () => {
           <div
             style={{
               width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              padding: "16px",
               marginTop: "16px",
               marginBottom: "32px",
             }}
@@ -381,9 +395,9 @@ export const Main = () => {
               alt="Beneficii eproprietar"
               style={{
                 width: "100%",
-                maxWidth: "340px",
                 height: "auto",
-                borderRadius: "8px",
+                display: "block",
+                borderRadius: "0", // dacă vrei fără colțuri rotunjite
               }}
             />
           </div>
