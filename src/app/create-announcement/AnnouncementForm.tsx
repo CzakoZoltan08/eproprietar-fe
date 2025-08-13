@@ -567,19 +567,29 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     const files = event.dataTransfer.files;
 
     const validImages = validateImageFiles(files);
-    if (formData.images.length + validImages.length > MAX_IMAGES) {
+    if (imageItems.length + validImages.length > MAX_IMAGES) {
       setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
       return;
     }
-    
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...validImages],
-    }));
-    setImagePreviews((prev) => [
-      ...prev,
-      ...validImages.map((file) => URL.createObjectURL(file)),
-    ]);
+
+    const newItems = validImages.map((file) => ({ file }));
+    setImageItems((prev) => [...prev, ...newItems]);
+    setError('');
+  };
+
+  const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingVideos(false);
+    const files = event.dataTransfer.files;
+
+    const validVideos = validateVideoFiles(files);
+    if (videoItems.length + validVideos.length > MAX_VIDEOS) {
+      setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
+      return;
+    }
+
+    const newItems = validVideos.map((file) => ({ file }));
+    setVideoItems((prev) => [...prev, ...newItems]);
     setError('');
   };
 
@@ -629,28 +639,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     const newItems = validVideos.map((file) => ({ file }));
 
     setVideoItems((prev) => [...prev, ...newItems]);
-  };
-
-  const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const files = event.dataTransfer.files;
-    
-    const validVideos = validateVideoFiles(files);
-    if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-      setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      videos: [...prev.videos, ...validVideos],
-    }));
-    setVideoPreviews((prev) => [
-      ...prev,
-      ...validVideos.map((file) => URL.createObjectURL(file)),
-    ]);
-    setError('');
   };
 
   const handleVideoDragOver = (event: React.DragEvent<HTMLDivElement>) => {

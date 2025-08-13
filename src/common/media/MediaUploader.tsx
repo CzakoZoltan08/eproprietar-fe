@@ -37,16 +37,34 @@ const DropArea = styled.div<{ $isDragging: boolean }>`
   }
 `;
 
-const PreviewContainer = styled.div`
+/* IMAGES: grid ~120px min cell, square aspect; responsive down to 100px */
+const ImagesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
   margin-top: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+`;
+
+/* VIDEOS: grid ~180px min cell, 16:9 aspect; responsive down to 140px */
+const VideosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 `;
 
 const PreviewImage = styled.img`
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -59,6 +77,7 @@ const PreviewImage = styled.img`
 
 const PreviewVideo = styled.video`
   width: 100%;
+  aspect-ratio: 16 / 9;
   height: auto;
   object-fit: cover;
   border-radius: 8px;
@@ -81,7 +100,7 @@ const ThumbnailWrapper = styled.div`
 
 const ThumbnailBox = styled.div`
   width: 100%;
-  max-width: 200px;
+  max-width: 220px; /* puțin mai mare pentru consistență vizuală */
   aspect-ratio: 1;
   border: 2px dashed #ccc;
   display: flex;
@@ -98,8 +117,8 @@ const ThumbnailBox = styled.div`
   }
 
   @media (max-width: 360px) {
-    max-width: 150px;
-    border-radius: 8px;
+    max-width: 160px;
+    border-radius: 10px;
   }
 `;
 
@@ -207,7 +226,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setImages([...images, ...valid]);
     setError("");
 
-    // ✅ Reset input so re-selecting the same file works
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
@@ -224,7 +242,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setVideos([...videos, ...valid]);
     setError("");
 
-    // ✅ Reset input so re-selecting the same file works
     if (videoInputRef.current) {
       videoInputRef.current.value = "";
     }
@@ -313,11 +330,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         style={{ display: "none" }}
         onChange={handleImageUpload}
       />
-      <PreviewContainer>
+      <ImagesGrid>
         {imagePreviews.map((src, idx) => (
           <PreviewImage key={idx} src={src} alt="previzualizare" onClick={() => removeImage(idx)} />
         ))}
-      </PreviewContainer>
+      </ImagesGrid>
 
       {/* Videoclipuri */}
       <Typography mt={4} variant="h6">Videoclipuri</Typography>
@@ -347,11 +364,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         style={{ display: "none" }}
         onChange={handleVideoUpload}
       />
-      <PreviewContainer>
+      <VideosGrid>
         {videoPreviews.map((src, idx) => (
           <PreviewVideo key={idx} src={src} controls onClick={() => removeVideo(idx)} />
         ))}
-      </PreviewContainer>
+      </VideosGrid>
 
       {error && (
         <Typography color="error" mt={2} align="center">
