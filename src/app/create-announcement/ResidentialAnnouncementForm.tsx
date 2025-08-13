@@ -79,6 +79,14 @@ const INITIAL_DATA = {
   images: [] as File[],
   videos: [] as File[],
   apartmentTypeOther: "",
+  neighborhood: "",              // Cartier/zonă
+  constructionStart: "",         // Începerea construcției (vom folosi tot month+year)
+  floorsCount: "",               // Nr. de etaje
+  builtSurface: "",              // Suprafață construită (m²)
+  landSurface: "",               // Suprafață teren (m²)
+  amenities: "",                 // Facilități
+  developerSite: "",             // Site dezvoltator
+  frameType: "",                 // Tip chenar pe pagina de prezentare
 };
 
 const ResidentialAnnouncementForm = () => {
@@ -128,6 +136,18 @@ const ResidentialAnnouncementForm = () => {
       "endDate"
     );
     setFormErrors((prev) => ({ ...prev, endDate: error ? String(error) : "" }));
+  };
+
+  const handleConstructionStartChange = (date: Date | null) => {
+    const isoMonthStart = date ? new Date(date.getFullYear(), date.getMonth(), 1).toISOString() : "";
+    setFormData((prev) => ({ ...prev, constructionStart: isoMonthStart }));
+
+    const error = generalValidation(
+      residentialAnnouncementValidationSchema,
+      { ...formData, constructionStart: isoMonthStart },
+      "constructionStart"
+    );
+    setFormErrors((prev) => ({ ...prev, constructionStart: error ? String(error) : "" } as any));
   };
 
   const uploadMedia = async (announcementId: string) => {
@@ -252,7 +272,16 @@ const ResidentialAnnouncementForm = () => {
         streetWindowLength: 0,
         hasStreetEntrance: false,
         hasLift: false,
-        vehicleAccess: [] as string[]
+        vehicleAccess: [] as string[],
+        neighborhood: formData.neighborhood,
+        constructionStart: formData.constructionStart,         // ISO cu prima zi din lună
+        floorsCount: Number(formData.floorsCount) || 0,
+        landSurface: Number(formData.landSurface) || 0,
+        amenities: formData.amenities
+          ? formData.amenities.split(",").map(a => a.trim()).filter(a => a)
+          : [],
+        developerSite: formData.developerSite,
+        frameType: formData.frameType,
       };
 
       const newAnnouncement = await createAnnouncement(payload);
@@ -401,6 +430,82 @@ const ResidentialAnnouncementForm = () => {
               multiline
               rows={4}
             />
+
+            <Typography variant="h6" mt={2}>Detalii ansamblu</Typography>
+
+            <TextField
+              label="Cartier / zonă"
+              name="neighborhood"
+              value={formData.neighborhood}
+              onChange={handleInputChange}
+              fullWidth
+            />
+
+            <PrimaryDatePicker
+              name="constructionStart"
+              label="Începerea construcției"
+              value={formData.constructionStart}
+              error={formErrors.constructionStart as unknown as string || ""} // dacă nu ai validare, poți lăsa ""
+              handleChange={handleConstructionStartChange}
+              monthYearOnly   // 👈 afișează doar luna+an
+            />
+
+            {/* Stadiu - presetat 'în construcție' dar editabil */}
+            <TextField
+              label="Stadiu"
+              name="stage"
+              value={formData.stage || "în construcție"}
+              onChange={handleInputChange}
+              fullWidth
+            />
+
+            <TextField
+              label="Nr. de etaje"
+              name="floorsCount"
+              value={formData.floorsCount}
+              onChange={handleInputChange}
+              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              fullWidth
+            />
+
+            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} width="100%">
+              <TextField
+                label="Suprafață construită (m²)"
+                name="builtSurface"
+                value={formData.builtSurface}
+                onChange={handleInputChange}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                fullWidth
+              />
+              <TextField
+                label="Suprafață teren (m²)"
+                name="landSurface"
+                value={formData.landSurface}
+                onChange={handleInputChange}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                fullWidth
+              />
+            </Box>
+
+            <TextField
+              label="Facilități (separate prin virgulă)"
+              name="amenities"
+              value={formData.amenities}
+              onChange={handleInputChange}
+              fullWidth
+              multiline
+              rows={3}
+            />
+
+            <TextField
+              label="Site dezvoltator"
+              name="developerSite"
+              value={formData.developerSite}
+              onChange={handleInputChange}
+              placeholder="https://..."
+              fullWidth
+            />
+            
             {formData.announcementType?.toLowerCase() === "apartament" && (
               <TextField
                 label="Tipuri de apartamente (ex: garsonieră, o cameră, două camere, etc.)"
@@ -430,6 +535,7 @@ const ResidentialAnnouncementForm = () => {
               value={formData.endDate}
               error={formErrors.endDate || ""}
               handleChange={handleDateChange}
+              monthYearOnly   // 👈 va afișa doar luna+an (ex: August 2026)
             />
             <MediaUploader
               logo={formData.logo}

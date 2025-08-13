@@ -272,7 +272,7 @@ const Header = () => {
           color="inherit"
         >
           {"Anunțuri agenții cu exclusivitate"}<br />
-          {"0% comision pentru cumpărător!!!"}
+          {"0% comision pentru cumpărător!"}
         </Button>
 
         <RightSection>
@@ -314,7 +314,7 @@ const Header = () => {
 
           <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=agency&status=active")}>
             {"Anunțuri agenții cu exclusivitate"}<br />
-            {"0% comision pentru cumpărător!!!"}
+            {"0% comision pentru cumpărător!"}
           </div>
         </DrawerContent>
       </Drawer>

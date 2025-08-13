@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Divider,
   Grid,
+  Link,
   Paper,
   Typography,
 } from "@mui/material";
@@ -17,6 +18,21 @@ import { observer } from "mobx-react";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
+
+const formatMonthYear = (iso?: string) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  // ex: "august 2026" -> "August 2026"
+  const s = new Intl.DateTimeFormat("ro-RO", {
+    month: "long",
+    year: "numeric",
+  }).format(d);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+const hasNumber = (v: any) =>
+  v !== null && v !== undefined && v !== 0;
 
 const EnsembleAnnouncementDetailsPage = () => {
   const {
@@ -40,16 +56,20 @@ const EnsembleAnnouncementDetailsPage = () => {
     );
   }
 
-  const announcement = currentAnnouncement;
+  const a = currentAnnouncement;
+
+  const amenities: string[] = Array.isArray(a.amenities)
+    ? a.amenities.filter(Boolean)
+    : [];
 
   return (
     <Box sx={{ px: 1.5, py: 2, maxWidth: "1300px", mx: "auto" }}>
       <Box sx={{ mb: 1 }}>
         <AutoImageCarousel
           images={
-            announcement.images?.length
-              ? announcement.images.map((img) => ({ url: img.original }))
-              : [{ url: announcement.imageUrl || "/default.jpg" }]
+            a.images?.length
+              ? a.images.map((img) => ({ url: img.original }))
+              : [{ url: a.imageUrl || "/default.jpg" }]
           }
         />
       </Box>
@@ -75,10 +95,10 @@ const EnsembleAnnouncementDetailsPage = () => {
             fontSize: "1.2rem",
           }}
         >
-          {announcement.title}
+          {a.title}
         </Typography>
         <Typography variant="subtitle2" sx={{ mt: 0.5, color: "#555" }}>
-          {announcement.city}
+          {[a.city, a.county].filter(Boolean).join(", ")}
         </Typography>
       </Box>
 
@@ -90,27 +110,110 @@ const EnsembleAnnouncementDetailsPage = () => {
             </Typography>
             <Divider sx={{ mb: 1 }} />
 
-            {announcement.city && (
-              <Typography variant="body2"><strong>Oraș:</strong> {announcement.city}</Typography>
-            )}
-            {announcement.announcementType && (
-              <Typography variant="body2"><strong>Tip:</strong> {announcement.announcementType}</Typography>
-            )}
-            {announcement.rooms !== null && announcement.rooms !== undefined && announcement.rooms !== 0 && (
-              <Typography variant="body2"><strong>Camere:</strong> {announcement.rooms}</Typography>
-            )}
-            {announcement.surface !== null && announcement.surface !== undefined && announcement.surface !== 0 && (
-              <Typography variant="body2"><strong>Suprafață:</strong> {announcement.surface} mp</Typography>
-            )}
-            {announcement.price !== null && announcement.price !== undefined && announcement.price !== 0 && (
-              <Typography variant="body2"><strong>Preț:</strong> {announcement.price} EUR</Typography>
-            )}
-            {announcement.endDate && (
+            {a.city && (
               <Typography variant="body2">
-                <strong>Finalizare:</strong> {new Date(announcement.endDate).toLocaleDateString()}
+                <strong>Oraș:</strong> {a.city}
+              </Typography>
+            )}
+            {a.county && (
+              <Typography variant="body2">
+                <strong>Județ:</strong> {a.county}
+              </Typography>
+            )}
+            {a.street && (
+              <Typography variant="body2">
+                <strong>Stradă:</strong> {a.street}
+              </Typography>
+            )}
+            {a.neighborhood && (
+              <Typography variant="body2">
+                <strong>Cartier/Zonă:</strong> {a.neighborhood}
+              </Typography>
+            )}
+            {a.announcementType && (
+              <Typography variant="body2">
+                <strong>Tip:</strong> {a.announcementType}
+              </Typography>
+            )}
+            {hasNumber(a.rooms) && (
+              <Typography variant="body2">
+                <strong>Camere:</strong> {a.rooms}
+              </Typography>
+            )}
+            {hasNumber(a.surface) && (
+              <Typography variant="body2">
+                <strong>Suprafață utilă:</strong> {a.surface} mp
+              </Typography>
+            )}
+            {hasNumber(a.builtSurface) && (
+              <Typography variant="body2">
+                <strong>Suprafață construită:</strong> {a.builtSurface} mp
+              </Typography>
+            )}
+            {hasNumber(a.landSurface) && (
+              <Typography variant="body2">
+                <strong>Suprafață teren:</strong> {a.landSurface} mp
+              </Typography>
+            )}
+            {hasNumber(a.floorsCount) && (
+              <Typography variant="body2">
+                <strong>Nr. de etaje:</strong> {a.floorsCount}
+              </Typography>
+            )}
+            {hasNumber(a.price) && (
+              <Typography variant="body2">
+                <strong>Preț:</strong> {a.price} {a.currency || "EUR"}
+              </Typography>
+            )}
+            {a.stage && (
+              <Typography variant="body2">
+                <strong>Stadiu:</strong> {a.stage}
+              </Typography>
+            )}
+            {a.constructionStart && (
+              <Typography variant="body2">
+                <strong>Începerea construcției:</strong>{" "}
+                {formatMonthYear(a.constructionStart)}
+              </Typography>
+            )}
+            {a.endDate && (
+              <Typography variant="body2">
+                <strong>Finalizare:</strong> {formatMonthYear(a.endDate)}
+              </Typography>
+            )}
+            {a.developerSite && (
+              <Typography variant="body2">
+                <strong>Site dezvoltator:</strong>{" "}
+                <Link
+                  href={a.developerSite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  underline="hover"
+                >
+                  {a.developerSite}
+                </Link>
+              </Typography>
+            )}
+            {a.frameType && (
+              <Typography variant="body2">
+                <strong>Tip chenar (prezentare):</strong> {a.frameType}
               </Typography>
             )}
           </Paper>
+
+          {amenities.length > 0 && (
+            <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
+              <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+                Facilități
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {amenities.map((f, idx) => (
+                  <Chip key={`${f}-${idx}`} label={f} size="small" />
+                ))}
+              </Box>
+            </Paper>
+          )}
 
           <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
             <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
@@ -118,30 +221,30 @@ const EnsembleAnnouncementDetailsPage = () => {
             </Typography>
             <Divider sx={{ mb: 1 }} />
             <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-              {announcement.description || "Fără descriere disponibilă."}
+              {a.description || "Fără descriere disponibilă."}
             </Typography>
           </Paper>
 
-          {announcement.apartmentTypeOther && (
+          {a.apartmentTypeOther && (
             <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1 }}>
               <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
                 Tipuri de apartamente
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-                {announcement.apartmentTypeOther}
+                {a.apartmentTypeOther}
               </Typography>
             </Paper>
           )}
         </Grid>
 
         <Grid item xs={12} md={3}>
-          {(announcement.logoUrl || announcement.phoneContact) && (
+          {(a.logoUrl || a.phoneContact) && (
             <Box sx={{ position: { md: "sticky" }, top: 20 }}>
               <DeveloperContactCard
-                name={announcement.developerName || "Dezvoltator"}
-                phone={announcement.phoneContact || "N/A"}
-                logoUrl={announcement.logoUrl || "/default-logo.png"}
+                name={a.developerName || "Dezvoltator"}
+                phone={a.phoneContact || "N/A"}
+                logoUrl={a.logoUrl || "/default-logo.png"}
               />
             </Box>
           )}
@@ -157,8 +260,11 @@ const EnsembleAnnouncementDetailsPage = () => {
           justifyContent: { xs: "center", md: "flex-start" },
         }}
       >
-        {announcement.city && <Chip label={announcement.city} size="small" />}
-        {announcement.announcementType && <Chip label={announcement.announcementType} size="small" />}
+        {a.city && <Chip label={a.city} size="small" />}
+        {a.announcementType && <Chip label={a.announcementType} size="small" />}
+        {a.neighborhood && <Chip label={a.neighborhood} size="small" />}
+        {a.stage && <Chip label={`Stadiu: ${a.stage}`} size="small" />}
+        {a.endDate && <Chip label={`Finalizare: ${formatMonthYear(a.endDate)}`} size="small" />}
       </Box>
     </Box>
   );

@@ -62,6 +62,13 @@ export interface PropertyAnnouncementModel {
   hasStreetEntrance?: boolean;
   hasLift?: boolean;
   vehicleAccess?: string[];
+  stage?: string;
+  neighborhood?: string;          // Cartier / zonă
+  constructionStart?: string;     // ISO (prima zi a lunii)
+  floorsCount?: number;           // Nr. de etaje
+  amenities?: string[];           // Facilități (listă)
+  developerSite?: string;         // URL site dezvoltator
+  frameType?: string;             // Tip chenar pagina de prezentare
 }
 
 export class CreateAnnouncementDto {
@@ -119,6 +126,13 @@ export class CreateAnnouncementDto {
   hasStreetEntrance?: boolean = false; // Intrare din stradă
   hasLift?: boolean = false; // Lift
   vehicleAccess: string[] = []; // Acces auto
+  stage?: string;
+  neighborhood?: string = "";
+  constructionStart?: string = "";     // ISO (ex: 2026-08-01T00:00:00.000Z)
+  floorsCount?: number = 0;
+  amenities?: string[] = [];           // parsezi din textarea (split pe virgulă)
+  developerSite?: string = "";
+  frameType?: string = "";
 }
 
 export interface FetchAnnouncementsModel {

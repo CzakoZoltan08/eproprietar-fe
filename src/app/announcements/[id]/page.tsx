@@ -521,6 +521,237 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   );
 };
 
+// --- AdditionalDetailsCard: shows new fields only when present ---
+const SectionCard = styled(Box)`
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+`;
+
+const Row = styled.div`
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Label = styled.span`
+  color: #666;
+  font-size: 14px;
+`;
+
+const Value = styled.span`
+  color: #111;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: pre-wrap;
+`;
+
+// Accept "any" to avoid TS friction with your store model
+const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }) => {
+  if (!announcement) return null;
+
+  // Pull values safely
+  const {
+    // Land
+    landType,
+    landPlacement,
+    urbanismDocuments,
+    utilities,
+    // House (Casa / Case la tara)
+    streetFront,
+    streetFrontLength,
+    heightRegime,
+    // Apartment
+    balconyCount,
+    parkingCount,
+    // Commercial
+    commercialSpaceType,
+    usableSurface,
+    builtSurface,
+    spaceHeight,
+    hasStreetWindow,
+    streetWindowLength,
+    hasStreetEntrance,
+    hasLift,
+    vehicleAccess,
+  } = announcement ?? {};
+
+  // Transform helpers
+  const toYesNo = (v: boolean | null | undefined) =>
+    v === true ? "Da" : v === false ? "Nu" : undefined;
+
+  const joinArr = (arr?: string[]) => Array.isArray(arr) && arr.length ? arr.join(", ") : undefined;
+
+  const utilRows: (string | undefined)[][] = [
+    ["Curent", toYesNo(utilities?.curent)],
+    ["Apă", toYesNo(utilities?.apa)],
+    ["Canalizare", toYesNo(utilities?.canalizare)],
+    ["Gaz", toYesNo(utilities?.gaz)],
+  ].filter(([, v]) => v !== undefined);
+
+  // Decide if we have anything to show
+  const hasAnything =
+    !!landType ||
+    !!landPlacement ||
+    (urbanismDocuments && urbanismDocuments.length > 0) ||
+    utilRows.length > 0 ||
+    typeof streetFront === "boolean" ||
+    (typeof streetFrontLength === "number" && streetFrontLength > 0) ||
+    (heightRegime && heightRegime.length > 0) ||
+    (typeof balconyCount === "number" && balconyCount > 0) ||
+    (typeof parkingCount === "number" && parkingCount > 0) ||
+    !!commercialSpaceType ||
+    (typeof usableSurface === "number" && usableSurface > 0) ||
+    (typeof builtSurface === "number" && builtSurface > 0) ||
+    (typeof spaceHeight === "number" && spaceHeight > 0) ||
+    typeof hasStreetWindow === "boolean" ||
+    (typeof streetWindowLength === "number" && streetWindowLength > 0) ||
+    typeof hasStreetEntrance === "boolean" ||
+    typeof hasLift === "boolean" ||
+    (vehicleAccess && vehicleAccess.length > 0);
+
+  if (!hasAnything) return null;
+
+  return (
+    <SectionCard>
+      <Typography variant="h6" sx={{ mb: 1.5 }}>
+        Detalii suplimentare
+      </Typography>
+
+      {/* --- LAND (Teren) --- */}
+      {landType && (
+        <Row>
+          <Label>Tip teren</Label>
+          <Value>{landType}</Value>
+        </Row>
+      )}
+      {landPlacement && (
+        <Row>
+          <Label>Amplasare</Label>
+          <Value>{landPlacement}</Value>
+        </Row>
+      )}
+      {urbanismDocuments?.length > 0 && (
+        <Row>
+          <Label>Urbanism</Label>
+          <Value>{joinArr(urbanismDocuments)}</Value>
+        </Row>
+      )}
+      {utilRows.length > 0 && (
+        <>
+          {utilRows.map(([k, v]) => (
+            <Row key={k}>
+              <Label>{k}</Label>
+              <Value>{v}</Value>
+            </Row>
+          ))}
+        </>
+      )}
+
+      {/* --- HOUSE (Casa / Case la tara) --- */}
+      {typeof streetFront === "boolean" && (
+        <Row>
+          <Label>Front la stradă</Label>
+          <Value>{toYesNo(streetFront)}</Value>
+        </Row>
+      )}
+      {streetFront && typeof streetFrontLength === "number" && streetFrontLength > 0 && (
+        <Row>
+          <Label>Front la stradă (ml)</Label>
+          <Value>{streetFrontLength}</Value>
+        </Row>
+      )}
+      {heightRegime?.length > 0 && (
+        <Row>
+          <Label>Regim înălțime</Label>
+          <Value>{joinArr(heightRegime)}</Value>
+        </Row>
+      )}
+
+      {/* --- APARTMENT --- */}
+      {typeof balconyCount === "number" && balconyCount > 0 && (
+        <Row>
+          <Label>Număr balcoane</Label>
+          <Value>{balconyCount}</Value>
+        </Row>
+      )}
+      {typeof parkingCount === "number" && parkingCount > 0 && (
+        <Row>
+          <Label>Locuri parcare/garaj</Label>
+          <Value>{parkingCount}</Value>
+        </Row>
+      )}
+
+      {/* --- COMMERCIAL (Comercial) --- */}
+      {commercialSpaceType && (
+        <Row>
+          <Label>Tip spațiu</Label>
+          <Value>{commercialSpaceType[0].toUpperCase() + commercialSpaceType.slice(1)}</Value>
+        </Row>
+      )}
+      {typeof usableSurface === "number" && usableSurface > 0 && (
+        <Row>
+          <Label>Suprafață utilă (mp)</Label>
+          <Value>{usableSurface}</Value>
+        </Row>
+      )}
+      {typeof builtSurface === "number" && builtSurface > 0 && (
+        <Row>
+          <Label>Suprafață construită (mp)</Label>
+          <Value>{builtSurface}</Value>
+        </Row>
+      )}
+      {typeof spaceHeight === "number" && spaceHeight > 0 && (
+        <Row>
+          <Label>Înălțime spațiu (m)</Label>
+          <Value>{spaceHeight}</Value>
+        </Row>
+      )}
+      {typeof hasStreetWindow === "boolean" && (
+        <Row>
+          <Label>Vitrină la stradă</Label>
+          <Value>{toYesNo(hasStreetWindow)}</Value>
+        </Row>
+      )}
+      {typeof streetWindowLength === "number" && streetWindowLength > 0 && (
+        <Row>
+          <Label>Front vitrină (ml)</Label>
+          <Value>{streetWindowLength}</Value>
+        </Row>
+      )}
+      {typeof hasStreetEntrance === "boolean" && (
+        <Row>
+          <Label>Intrare din stradă</Label>
+          <Value>{toYesNo(hasStreetEntrance)}</Value>
+        </Row>
+      )}
+      {typeof hasLift === "boolean" && (
+        <Row>
+          <Label>Lift</Label>
+          <Value>{toYesNo(hasLift)}</Value>
+        </Row>
+      )}
+      {vehicleAccess?.length > 0 && (
+        <Row>
+          <Label>Acces auto</Label>
+          <Value>{joinArr(vehicleAccess)}</Value>
+        </Row>
+      )}
+    </SectionCard>
+  );
+};
+
 const AnnouncementDetailPage: React.FC = () => {
   const { announcementStore } = useStore();
   const { getAnnouncementById, fetchAnnouncementImages, currentAnnouncement } = announcementStore;
@@ -578,6 +809,8 @@ const AnnouncementDetailPage: React.FC = () => {
             <Box>No media available</Box>
           )}
         </GalleryAlignmentWrapper>
+
+        <AdditionalDetailsCard announcement={currentAnnouncement} />
 
         <CharacteristicsCard />
 

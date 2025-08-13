@@ -245,7 +245,7 @@ export default function CreateAnnounce() {
                 title={opt.title}
                 subtitle={opt.subtitle}
                 imageSrc={opt.imageSrc}
-                badgeText={opt.key === "agency" ? "0% comision pentru cumpărător!!!" : undefined}
+                badgeText={opt.key === "agency" ? "0% comision pentru cumpărător!" : undefined}
               />
             ))}
           </CardsRow>

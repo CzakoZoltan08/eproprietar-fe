@@ -20,7 +20,7 @@ import Image from "next/image";
 import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
-import bannerEproprietar from "./assets/banner_eproprietar.png";
+import bannerEproprietar from "./assets/banner_eproprietar.jpeg";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
 
@@ -361,7 +361,7 @@ export const Main = () => {
 
           <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
 
-          <div style={{ width: "90%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
+          <div style={{ width: "80%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
             <Image
               src={bannerEproprietar}
               alt="Beneficii eproprietar"
