@@ -15,6 +15,7 @@ import { propertyTypesResidential, serviceTypes } from "@/constants/annountement
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
+import FlyerUploader from "@/common/flyerUploader/FlyerUploader";
 import MediaUploader from "@/common/media/MediaUploader";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import PrimaryDatePicker from "@/common/datepicker/PrimaryDatePicker";
@@ -87,6 +88,9 @@ const INITIAL_DATA = {
   amenities: "",                 // Facilități
   developerSite: "",             // Site dezvoltator
   frameType: "",                 // Tip chenar pe pagina de prezentare
+  flyer: null as File | null,   // local file
+  flyerUrl: "",                 // server URL (edit mode/backfill)
+  flyerMimeType: "",            // saved mime
 };
 
 const ResidentialAnnouncementForm = () => {
@@ -95,6 +99,7 @@ const ResidentialAnnouncementForm = () => {
   const { createAnnouncement, updateAnnouncement, createImageOrVideo } = announcementStore;
 
   const [formData, setFormData] = useState(INITIAL_DATA);
+  const [flyerError, setFlyerError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({
   ...INITIAL_DATA,
 });
@@ -124,6 +129,16 @@ const ResidentialAnnouncementForm = () => {
       name
     );
     setFormErrors((prev) => ({ ...prev, [name]: fieldError }));
+  };
+
+  const handleRemoveFlyer = () => {
+    setFormData(prev => ({
+      ...prev,
+      flyer: null,
+      flyerUrl: "",
+      flyerMimeType: "",
+    }));
+    setFlyerError(null);
   };
 
   const handleDateChange = (date: Date | null) => {
@@ -214,6 +229,24 @@ const ResidentialAnnouncementForm = () => {
       incrementVideo();
     }
 
+    // ─── 5. Upload flyer (PDF or image) ───
+    if (formData.flyer) {
+      const fd = new FormData();
+      fd.append("file", formData.flyer);
+      fd.append("type", "flyer"); // backend should accept this
+
+      const resp = await createImageOrVideo(fd, announcementId);
+      const url = resp?.optimized_url || resp?.url || "";
+      const mime = resp?.mimeType || formData.flyer.type;
+
+      if (url) {
+        await updateAnnouncement(announcementId, {
+          flyerUrl: url,
+          flyerMimeType: mime,
+        });
+      }
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
   };
 
@@ -282,6 +315,8 @@ const ResidentialAnnouncementForm = () => {
           : [],
         developerSite: formData.developerSite,
         frameType: formData.frameType,
+        flyerUrl: formData.flyerUrl || "",         // if you prefill on edit
+        flyerMimeType: formData.flyerMimeType || "",
       };
 
       const newAnnouncement = await createAnnouncement(payload);
@@ -537,6 +572,25 @@ const ResidentialAnnouncementForm = () => {
               handleChange={handleDateChange}
               monthYearOnly   // 👈 va afișa doar luna+an (ex: August 2026)
             />
+            <Box width="100%" display="flex" justifyContent="center" mt={2}>
+              <FlyerUploader
+                file={formData.flyer}
+                setFile={(f) => setFormData((p) => ({ ...p, flyer: f }))}
+                url={formData.flyerUrl}
+                mimeType={formData.flyerMimeType}
+                error={flyerError || undefined}
+                setError={setFlyerError}
+                onPreviewClickRemove={() => {
+                  setFormData(p => ({
+                    ...p,
+                    flyer: null,
+                    flyerUrl: "",
+                    flyerMimeType: "",
+                  }));
+                  setFlyerError(null);
+                }}
+              />
+            </Box>
             <MediaUploader
               logo={formData.logo}
               setLogo={(file) => setFormData((prev) => ({ ...prev, logo: file }))}

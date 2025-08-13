@@ -69,6 +69,8 @@ export interface PropertyAnnouncementModel {
   amenities?: string[];           // Facilități (listă)
   developerSite?: string;         // URL site dezvoltator
   frameType?: string;             // Tip chenar pagina de prezentare
+  flyerUrl?: string;          // public URL to flyer
+  flyerMimeType?: string;     // e.g., "application/pdf", "image/png"
 }
 
 export class CreateAnnouncementDto {
@@ -133,6 +135,8 @@ export class CreateAnnouncementDto {
   amenities?: string[] = [];           // parsezi din textarea (split pe virgulă)
   developerSite?: string = "";
   frameType?: string = "";
+  flyerUrl?: string;
+  flyerMimeType?: string;
 }
 
 export interface FetchAnnouncementsModel {
@@ -146,5 +150,4 @@ export interface FetchAnnouncementsModel {
   };
   select?: string[];
   path?: string;
-  
 }

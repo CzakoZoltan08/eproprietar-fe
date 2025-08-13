@@ -14,6 +14,7 @@ import {
 import { AutoImageCarousel } from "@/common/autoImageCarousel/AutoImageCarousel";
 import { COLOR_TEXT } from "@/constants/colors";
 import { DeveloperContactCard } from "@/common/developerContactCard/DeveloperContactCard";
+import FlyerViewer from "@/common/flyerViewer/FlyerViewer";
 import { observer } from "mobx-react";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -213,6 +214,10 @@ const EnsembleAnnouncementDetailsPage = () => {
                 ))}
               </Box>
             </Paper>
+          )}
+
+          {(a.flyerUrl) && (
+            <FlyerViewer url={a.flyerUrl} mimeType={a.flyerMimeType} />
           )}
 
           <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
