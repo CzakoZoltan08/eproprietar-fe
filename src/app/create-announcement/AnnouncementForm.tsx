@@ -5,8 +5,11 @@ import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react
 import {
   apartamentPartitionings,
   apartmentFloors,
+  balconyCounts,
   balconyTypes,
   comfortLevels,
+  kitchenOptionsMax2,
+  parkingCounts,
   parkingTypes,
   propertyTypes,
   roomOptions,
@@ -300,6 +303,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     numberOfKitchens: "",
     balcony: "",
     parking: "",
+    balconyCount: "",
+    parkingCount: "",
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
@@ -450,6 +455,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             numberOfKitchens: announcement.numberOfKitchens?.toString() || "",
             balcony: announcement.balcony || "",
             parking: announcement.parking || "",
+            balconyCount: announcement.balconyCount?.toString() || "",
+            parkingCount: announcement.parkingCount?.toString() || "",
             // We leave `formData.images` empty: newly selected Files go here
             images: [],
             // We leave `formData.videos` empty: newly selected Files go here
@@ -855,6 +862,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
         streetFrontLength: Number(data.streetFrontLength) ?? 0,
+        balconyCount: data.balconyCount !== undefined && data.balconyCount !== null ? Number(data.balconyCount) : undefined,
+        parkingCount: data.parkingCount !== undefined && data.parkingCount !== null ? Number(data.parkingCount) : undefined,
         status: userStore.user && userStore.user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
@@ -1559,7 +1568,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 {/* Number of Kitchens */}
                 <SelectDropdown
                   label="Număr bucătării"
-                  options={roomOptions}
+                  options={kitchenOptionsMax2}
                   name="numberOfKitchens"
                   value={formData.numberOfKitchens}
                   handleChange={handleSelectChange}
@@ -1592,18 +1601,36 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                   handleChange={handleSelectChange}
                 />
 
+                {/* Număr balcoane */}
+                <SelectDropdown
+                  label="Număr balcoane"
+                  options={balconyCounts}
+                  name="balconyCount"
+                  value={formData.balconyCount}
+                  handleChange={handleSelectChange}
+                />
+
                 {/* Balcony */}
                 <SelectDropdown
-                  label="Balcon"
+                  label="Tip balcon"
                   options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
                   name="balcony"
                   value={formData.balcony}
                   handleChange={handleSelectChange}
                 />
 
+                {/* Parcare/Garaj – număr */}
+                <SelectDropdown
+                  label="Parcare/Garaj (număr)"
+                  options={parkingCounts}
+                  name="parkingCount"
+                  value={formData.parkingCount}
+                  handleChange={handleSelectChange}
+                />
+
                 {/* Parking */}
                 <SelectDropdown
-                  label="Parcare"
+                  label="Tip parcare"
                   options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
                   name="parking"
                   value={formData.parking}

@@ -29,6 +29,8 @@ export interface PropertyAnnouncementModel {
   numberOfKitchens?: number;
   balcony?: string;
   parking?: string;
+  balconyCount?: number; // Add this line
+  parkingCount?: number; // Add this line
   images?: { original: string; thumbnail: string }[];
   videos?: { original: string; format: string }[];
   endDate?: string; // Add this line
@@ -77,6 +79,10 @@ export class CreateAnnouncementDto {
   description?: string = '';
   partitioning?: string;
   numberOfKitchens?: number;
+  balcony?: string;
+  parking?: string;
+  balconyCount?: number;
+  parkingCount?: number;
   floor?: number;
   isNew?: boolean;
   user: { id: string; firebaseId: string } = { id: '', firebaseId: ''};
