@@ -133,7 +133,7 @@ export class CreateAnnouncementDto {
   constructionStart?: string = "";     // ISO (ex: 2026-08-01T00:00:00.000Z)
   floorsCount?: number = 0;
   amenities?: string[] = [];           // parsezi din textarea (split pe virgulă)
-  developerSite?: string = "";
+  developerSite?: string | null = null;
   frameType?: string = "";
   flyerUrl?: string;
   flyerMimeType?: string;

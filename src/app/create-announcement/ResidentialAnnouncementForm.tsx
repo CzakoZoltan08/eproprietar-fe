@@ -86,7 +86,7 @@ const INITIAL_DATA = {
   builtSurface: "",              // Suprafață construită (m²)
   landSurface: "",               // Suprafață teren (m²)
   amenities: "",                 // Facilități
-  developerSite: "",             // Site dezvoltator
+  developerSite: null,             // Site dezvoltator
   frameType: "",                 // Tip chenar pe pagina de prezentare
   flyer: null as File | null,   // local file
   flyerUrl: "",                 // server URL (edit mode/backfill)
@@ -252,7 +252,7 @@ const ResidentialAnnouncementForm = () => {
 
   const handleSubmit = async () => {
     setIsSubmitted(true)
-    const { logo, images, videos, ...cleanFormData } = formData;
+    const { logo, images, videos, flyer, ...cleanFormData } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
       contactPhone,
@@ -313,7 +313,7 @@ const ResidentialAnnouncementForm = () => {
         amenities: formData.amenities
           ? formData.amenities.split(",").map(a => a.trim()).filter(a => a)
           : [],
-        developerSite: formData.developerSite,
+        developerSite: formData.developerSite ? formData.developerSite : null,
         frameType: formData.frameType,
         flyerUrl: formData.flyerUrl || "",         // if you prefill on edit
         flyerMimeType: formData.flyerMimeType || "",
