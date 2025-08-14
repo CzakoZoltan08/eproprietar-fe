@@ -361,14 +361,30 @@ export const Main = () => {
 
           <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
 
-          <div style={{ width: "80%", display: "flex", justifyContent: "center", marginTop: "24px" }}>
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              marginTop: isDesktop ? "24px" : "16px",
+              marginBottom: isDesktop ? "24px" : "32px",
+            }}
+          >
             <Image
               src={bannerEproprietar}
               alt="Beneficii eproprietar"
+              // Helps with LCP (it’s above the fold)
+              priority
+              placeholder="blur" // works with static imports
+              // Let the image keep its intrinsic ratio and scale to container
               style={{
-                width: "100%",
-                maxHeight: "800px",
+                width: isDesktop ? "60%" : "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: isDesktop ? "12px" : "0",
               }}
+              // Tell the browser how wide the image appears at different viewports
+              sizes={isDesktop ? "60vw" : "100vw"}
             />
           </div>
         </>
