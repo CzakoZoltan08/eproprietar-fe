@@ -417,28 +417,28 @@ export default function GDPR() {
               <p>
                 Compania este proprietarul sau licențiatul drepturilor de
                 proprietate intelectuală a structurii generale a site-ului Web,
-                precum și a conținutului desemnat expres ca sursă eproprietar.ro
-                .
-                <p>
-                  Pe de altă parte, Compania nu este nici proprietar și nici
-                  responsabil, indiferent de capacitate și chiar dacă este
-                  concesionară a drepturilor de proprietate intelectuală, a
-                  întregii celelalte conținuturi de pe Site (în special
-                  anunțuri, texte, sloganuri , grafică, imagini, videoclipuri,
-                  fotografii și alt conținut), care este responsabilitatea
-                  exclusivă a proprietarilor acestora (personae fizice sau
-                  dezvoltatori care sunt autori de oferte publicate sau diferiți
-                  furnizori de date).
-                </p>
-                <p>
-                  Orice reprezentare, reproducere, modificare, denaturare și /
-                  sau exploatare, integral sau parțial, a site-ului Web și / sau
-                  a conținutului acestuia (indiferent de autor) și / sau a
-                  Serviciilor, prin orice mijloace și pe orice suport că este,
-                  fără autorizarea expresă și preliminară a Companiei sau a
-                  autorului conținutului, potrivit cazurilor, este interzis și
-                  constituie acte de încălcare a drepturilor de autor.
-                </p>
+                precum și a conținutului desemnat expres ca sursă eproprietar.ro.
+                
+                <br /><br />
+                Pe de altă parte, Compania nu este nici proprietar și nici
+                responsabil, indiferent de capacitate și chiar dacă este
+                concesionară a drepturilor de proprietate intelectuală, a
+                întregii celelalte conținuturi de pe Site (în special
+                anunțuri, texte, sloganuri , grafică, imagini, videoclipuri,
+                fotografii și alt conținut), care este responsabilitatea
+                exclusivă a proprietarilor acestora (personae fizice sau
+                dezvoltatori care sunt autori de oferte publicate sau diferiți
+                furnizori de date).
+              
+                <br /><br />
+                Orice reprezentare, reproducere, modificare, denaturare și /
+                sau exploatare, integral sau parțial, a site-ului Web și / sau
+                a conținutului acestuia (indiferent de autor) și / sau a
+                Serviciilor, prin orice mijloace și pe orice suport că este,
+                fără autorizarea expresă și preliminară a Companiei sau a
+                autorului conținutului, potrivit cazurilor, este interzis și
+                constituie acte de încălcare a drepturilor de autor.
+               
               </p>
 
               <h2>FORȚA MAJORA</h2>
