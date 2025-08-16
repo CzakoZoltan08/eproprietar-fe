@@ -168,16 +168,16 @@ const Footer = () => {
         <Section>
           <SectionTitle>Ghid imobiliar</SectionTitle>
           <GuideButtonsGrid>
-            <GuideButton onClick={() => goTo({ link: "/ghid/chiriasi" })}>
+            <GuideButton onClick={() => goTo({ link: "/guide/tenants" })}>
               Ghid pentru chiriași
             </GuideButton>
-            <GuideButton onClick={() => goTo({ link: "/ghid/proprietari-vanzare" })}>
+            <GuideButton onClick={() => goTo({ link: "/guide/owners-sale" })}>
               Ghid pentru proprietari (vânzare)
             </GuideButton>
-            <GuideButton onClick={() => goTo({ link: "/ghid/proprietari-inchiriere" })}>
+            <GuideButton onClick={() => goTo({ link: "/guide/owners-rent" })}>
               Ghid pentru proprietari (închiriere)
             </GuideButton>
-            <GuideButton onClick={() => goTo({ link: "/ghid/cumparatori" })}>
+            <GuideButton onClick={() => goTo({ link: "/guide/buyers" })}>
               Ghid pentru cumpărători
             </GuideButton>
           </GuideButtonsGrid>
