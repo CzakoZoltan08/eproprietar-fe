@@ -37,8 +37,15 @@ const HeaderBlock = styled(Box)`
   margin-bottom: 24px;
 `;
 
-const SectionTitle = (props: { children: React.ReactNode; mt?: number; mb?: number }) => (
-  <Typography variant="h5" fontWeight={700} color="primary" mt={props.mt ?? 0} mb={props.mb ?? 0}>
+const SectionTitle = (props: { children: React.ReactNode; mt?: number; mb?: number; style?: React.CSSProperties }) => (
+  <Typography
+    variant="h5"
+    fontWeight={700}
+    color="primary"
+    mt={props.mt ?? 0}
+    mb={props.mb ?? 0}
+    style={props.style}
+  >
     {props.children}
   </Typography>
 );
@@ -83,6 +90,74 @@ const CardInner = styled(Box)<{ $hasBadge?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
+`;
+
+/* ------- Promotion specific design (single-column, centered, spaced, highlighted) ------- */
+
+const PromotionGrid = styled.div<{ $single?: boolean }>`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PromoCard = styled(Card)<{ selected: boolean }>`
+  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    border-color: ${COLOR_PRIMARY};
+    box-shadow: 0 4px 16px rgba(25, 103, 210, 0.15);
+  }
+`;
+
+const PromoLabel = styled.div`
+  font-weight: 600;
+  color: ${COLOR_TEXT};
+  opacity: 0.8;
+  margin-bottom: 6px;
+`;
+
+const PromoValue = styled.div`
+  font-size: 1rem;
+  margin-bottom: 18px; /* more space between rows */
+`;
+
+const PromoPrice = styled.div`
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: ${COLOR_PRIMARY};
+  margin-bottom: 18px;
+`;
+
+const PromoBenefit = styled(PromoValue)`
+  font-weight: 700;
+  color: ${COLOR_PRIMARY};
+`;
+
+const PromoDivider = styled.div`
+  height: 1px;
+  background: ${COLOR_BORDER_PRIMARY};
+  margin: 16px 0;
+  opacity: 0.6;
+`;
+
+const PromoRecommendation = styled(Box)`
+  background: #f5f9ff;
+  border: 1px dashed ${COLOR_PRIMARY};
+  color: ${COLOR_PRIMARY};
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-top: 24px;
+  text-align: center;
+  font-weight: 600;
 `;
 
 /* --------------- helpers / mock features for other audiences --------------- */
@@ -170,7 +245,7 @@ const getOwnerPackages = () => [
     currentPriceText: "7 EURO",
     durationDays: 7,
     standardPrice: 7,
-    price: 7, // used for totals
+    price: 7,
     costPerDayText: "1 Euro / Zi",
     currency: "EUR",
   },
@@ -194,9 +269,9 @@ const getOwnerPackages = () => [
     durationText: "NELIMITAT",
     standardPriceText: "30 EURO",
     currentPriceText: "20 EURO",
-    durationDays: -1, // unlimited
+    durationDays: -1,
     standardPrice: 30,
-    price: 20, // discounted
+    price: 20,
     currency: "EUR",
     badge: "Cel mai ales",
     highlights: [
@@ -207,6 +282,101 @@ const getOwnerPackages = () => [
     ],
   },
 ];
+
+/* ---------- Fixed promotion options & renderer ---------- */
+
+type FixedPromotion = {
+  id: string;
+  label: string; // Tip Promovare (with stars)
+  durationText: string;
+  price: number;
+  currency: "EUR";
+  benefit: string;
+  stars: string;
+};
+
+const getFixedPromotions = (): FixedPromotion[] => [
+  {
+    id: "promo-basic",
+    label: "⭐ Promovare BASIC",
+    durationText: "7 zile",
+    price: 5,
+    currency: "EUR",
+    benefit: "Mai multă expunere în listări",
+    stars: "⭐",
+  },
+  {
+    id: "promo-plus",
+    label: "⭐⭐ Promovare PLUS",
+    durationText: "15 zile",
+    price: 8,
+    currency: "EUR",
+    benefit: "Vizibilitate dublă față de pachetul standard",
+    stars: "⭐⭐",
+  },
+  {
+    id: "promo-max",
+    label: "⭐⭐⭐ Promovare MAX",
+    durationText: "30 zile",
+    price: 10,
+    currency: "EUR",
+    benefit: "Prezență susținută și constantă",
+    stars: "⭐⭐⭐",
+  },
+];
+
+const PromotionCards = ({
+  promotions,
+  selectedPromotion,
+  onSelect,
+}: {
+  promotions: FixedPromotion[];
+  selectedPromotion: FixedPromotion | null;
+  onSelect: (p: FixedPromotion | null) => void;
+}) => (
+  <>
+    <SectionTitle mt={6} mb={2} style={{ textAlign: "center" }}>
+      Alege una dintre opțiunile de promovare pentru a atrage mai mulți vizitatori către anunțul tău:
+    </SectionTitle>
+
+    <PromotionGrid>
+      {promotions.map((p) => {
+        const isSelected = selectedPromotion?.id === p.id;
+        return (
+          <PromoCard
+            key={p.id}
+            selected={isSelected}
+            onClick={() => onSelect(isSelected ? null : p)}
+          >
+            <Typography fontWeight={800} fontSize="1.1rem" mb={2}>
+              {p.label}
+            </Typography>
+
+            <PromoDivider />
+
+            <PromoLabel>Tip Promovare</PromoLabel>
+            <PromoValue>{p.label.replace(/^[⭐\s]+/, "")}</PromoValue>
+
+            <PromoLabel>Durată</PromoLabel>
+            <PromoValue>{p.durationText}</PromoValue>
+
+            <PromoLabel>Preț</PromoLabel>
+            <PromoPrice>
+              {p.price} {p.currency}
+            </PromoPrice>
+
+            <PromoLabel>Beneficiu</PromoLabel>
+            <PromoBenefit>{p.benefit}</PromoBenefit>
+          </PromoCard>
+        );
+      })}
+    </PromotionGrid>
+
+    <PromoRecommendation>
+      💡 Recomandare: Combină promovarea cu <b>Pachetul Nelimitat</b> pentru rezultate maxime!
+    </PromoRecommendation>
+  </>
+);
 
 /* ---------------- component ---------------- */
 
@@ -282,35 +452,19 @@ const SelectPackagePage = () => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
 
-      // ENSEMBLE: fixed packages, no promotions
       if (isEnsemble) {
         setPackages(getEnsemblePackages());
         setPromotions([]);
         return;
       }
 
-      // OWNER: fixed packages + we DO want promotions (shown after base package selection)
       if (isOwner) {
         setPackages(getOwnerPackages());
-        try {
-          const fetchedPromotions = await getPromotionPackages(user.id);
-          const withMockFeatures = (items: any[]) =>
-            (items ?? []).map((item) => {
-              const features =
-                item.features?.length
-                  ? item.features
-                  : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
-              return { ...item, features };
-            });
-          setPromotions(withMockFeatures(fetchedPromotions));
-        } catch (err) {
-          console.error("Failed to load promotions for owner", err);
-          setPromotions([]);
-        }
+        setPromotions(getFixedPromotions());
         return;
       }
 
-      // AGENCY / NORMAL: fetch from backend
+      // Agency / Normal
       try {
         const audienceForPackages = audienceParam === "owner" ? "normal" : audienceParam;
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
@@ -328,13 +482,13 @@ const SelectPackagePage = () => {
           });
 
         setPackages(withMockFeatures(fetchedPackages));
-        setPromotions(withMockFeatures(fetchedPromotions));
+        setPromotions(isAgency ? getFixedPromotions() : withMockFeatures(fetchedPromotions));
       } catch (err) {
         console.error("Failed to load pricing options", err);
       }
     };
     fetchPricingData();
-  }, [user?.id, audienceParam, isEnsemble, isOwner, getAnnouncementPackages, getPromotionPackages]);
+  }, [user?.id, audienceParam, isEnsemble, isOwner, isAgency, getAnnouncementPackages, getPromotionPackages]);
 
   /* Auto-select when only one (non-owner flows) */
   useEffect(() => {
@@ -588,14 +742,13 @@ const SelectPackagePage = () => {
             <SectionTitle>Puteți beneficia de listare accesând unul dintre pachete:</SectionTitle>
           </HeaderBlock>
 
-          <PackageGrid $single={false}>
+        <PackageGrid $single={false}>
             {packages.map((pkg) => (
               <StyledCard
                 key={pkg.id}
                 selected={selectedPackage?.id === pkg.id}
                 onClick={() => {
                   setSelectedPackage(pkg);
-                  // reset promotion on changing base package
                   setSelectedPromotion(null);
                 }}
               >
@@ -608,27 +761,11 @@ const SelectPackagePage = () => {
           </PackageGrid>
 
           {shouldShowPromotions && (
-            <>
-              <SectionTitle mt={6} mb={2}>Adaugă promovare (opțional)</SectionTitle>
-              <PackageGrid $single={promotions.length === 1}>
-                {promotions.map((promo) => (
-                  <StyledCard
-                    key={promo.id}
-                    selected={selectedPromotion?.id === promo.id}
-                    onClick={() =>
-                      selectedPromotion?.id === promo.id
-                        ? setSelectedPromotion(null)
-                        : setSelectedPromotion(promo)
-                    }
-                  >
-                    {promo.badge && <Badge label={promo.badge} color="primary" size="small" />}
-                    <CardInner $hasBadge={!!promo.badge}>
-                      <GenericCardBody item={promo} />
-                    </CardInner>
-                  </StyledCard>
-                ))}
-              </PackageGrid>
-            </>
+            <PromotionCards
+              promotions={getFixedPromotions()}
+              selectedPromotion={selectedPromotion}
+              onSelect={(p) => setSelectedPromotion(p)}
+            />
           )}
         </>
       ) : (
@@ -652,37 +789,19 @@ const SelectPackagePage = () => {
             ))}
           </PackageGrid>
 
-          {/* For agency: show promotions only after a base package is chosen */}
-          {(isAgency ? !!selectedPackage : true) && promotions.length > 0 && (
-            <>
-              <SectionTitle mt={6} mb={2}>Adaugă promovare (opțional)</SectionTitle>
-              <PackageGrid $single={promotions.length === 1}>
-                {promotions.map((promo) => (
-                  <StyledCard
-                    key={promo.id}
-                    selected={selectedPromotion?.id === promo.id}
-                    onClick={() =>
-                      selectedPromotion?.id === promo.id
-                        ? setSelectedPromotion(null)
-                        : setSelectedPromotion(promo)
-                    }
-                  >
-                    {promo.badge && <Badge label={promo.badge} color="primary" size="small" />}
-                    <CardInner $hasBadge={!!promo.badge}>
-                      <GenericCardBody item={promo} />
-                    </CardInner>
-                  </StyledCard>
-                ))}
-              </PackageGrid>
-            </>
+          {(isAgency ? !!selectedPackage : true) && promotions.length >= 0 && (
+            <PromotionCards
+              promotions={getFixedPromotions()}
+              selectedPromotion={selectedPromotion}
+              onSelect={(p) => setSelectedPromotion(p)}
+            />
           )}
         </>
       )}
 
       {selectedPackage && (
         <>
-          {/* For free packages we skip invoice details */}
-          {!(isFree) && (
+          {!isFree && (
             <Box mt={6}>
               <SectionTitle mb={2}>Completează detaliile pentru facturare</SectionTitle>
               <Tabs
