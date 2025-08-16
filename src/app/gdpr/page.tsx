@@ -1,13 +1,13 @@
 "use client";
 
-import { Box, Grid } from "@mui/material";
-import React from "react";
-import styled from "styled-components";
-
-import { COLOR_TEXT_LIGHT } from "@/constants/colors";
 import * as palette from "@/constants/colors";
 
+import { Box, Grid } from "@mui/material";
+
+import { COLOR_TEXT_LIGHT } from "@/constants/colors";
 import { Layout } from "@/common/layout/Layout";
+import React from "react";
+import styled from "styled-components";
 
 const Container = styled.div`
   display: flex;
@@ -43,7 +43,7 @@ export default function GDPR() {
                 imobiliari,terti intermediari. Birouri: Str Dorobantilor nr 65,
                 Cluj Napoca,Cluj Contact Email : Informatii/Sesizari:
                 contact@eproprietar.ro Marketing/Oferte publicitate :
-                marketing@eproprietar.ro GDPR : datepersonale@eproprietar.ro
+                marketing@eproprietar.ro GDPR : gdpr@eproprietar.ro
               </p>
 
               <h2>CONDIȚII GENERALE DE UTILIZARE</h2>
@@ -469,14 +469,14 @@ export default function GDPR() {
                 </a>
                 <br /> GDPR:{" "}
                 <a href="mailto:support@buyencore.com">
-                  datepersonale@eproprietar.ro
+                  gdpr@eproprietar.ro
                 </a>
               </p>
 
               <h2>Autoritatea pentru Protecția Datelor</h2>
               <p>
                 Pentru orice sesizare legata de date personale va rugam sa ne
-                scrieti pe email: datepersonale@eproprietar.ro
+                scrieti pe email: gdpr@eproprietar.ro
                 <br />
                 Pentru sesizari privind protecția datelor, puteți contacta
                 autoritatea nationala :
