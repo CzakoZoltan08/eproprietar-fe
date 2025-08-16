@@ -3,6 +3,7 @@
 import * as palette from "@/constants/colors";
 
 import { Flex } from "@/common/flex/Flex";
+import { Layout } from "@/common/layout/Layout";
 import React from "react";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import styled from "styled-components";
@@ -178,149 +179,156 @@ const SmallMuted = styled.p`
 
 const AboutUsPage = () => {
   const router = useRouter();
-  const isMobile = typeof window !== "undefined" && window.innerWidth <= SIZES_NUMBER_TINY_SMALL;
+  const isMobile =
+    typeof window !== "undefined" && window.innerWidth <= SIZES_NUMBER_TINY_SMALL;
 
   const go = (href: string) => router.push(href);
 
   return (
-    <Page $pad={isMobile ? "18px 16px 24px" : "26px 20px 40px"}>
-      {/* HERO */}
-      <Hero>
-        <HeroTitle>
-          Platforma unde <strong>PROPRIETARII reali</strong> întâlnesc{" "}
-          <strong>CUMPĂRĂTORII reali</strong>.
-        </HeroTitle>
-        <HeroSubtitle>
-          Fără comisioane. Fără stres. Fără „s-a dat, dar avem altceva”.
-        </HeroSubtitle>
-        <Divider />
-      </Hero>
+    <Layout>
+      <Page $pad={isMobile ? "18px 16px 24px" : "26px 20px 40px"}>
+        {/* HERO */}
+        <Hero>
+          <HeroTitle>
+            Platforma unde <strong>PROPRIETARII reali</strong> întâlnesc{" "}
+            <strong>CUMPĂRĂTORII reali</strong>.
+          </HeroTitle>
+          <HeroSubtitle>
+            Fără comisioane. Fără stres. Fără „s-a dat, dar avem altceva”.
+          </HeroSubtitle>
+          <Divider />
+        </Hero>
 
-      {/* Cine suntem */}
-      <Section>
-        <SectionHeader>
-          <span>👋</span>
-          <h2>Cine suntem?</h2>
-        </SectionHeader>
-        <Lead>
-          Suntem o platformă independentă și transparentă, creată din dorința de a curăța piața
-          imobiliară din România.
-        </Lead>
-        <Lead>
-          <strong>eProprietar.ro</strong> este locul unde:
-        </Lead>
-        <BulletList>
-          <li>✅ Cumpărătorii și chiriașii găsesc anunțuri clare, publicate de oameni reali</li>
-          <li>
-            ✅ Proprietarii, dezvoltatorii și agenții în regim de exclusivitate își pot promova
-            imobilele într-un mediu curat, profesionist și eficient
-          </li>
-        </BulletList>
-      </Section>
-
-      {/* Pentru vizitatori + Pentru cei care listează */}
-      <ResponsiveGrid>
-        <Card>
+        {/* Cine suntem */}
+        <Section>
           <SectionHeader>
-            <span>🔍</span>
-            <h2>Pentru vizitatori – Vrei să cumperi sau să închiriezi?</h2>
+            <span>👋</span>
+            <h2>Cine suntem?</h2>
           </SectionHeader>
-          <Lead>💥 Uită de comisioane, telefoane inutile și anunțuri înșelătoare!</Lead>
-          <BulletList>
-            <li>✅ Acces gratuit și nelimitat la mii de anunțuri</li>
-            <li>📞 Contact direct cu proprietarul – fără intermediari</li>
-            <li>💬 Discuții reale, negocieri directe</li>
-            <li>📲 Actualizări în timp real – vezi doar ce este disponibil</li>
-            <li>💰 Fără comisioane, fără pierderi de timp</li>
-          </BulletList>
-          <Quote>
-            „Vrei să cumperi, nu să fii plimbat cu vorba.” De aceea ești aici. Și noi știm asta.
-          </Quote>
-          <CTAWrap>
-            <CTAButton onClick={() => go("/")}>Caută anunțuri</CTAButton>
-            <SecondaryButton onClick={() => go("/ghid/cumparatori")}>
-              Ghid pentru cumpărători
-            </SecondaryButton>
-          </CTAWrap>
-        </Card>
-
-        <Card>
-          <SectionHeader>
-            <span>🏡</span>
-            <h2>Pentru cei care listează – Proprietari, dezvoltatori, agenți exclusivi</h2>
-          </SectionHeader>
-          <Lead>🔔 Vrei ca anunțul tău să ajungă în fața oamenilor potriviți?</Lead>
           <Lead>
-            <strong>eProprietar.ro</strong> este locul ideal să-ți promovezi proprietatea!
+            Suntem o platformă independentă și transparentă, creată din dorința de a curăța piața
+            imobiliară din România.
           </Lead>
-          <Lead><strong>Ce oferim:</strong></Lead>
+          <Lead>
+            <strong>eProprietar.ro</strong> este locul unde:
+          </Lead>
           <BulletList>
-            <li>🎯 Public țintă interesat să cumpere sau să închirieze direct</li>
-            <li>📢 Promovare organizată, fără „zgomot” inutil</li>
-            <li>🏢 Vizibilitate pentru ansambluri rezidențiale, clădiri, parcuri logistice</li>
-            <li>🔐 Spațiu dedicat agenților cu reprezentare exclusivă – fără concurență neloială</li>
+            <li>✅ Cumpărătorii și chiriașii găsesc anunțuri clare, publicate de oameni reali</li>
+            <li>
+              ✅ Proprietarii, dezvoltatorii și agenții în regim de exclusivitate își pot promova
+              imobilele într-un mediu curat, profesionist și eficient
+            </li>
           </BulletList>
-          <Quote>
-            „Anunțul tău nu se pierde în mulțime. La noi, el iese în evidență.”
-          </Quote>
+        </Section>
+
+        {/* Pentru vizitatori + Pentru cei care listează */}
+        <ResponsiveGrid>
+          <Card>
+            <SectionHeader>
+              <span>🔍</span>
+              <h2>Pentru vizitatori – Vrei să cumperi sau să închiriezi?</h2>
+            </SectionHeader>
+            <Lead>💥 Uită de comisioane, telefoane inutile și anunțuri înșelătoare!</Lead>
+            <BulletList>
+              <li>✅ Acces gratuit și nelimitat la mii de anunțuri</li>
+              <li>📞 Contact direct cu proprietarul – fără intermediari</li>
+              <li>💬 Discuții reale, negocieri directe</li>
+              <li>📲 Actualizări în timp real – vezi doar ce este disponibil</li>
+              <li>💰 Fără comisioane, fără pierderi de timp</li>
+            </BulletList>
+            <Quote>
+              „Vrei să cumperi, nu să fii plimbat cu vorba.” De aceea ești aici. Și noi știm asta.
+            </Quote>
+            <CTAWrap>
+              <CTAButton onClick={() => go("/")}>Caută anunțuri</CTAButton>
+              <SecondaryButton onClick={() => go("/ghid/cumparatori")}>
+                Ghid pentru cumpărători
+              </SecondaryButton>
+            </CTAWrap>
+          </Card>
+
+          <Card>
+            <SectionHeader>
+              <span>🏡</span>
+              <h2>Pentru cei care listează – Proprietari, dezvoltatori, agenți exclusivi</h2>
+            </SectionHeader>
+            <Lead>🔔 Vrei ca anunțul tău să ajungă în fața oamenilor potriviți?</Lead>
+            <Lead>
+              <strong>eProprietar.ro</strong> este locul ideal să-ți promovezi proprietatea!
+            </Lead>
+            <Lead>
+              <strong>Ce oferim:</strong>
+            </Lead>
+            <BulletList>
+              <li>🎯 Public țintă interesat să cumpere sau să închirieze direct</li>
+              <li>📢 Promovare organizată, fără „zgomot” inutil</li>
+              <li>🏢 Vizibilitate pentru ansambluri rezidențiale, clădiri, parcuri logistice</li>
+              <li>
+                🔐 Spațiu dedicat agenților cu reprezentare exclusivă – fără concurență neloială
+              </li>
+            </BulletList>
+            <Quote>
+              „Anunțul tău nu se pierde în mulțime. La noi, el iese în evidență.”
+            </Quote>
+            <CTAWrap>
+              <CTAButton onClick={() => go("/create-announcement")}>Publică un anunț</CTAButton>
+              <SecondaryButton onClick={() => go("/ghid/proprietari-vanzare")}>
+                Ghid proprietari (vânzare)
+              </SecondaryButton>
+              <SecondaryButton onClick={() => go("/ghid/proprietari-inchiriere")}>
+                Ghid proprietari (închiriere)
+              </SecondaryButton>
+            </CTAWrap>
+          </Card>
+        </ResponsiveGrid>
+
+        {/* De ce eProprietar */}
+        <Section>
+          <SectionHeader>
+            <span>⚡</span>
+            <h2>De ce eProprietar.ro?</h2>
+          </SectionHeader>
+          <Lead>Pentru că...</Lead>
+          <BulletList>
+            <li>🔹 Știm că ai pierdut timp cu anunțuri false</li>
+            <li>🔹 Știm că ai sunat la zeci de oferte care nu mai există</li>
+            <li>🔹 Știm că ți s-a schimbat prețul pe drum</li>
+            <li>🔹 Știm că te-ai săturat să fii păcălit</li>
+          </BulletList>
+          <Lead>Și exact din acest motiv existăm NOI.</Lead>
+        </Section>
+
+        {/* Valori */}
+        <Section>
+          <SectionHeader>
+            <span>🎯</span>
+            <h2>eProprietar.ro este:</h2>
+          </SectionHeader>
+          <TagRow>
+            <Tag>✔️ Curat</Tag>
+            <Tag>✔️ Eficient</Tag>
+            <Tag>✔️ Corect</Tag>
+            <Tag>✔️ Prietenos</Tag>
+            <Tag>✔️ Gratuit pentru cumpărători</Tag>
+          </TagRow>
+        </Section>
+
+        {/* CTA final */}
+        <Section>
+          <Lead>
+            📲 Intră acum pe <strong>eProprietar.ro</strong> și descoperă imobiliarele fără filtre,
+            fără comisioane, fără minciuni.
+          </Lead>
           <CTAWrap>
-            <CTAButton onClick={() => go("/create-announcement")}>Publică un anunț</CTAButton>
-            <SecondaryButton onClick={() => go("/ghid/proprietari-vanzare")}>
-              Ghid proprietari (vânzare)
-            </SecondaryButton>
-            <SecondaryButton onClick={() => go("/ghid/proprietari-inchiriere")}>
-              Ghid proprietari (închiriere)
+            <CTAButton onClick={() => go("/")}>Începe să cauți</CTAButton>
+            <SecondaryButton onClick={() => go("/create-announcement")}>
+              Publică un anunț
             </SecondaryButton>
           </CTAWrap>
-        </Card>
-      </ResponsiveGrid>
-
-      {/* De ce eProprietar */}
-      <Section>
-        <SectionHeader>
-          <span>⚡</span>
-          <h2>De ce eProprietar.ro?</h2>
-        </SectionHeader>
-        <Lead>Pentru că...</Lead>
-        <BulletList>
-          <li>🔹 Știm că ai pierdut timp cu anunțuri false</li>
-          <li>🔹 Știm că ai sunat la zeci de oferte care nu mai există</li>
-          <li>🔹 Știm că ți s-a schimbat prețul pe drum</li>
-          <li>🔹 Știm că te-ai săturat să fii păcălit</li>
-        </BulletList>
-        <Lead>Și exact din acest motiv existăm NOI.</Lead>
-      </Section>
-
-      {/* Valori */}
-      <Section>
-        <SectionHeader>
-          <span>🎯</span>
-          <h2>eProprietar.ro este:</h2>
-        </SectionHeader>
-        <TagRow>
-          <Tag>✔️ Curat</Tag>
-          <Tag>✔️ Eficient</Tag>
-          <Tag>✔️ Corect</Tag>
-          <Tag>✔️ Prietenos</Tag>
-          <Tag>✔️ Gratuit pentru cumpărători</Tag>
-        </TagRow>
-      </Section>
-
-      {/* CTA final */}
-      <Section>
-        <Lead>
-          📲 Intră acum pe <strong>eProprietar.ro</strong> și descoperă imobiliarele fără filtre,
-          fără comisioane, fără minciuni.
-        </Lead>
-        <CTAWrap>
-          <CTAButton onClick={() => go("/")}>Începe să cauți</CTAButton>
-          <SecondaryButton onClick={() => go("/create-announcement")}>
-            Publică un anunț
-          </SecondaryButton>
-        </CTAWrap>
-        <SmallMuted>Cu respect, Echipa eProprietar.ro</SmallMuted>
-      </Section>
-    </Page>
+          <SmallMuted>Cu respect, Echipa eProprietar.ro</SmallMuted>
+        </Section>
+      </Page>
+    </Layout>
   );
 };
 
