@@ -199,7 +199,7 @@ const AnnouncementList = ({
     );
   }
 
-  // If the providerType is "agency", render a two-column (list + detail) layout
+  // If the providerType is "agency", render a two-column (list + detail) layout (NO SCROLL, USE PAGING)
   if (filters.providerType === "agency") {
     return (
       <Box
@@ -220,8 +220,6 @@ const AnnouncementList = ({
           sx={{
             p: 2,
             order: { xs: 1, md: 2 }, // show first on mobile, second on desktop
-            maxHeight: { md: "calc(100vh - 150px)" },
-            overflowY: { md: "auto" },
           }}
         >
           {selectedAnnouncement ? (
@@ -243,39 +241,29 @@ const AnnouncementList = ({
           ) : (
             <>
               <Typography variant="h6" sx={{ mb: 2, color: COLOR_TEXT }}>
-                Ce înseamnă exclusivitate?
+                Ce înseamnă Reprezentarea Exclusivă?
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ whiteSpace: "normal", wordBreak: "break-word", color: COLOR_TEXT }}
-              >
-                Anunțurile marcate cu <strong>„exclusivitate”</strong> sunt promovate doar printr-o
-                singură agenție imobiliară, în baza unui contract de reprezentare exclusivă semnat cu
-                proprietarul.
-                <br /><br />
-                Pentru <strong>cumpărători</strong>, acest lucru înseamnă adesea <strong>0% comision</strong>,
-                deoarece agenția este plătită direct de către vânzător. De asemenea, oferă informații
-                corecte și un proces transparent.
-                <br /><br />
-                Pentru <strong>vânzători</strong>, exclusivitatea asigură o promovare profesionistă, un
-                singur punct de contact și mai multă implicare din partea agenției, care are tot interesul
-                să vândă rapid și la cel mai bun preț.
-                <br /><br />
-                Când vezi eticheta <strong>„exclusivitate”</strong>, înseamnă că ai parte de un proces
-                imobiliar mai clar, mai sigur și fără comisioane ascunse.
-              </Typography>
+                sx={{ whiteSpace: "pre-line", wordBreak: "break-word", color: COLOR_TEXT }}
+              >{`Am creat această secțiune special pentru tine, o secțiune care conține anunțuri imobiliare publicate exclusiv de agenți care au un contract oficial de reprezentare directă cu proprietarul imobilului, pentru a avea acces la toate imobilele de pe piața imobiliara si a le putea accesa fără a plăti comision!
+🟢 Ce înseamnă asta pentru tine, ca potențial cumpărător?
+✅ Informații corecte și verificate – Agentul are acces direct la toate detaliile importante despre imobil și este obligat să ofere transparență totală.
+✅ Fără anunțuri dublate sau false – Fiecare proprietate este unică în platformă, fără suprapuneri sau confuzii.
+✅ Un singur punct de contact – Comunici cu un agent autorizat, profesionist, care reprezintă interesele vânzătorului în mod exclusiv.
+✅ Timp câștigat – Nu mai pierzi vremea cu vizionări inutile sau oferte neclare.
+✅ Proces de achiziție clar și controlat – Ai parte de un flux bine organizat, cu pași clari de la vizionare până la semnarea contractului.
+✅ Documentație completă și sprijin juridic – Poți primi sprijin în obținerea actelor, evaluări sau consultanță juridică prin agentul responsabil.
+✅ Acces la proprietăți înaintea pieței largi – Unele imobile în regim exclusiv nu sunt listate în altă parte.
+________________________________________
+🎯 Reprezentarea Exclusivă este o garanție a profesionalismului în tranzacțiile imobiliare.
+Explorează această secțiune cu încredere – ai acces la cele mai serioase și sigure oferte din piață!`}</Typography>
             </>
           )}
         </Paper>
 
-        {/* Left Column: Announcement list */}
-        <Box
-          sx={{
-            order: { xs: 2, md: 1 }, // show second on mobile, first on desktop
-            maxHeight: { md: "calc(100vh - 150px)" },
-            overflowY: { md: "auto" },
-          }}
-        >
+        {/* Left Column: Announcement list with paging (no scroll) */}
+        <Box sx={{ order: { xs: 2, md: 1 } }}>
           {announcements.map((item, index) => (
             <Box
               key={`agency-item-${index}`}
