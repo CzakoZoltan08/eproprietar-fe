@@ -160,6 +160,38 @@ const PromoRecommendation = styled(Box)`
   font-weight: 600;
 `;
 
+/* --- NEW: Why Promote block --- */
+const PromoWhy = styled(Box)`
+  margin-top: 32px;
+  padding: 20px;
+  background: #fff;
+  border-left: 4px solid ${COLOR_PRIMARY};
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+`;
+
+const PromoWhyTitle = styled(Typography)`
+  font-weight: 700 !important;
+  color: ${COLOR_PRIMARY};
+  margin-bottom: 12px !important;
+  text-align: center;
+`;
+
+const PromoWhyList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+
+  li {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    text-align: left;
+  }
+`;
+
 /* --------------- helpers / mock features for other audiences --------------- */
 
 const mockFeaturesMap: Record<string, string[]> = {
@@ -375,6 +407,16 @@ const PromotionCards = ({
     <PromoRecommendation>
       💡 Recomandare: Combină promovarea cu <b>Pachetul Nelimitat</b> pentru rezultate maxime!
     </PromoRecommendation>
+
+    {/* NEW: Why it matters */}
+    <PromoWhy>
+      <PromoWhyTitle variant="h6">🏆 De ce să alegi promovarea?</PromoWhyTitle>
+      <PromoWhyList>
+        <li>• Crește vizibilitatea anunțului de până la 5x mai mult</li>
+        <li>• Ajungi atât la cumpărători direcți, cât și la alți agenți</li>
+        <li>• Poziționare prioritară în rezultate</li>
+      </PromoWhyList>
+    </PromoWhy>
   </>
 );
 
@@ -742,7 +784,7 @@ const SelectPackagePage = () => {
             <SectionTitle>Puteți beneficia de listare accesând unul dintre pachete:</SectionTitle>
           </HeaderBlock>
 
-        <PackageGrid $single={false}>
+          <PackageGrid $single={false}>
             {packages.map((pkg) => (
               <StyledCard
                 key={pkg.id}
