@@ -80,7 +80,7 @@ export default function ForBuyersPage() {
   const router = useRouter();
 
   return (
-    <PageWrap component="section" aria-label="Informații pentru cumpărători și chiriași">
+    <PageWrap as="section" aria-label="Informații pentru cumpărători și chiriași">
       <Hero>
         <Typography variant="h1" component="h1" gutterBottom>
           🏠 eProprietar.ro – Imobiliare fără comisioane, fără intermedieri inutile
