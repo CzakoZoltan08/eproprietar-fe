@@ -155,12 +155,13 @@ const Footer = () => {
         {/* Pentru cine */}
         <Section>
           <SectionTitle>Servicii dedicate</SectionTitle>
-          <Link onClick={() => goTo({ link: "/pentru-cumparatori" })}>Pentru cumpărători</Link>
-          <Link onClick={() => goTo({ link: "/pentru-proprietari" })}>Pentru proprietari</Link>
-          <Link onClick={() => goTo({ link: "/pentru-dezvoltatori" })}>Pentru dezvoltatori imobiliari</Link>
-          <Link onClick={() => goTo({ link: "/pentru-agenti-exclusivitate" })}>
+          <Link onClick={() => goTo({ link: "/for-buyers" })}>Pentru cumpărători</Link>
+          <Link onClick={() => goTo({ link: "/for-owners" })}>Pentru proprietari</Link>
+          <Link onClick={() => goTo({ link: "/for-developers" })}>Pentru dezvoltatori imobiliari</Link>
+          <Link onClick={() => goTo({ link: "/for-exclusive-agents" })}>
             Pentru agenți imobiliari în regim de exclusivitate
           </Link>
+
         </Section>
 
         {/* Ghid imobiliar – 4 butoane în 2 coloane */}
