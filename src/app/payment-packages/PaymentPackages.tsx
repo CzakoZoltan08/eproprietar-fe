@@ -37,7 +37,12 @@ const HeaderBlock = styled(Box)`
   margin-bottom: 24px;
 `;
 
-const SectionTitle = (props: { children: React.ReactNode; mt?: number; mb?: number; style?: React.CSSProperties }) => (
+const SectionTitle = (props: {
+  children: React.ReactNode;
+  mt?: number;
+  mb?: number;
+  style?: React.CSSProperties;
+}) => (
   <Typography
     variant="h5"
     fontWeight={700}
@@ -53,7 +58,7 @@ const SectionTitle = (props: { children: React.ReactNode; mt?: number; mb?: numb
 const PackageGrid = styled.div<{ $single: boolean }>`
   display: grid;
   grid-template-columns: ${({ $single }) =>
-    $single ? "minmax(280px, 280px)" : "repeat(auto-fit, minmax(280px, 1fr))"};
+    $single ? "minmax(280px, 360px)" : "repeat(auto-fit, minmax(280px, 1fr))"};
   gap: 24px;
   margin-top: 24px;
   justify-content: ${({ $single }) => ($single ? "center" : "initial")};
@@ -127,7 +132,7 @@ const PromoLabel = styled.div`
 
 const PromoValue = styled.div`
   font-size: 1rem;
-  margin-bottom: 18px; /* more space between rows */
+  margin-bottom: 18px;
 `;
 
 const PromoPrice = styled.div`
@@ -160,14 +165,14 @@ const PromoRecommendation = styled(Box)`
   font-weight: 600;
 `;
 
-/* --- NEW: Why Promote block --- */
+/* --- Why Promote block --- */
 const PromoWhy = styled(Box)`
   margin-top: 32px;
   padding: 20px;
   background: #fff;
   border-left: 4px solid ${COLOR_PRIMARY};
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 `;
 
 const PromoWhyTitle = styled(Typography)`
@@ -315,7 +320,7 @@ const getOwnerPackages = () => [
   },
 ];
 
-/* ---------- Fixed promotion options & renderer ---------- */
+/* ---------- Fixed promotion options ---------- */
 
 type FixedPromotion = {
   id: string;
@@ -324,7 +329,7 @@ type FixedPromotion = {
   price: number;
   currency: "EUR";
   benefit: string;
-  stars: string;
+  stars?: string;
 };
 
 const getFixedPromotions = (): FixedPromotion[] => [
@@ -356,6 +361,82 @@ const getFixedPromotions = (): FixedPromotion[] => [
     stars: "⭐⭐⭐",
   },
 ];
+
+/* ---------------- Agency Exclusive package (data) ---------------- */
+
+const getAgencyExclusivePackage = () => ({
+  id: "ag-excl",
+  label: "Listare anunț reprezentare exclusivă",
+  currency: "EUR",
+  originalPrice: 30,
+  price: 20,
+  durationText: "valabil nelimitat ca durată",
+  details1: "Anunțuri evidențiate ca fiind cu reprezentare exclusivă",
+  details2: "Publicare pana la vânzare/închiriere",
+});
+
+/* ---------------- Agency card (single column, centered) ---------------- */
+
+const AgencyCard = styled(Card)<{ selected: boolean }>`
+  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: ${COLOR_PRIMARY};
+    box-shadow: 0 4px 16px rgba(25, 103, 210, 0.15);
+  }
+`;
+
+const AgencyCardInner = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const AgencyBody = ({ pkg }: { pkg: any }) => (
+  <AgencyCardInner>
+    <Typography variant="h6" fontWeight={700} gutterBottom>
+      ✅ {pkg.label}
+    </Typography>
+
+    <Box mt={2} mb={2}>
+      {/* Old price line-through */}
+      <Typography
+        variant="body2"
+        color={COLOR_TEXT}
+        sx={{ mb: 1, textDecoration: "line-through", opacity: 0.7 }}
+      >
+        {pkg.originalPrice} euro / anunț (valabil nelimitat ca durată)
+      </Typography>
+
+      {/* Highlighted current price + duration in primary */}
+      <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
+        {pkg.price} euro / anunț (valabil nelimitat ca durată)
+      </Typography>
+    </Box>
+
+    <Box mt={2} textAlign="left" sx={{ maxWidth: 340 }}>
+      <Typography sx={{ mb: 1 }}>{pkg.details1}</Typography>
+      <Typography>{pkg.details2}</Typography>
+    </Box>
+  </AgencyCardInner>
+);
+
+const BonusBox = styled(Box)`
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #fafafa;
+  border: 1px dashed ${COLOR_BORDER_PRIMARY};
+  font-weight: 600;
+  text-align: center;
+  margin-top: 18px;
+`;
+
+/* ---------------- Promotion renderer ---------------- */
 
 const PromotionCards = ({
   promotions,
@@ -408,7 +489,6 @@ const PromotionCards = ({
       💡 Recomandare: Combină promovarea cu <b>Pachetul Nelimitat</b> pentru rezultate maxime!
     </PromoRecommendation>
 
-    {/* NEW: Why it matters */}
     <PromoWhy>
       <PromoWhyTitle variant="h6">🏆 De ce să alegi promovarea?</PromoWhyTitle>
       <PromoWhyList>
@@ -506,11 +586,16 @@ const SelectPackagePage = () => {
         return;
       }
 
-      // Agency / Normal
+      if (isAgency) {
+        setPackages([getAgencyExclusivePackage()]);
+        setPromotions(getFixedPromotions());
+        return;
+      }
+
+      // Normal
       try {
-        const audienceForPackages = audienceParam === "owner" ? "normal" : audienceParam;
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
-          getAnnouncementPackages(user.id, audienceForPackages),
+          getAnnouncementPackages(user.id, audienceParam),
           getPromotionPackages(user.id),
         ]);
 
@@ -524,7 +609,7 @@ const SelectPackagePage = () => {
           });
 
         setPackages(withMockFeatures(fetchedPackages));
-        setPromotions(isAgency ? getFixedPromotions() : withMockFeatures(fetchedPromotions));
+        setPromotions(withMockFeatures(fetchedPromotions));
       } catch (err) {
         console.error("Failed to load pricing options", err);
       }
@@ -532,12 +617,12 @@ const SelectPackagePage = () => {
     fetchPricingData();
   }, [user?.id, audienceParam, isEnsemble, isOwner, isAgency, getAnnouncementPackages, getPromotionPackages]);
 
-  /* Auto-select when only one (non-owner flows) */
+  /* Auto-select when only one (non-owner & non-agency flows) */
   useEffect(() => {
-    if (!isOwner && packages.length === 1) {
+    if (!isOwner && !isAgency && packages.length === 1) {
       setSelectedPackage(packages[0]);
     }
-  }, [packages, isOwner]);
+  }, [packages, isOwner, isAgency]);
 
   /* Totals */
   useEffect(() => {
@@ -571,8 +656,11 @@ const SelectPackagePage = () => {
   };
 
   const currency = useMemo(
-    () => (isEnsemble || isOwner ? "EUR" : selectedPackage?.currency?.toUpperCase?.() ?? "RON"),
-    [isEnsemble, isOwner, selectedPackage?.currency]
+    () =>
+      isEnsemble || isOwner || isAgency
+        ? "EUR"
+        : selectedPackage?.currency?.toUpperCase?.() ?? "RON",
+    [isEnsemble, isOwner, isAgency, selectedPackage?.currency]
   );
 
   const handleSubmit = async () => {
@@ -646,10 +734,7 @@ const SelectPackagePage = () => {
 
   // show promotions only for owner/agency AND only after choosing a base package
   const shouldShowPromotions =
-    !isEnsemble &&
-    (isOwner || isAgency) &&
-    !!selectedPackage &&
-    promotions.length > 0;
+    !isEnsemble && (isOwner || isAgency) && !!selectedPackage && promotions.length > 0;
 
   /* ---------------- card body renderers ---------------- */
 
@@ -810,6 +895,45 @@ const SelectPackagePage = () => {
             />
           )}
         </>
+      ) : isAgency ? (
+        <>
+          {/* Agency Exclusive – one centered card, single column */}
+          <SectionTitle mb={1} style={{ textAlign: "center" }}>
+            🏢 Agenți Imobiliari – Reprezentare Exclusivă
+          </SectionTitle>
+          <Typography textAlign="center" sx={{ fontWeight: 600, mb: 0.5 }}>
+            🎯 Pachet dedicat agențiilor imobiliare
+          </Typography>
+
+          <PackageGrid $single={true}>
+            {packages.map((pkg) => (
+              <AgencyCard
+                key={pkg.id}
+                selected={selectedPackage?.id === pkg.id}
+                onClick={() => {
+                  setSelectedPackage(pkg);
+                  setSelectedPromotion(null);
+                }}
+              >
+                <AgencyBody pkg={pkg} />
+              </AgencyCard>
+            ))}
+          </PackageGrid>
+
+          <BonusBox>
+            ✅ <b>Bonus:</b> Anunțul tău va apărea și în zona de listări destinate
+            <b> persoanelor fizice</b>, oferindu-i expunere maximă pe întreaga platformă!
+          </BonusBox>
+
+          {/* Show promotions after base package is selected */}
+          {shouldShowPromotions && (
+            <PromotionCards
+              promotions={getFixedPromotions()}
+              selectedPromotion={selectedPromotion}
+              onSelect={(p) => setSelectedPromotion(p)}
+            />
+          )}
+        </>
       ) : (
         <>
           <SectionTitle mb={2}>Alege pachetul pentru anunțul tău</SectionTitle>
@@ -820,7 +944,7 @@ const SelectPackagePage = () => {
                 selected={selectedPackage?.id === pkg.id}
                 onClick={() => {
                   setSelectedPackage(pkg);
-                  if (isAgency) setSelectedPromotion(null);
+                  setSelectedPromotion(null);
                 }}
               >
                 {pkg.badge && <Badge label={pkg.badge} color="primary" size="small" />}
@@ -831,7 +955,7 @@ const SelectPackagePage = () => {
             ))}
           </PackageGrid>
 
-          {(isAgency ? !!selectedPackage : true) && promotions.length >= 0 && (
+          {shouldShowPromotions && (
             <PromotionCards
               promotions={getFixedPromotions()}
               selectedPromotion={selectedPromotion}
