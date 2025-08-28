@@ -27,6 +27,12 @@ import { useStore } from "@/hooks/useStore";
 
 /* ---------------- layout ---------------- */
 
+export enum PromotionPackageType {
+    PROMOTE_7_DAYS = 'promote_7_days',
+    PROMOTE_15_DAYS = 'promote_15_days',
+    PROMOTE_30_DAYS = 'promote_30_days',
+}
+
 const PageWrap = styled(Box)`
   max-width: 960px;
   margin: 0 auto;
@@ -97,7 +103,7 @@ const CardInner = styled(Box)<{ $hasBadge?: boolean }>`
   align-items: center;
 `;
 
-/* ------- Promotion specific design (single-column, centered, spaced, highlighted) ------- */
+/* ------- Promotion specific design ------- */
 
 const PromotionGrid = styled.div<{ $single?: boolean }>`
   display: grid;
@@ -215,7 +221,7 @@ const mockFeaturesMap: Record<string, string[]> = {
   "12_months": ["Vizibil 12 luni", "Imagini nelimitate", "Poziționare top", "Insignă premium"],
 };
 
-/* ---------------- fixed packages ---------------- */
+/* ---------------- defaults (used for enhancement/fallback) ---------------- */
 
 const getEnsemblePackages = () => [
   {
@@ -271,7 +277,7 @@ const getEnsemblePackages = () => [
   },
 ];
 
-/** Owner packages in card layout (with numeric prices for calculations) */
+/** Owner packages (defaults for enhancement) */
 const getOwnerPackages = () => [
   {
     id: "own-7",
@@ -285,6 +291,7 @@ const getOwnerPackages = () => [
     price: 7,
     costPerDayText: "1 Euro / Zi",
     currency: "EUR",
+    packageType: "7_days",
   },
   {
     id: "own-15",
@@ -298,6 +305,7 @@ const getOwnerPackages = () => [
     price: 15,
     costPerDayText: "1 Euro / Zi",
     currency: "EUR",
+    packageType: "15_days",
   },
   {
     id: "own-unl",
@@ -317,14 +325,15 @@ const getOwnerPackages = () => [
       "💰 Plătești o singură dată!",
       "🎯 Fără limită de timp",
     ],
+    packageType: "unlimited",
   },
 ];
 
-/* ---------- Fixed promotion options ---------- */
+/* ---------- Fixed promotion options (defaults for enhancement) ---------- */
 
 type FixedPromotion = {
   id: string;
-  label: string; // Tip Promovare (with stars)
+  label: string;
   durationText: string;
   price: number;
   currency: "EUR";
@@ -333,36 +342,19 @@ type FixedPromotion = {
 };
 
 const getFixedPromotions = (): FixedPromotion[] => [
-  {
-    id: "promo-basic",
-    label: "⭐ Promovare BASIC",
-    durationText: "7 zile",
-    price: 5,
-    currency: "EUR",
-    benefit: "Mai multă expunere în listări",
-    stars: "⭐",
-  },
-  {
-    id: "promo-plus",
-    label: "⭐⭐ Promovare PLUS",
-    durationText: "15 zile",
-    price: 8,
-    currency: "EUR",
-    benefit: "Vizibilitate dublă față de pachetul standard",
-    stars: "⭐⭐",
-  },
-  {
-    id: "promo-max",
-    label: "⭐⭐⭐ Promovare MAX",
-    durationText: "30 zile",
-    price: 10,
-    currency: "EUR",
-    benefit: "Prezență susținută și constantă",
-    stars: "⭐⭐⭐",
-  },
+  { id: "promo-basic", label: "⭐ Promovare BASIC", durationText: "7 zile",  price: 5,  currency: "EUR", benefit: "Mai multă expunere în listări",        stars: "⭐"   },
+  { id: "promo-plus",  label: "⭐⭐ Promovare PLUS",  durationText: "15 zile", price: 8,  currency: "EUR", benefit: "Vizibilitate dublă față de pachetul standard", stars: "⭐⭐"  },
+  { id: "promo-max",   label: "⭐⭐⭐ Promovare MAX",  durationText: "30 zile", price: 10, currency: "EUR", benefit: "Prezență susținută și constantă",      stars: "⭐⭐⭐" },
 ];
 
-/* ---------------- Agency Exclusive package (data) ---------------- */
+const FIXED_BY_TYPE: Record<string, FixedPromotion> = {
+  ["promote_7_days"]:  getFixedPromotions()[0], // BASIC
+  ["promote_15_days"]: getFixedPromotions()[1], // PLUS
+  ["promote_30_days"]: getFixedPromotions()[2], // MAX
+};
+
+
+/* ---------------- Agency Exclusive package (default) ---------------- */
 
 const getAgencyExclusivePackage = () => ({
   id: "ag-excl",
@@ -373,6 +365,7 @@ const getAgencyExclusivePackage = () => ({
   durationText: "valabil nelimitat ca durată",
   details1: "Anunțuri evidențiate ca fiind cu reprezentare exclusivă",
   details2: "Publicare pana la vânzare/închiriere",
+  packageType: "20_days",
 });
 
 /* ---------------- Agency card (single column, centered) ---------------- */
@@ -500,6 +493,73 @@ const PromotionCards = ({
   </>
 );
 
+/* ---------------- merge helpers (enhance fetched with defaults) ---------------- */
+
+type MaybeIdType = { id?: string; packageType?: string; [k: string]: any };
+
+const byKey = (arr: MaybeIdType[], key: "id" | "packageType") =>
+  new Map((arr ?? []).filter(Boolean).map((x) => [x?.[key], x]));
+
+// Fetched promo shape is assumed; adjust keys (e.g., packageType, price, discountedPrice, currency) to your BE.
+const enhancePromotionsFromFetched = (fetched: any[]): FixedPromotion[] => {
+  if (!Array.isArray(fetched)) return [];
+
+  return fetched.map((item) => {
+    const type: PromotionPackageType | undefined = item?.promotionType as PromotionPackageType | undefined;
+    const fixed = type ? FIXED_BY_TYPE[type] : undefined;
+
+    // Compose UI-facing object. Keep fetched id. Prefer fetched price/currency if present.
+    return {
+      id: item.id,                                       // ← keep fetched id
+      label: fixed?.label ?? item.label ?? "Promovare",
+      durationText: fixed?.durationText ?? item.durationText ?? "",
+      price: Number(item.discountedPrice ?? item.price ?? fixed?.price ?? 0),
+      currency: (item.currency ?? fixed?.currency ?? "EUR").toUpperCase(),
+      benefit: fixed?.benefit ?? item.benefit ?? "",
+      stars: fixed?.stars, // purely visual
+      // Keep any extra fields if your UI needs them:
+      // ...item,
+    };
+  }).filter(Boolean);
+};
+
+const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
+  // match by id first, then by packageType
+  const byId = byKey(defaults, "id");
+  const byType = byKey(defaults, "packageType");
+
+  const merged = (fetched ?? []).map((item) => {
+    const fallback =
+      (item?.id && byId.get(item.id)) ||
+      (item?.packageType && byType.get(item.packageType)) ||
+      null;
+
+    // defaults provide labels/features/badges/etc; fetched wins on prices and ids
+    const base = fallback ? { ...fallback, ...item } : { ...item };
+
+    // ensure features exist (fallback to mockFeatures by type)
+    if (!base.features || base.features.length === 0) {
+      const t = (base.packageType || "").toLowerCase();
+      const mf = mockFeaturesMap[t];
+      if (mf) base.features = mf;
+    }
+    return base;
+  });
+
+  // if fetched is empty, return defaults as a fallback
+  if (!merged.length) {
+    return (defaults ?? []).map((d) => {
+      const t = (d.packageType || "").toLowerCase();
+      return {
+        ...d,
+        features: d.features?.length ? d.features : mockFeaturesMap[t] || [],
+      };
+    });
+  }
+
+  return merged;
+};
+
 /* ---------------- component ---------------- */
 
 const SelectPackagePage = () => {
@@ -569,53 +629,66 @@ const SelectPackagePage = () => {
     if (announcementId && announcementLoading) setAnnouncementLoading(false);
   }, [announcementId, announcementLoading]);
 
-  /* Fetch pricing */
+  /* Fetch pricing (always fetch, then enhance with defaults per audience) */
   useEffect(() => {
     const fetchPricingData = async () => {
       if (!user?.id) return;
 
-      if (isEnsemble) {
-        setPackages(getEnsemblePackages());
-        setPromotions([]);
-        return;
-      }
-
-      if (isOwner) {
-        setPackages(getOwnerPackages());
-        setPromotions(getFixedPromotions());
-        return;
-      }
-
-      if (isAgency) {
-        setPackages([getAgencyExclusivePackage()]);
-        setPromotions(getFixedPromotions());
-        return;
-      }
-
-      // Normal
       try {
         const [fetchedPackages, fetchedPromotions] = await Promise.all([
-          getAnnouncementPackages(user.id, audienceParam),
+          getAnnouncementPackages(user.id, audienceParam === "owner" ? "normal" : audienceParam),
           getPromotionPackages(user.id),
         ]);
 
-        const withMockFeatures = (items: any[]) =>
-          (items ?? []).map((item) => {
-            const features =
-              item.features?.length
-                ? item.features
-                : mockFeaturesMap[item.packageType?.toLowerCase?.()] || [];
-            return { ...item, features };
-          });
+        // choose defaults by audience
+        const pkgDefaults = isEnsemble
+          ? getEnsemblePackages()
+          : isOwner
+          ? getOwnerPackages()
+          : isAgency
+          ? [getAgencyExclusivePackage()]
+          : [];
 
-        setPackages(withMockFeatures(fetchedPackages));
-        setPromotions(withMockFeatures(fetchedPromotions));
+        const enhancedPackages = enhanceList(fetchedPackages ?? [], pkgDefaults);
+
+        // Persist
+        setPackages(enhancedPackages);
+
+        if (!isEnsemble && (isOwner || isAgency)) {
+          const enhancedPromos = enhancePromotionsFromFetched(fetchedPromotions ?? []);
+          setPromotions(enhancedPromos);
+        } else {
+          setPromotions([]);
+        }
       } catch (err) {
         console.error("Failed to load pricing options", err);
+        // fallbacks if fetch blows up
+        const fallbackPkgs = isEnsemble
+          ? getEnsemblePackages()
+          : isOwner
+          ? getOwnerPackages()
+          : isAgency
+          ? [getAgencyExclusivePackage()]
+          : [];
+        setPackages(fallbackPkgs);
+
+        if (!isEnsemble && (isOwner || isAgency)) {
+          setPromotions(getFixedPromotions());
+        } else {
+          setPromotions([]);
+        }
       }
     };
     fetchPricingData();
-  }, [user?.id, audienceParam, isEnsemble, isOwner, isAgency, getAnnouncementPackages, getPromotionPackages]);
+  }, [
+    user?.id,
+    audienceParam,
+    isEnsemble,
+    isOwner,
+    isAgency,
+    getAnnouncementPackages,
+    getPromotionPackages,
+  ]);
 
   /* Auto-select when only one (non-owner & non-agency flows) */
   useEffect(() => {
@@ -700,7 +773,9 @@ const SelectPackagePage = () => {
         originalAmount: originalTotalPrice,
         currency,
         discountCode: selectedPackage.discountCode ?? undefined,
-        promotionDiscountCode: includePromotion ? selectedPromotion?.discountCode ?? undefined : undefined,
+        promotionDiscountCode: includePromotion
+          ? selectedPromotion?.discountCode ?? undefined
+          : undefined,
         invoiceDetails,
         products,
       });
@@ -751,7 +826,7 @@ const SelectPackagePage = () => {
 
       <Box mt={2} mb={1.5}>
         <Typography variant="body2" color={COLOR_TEXT} sx={{ mb: 1 }}>
-          Durată: <b>{pkg.durationText}</b>
+          Durată: <b>{pkg.durationText ?? (pkg.durationDays > 0 ? `${pkg.durationDays} zile` : "NELIMITAT")}</b>
         </Typography>
 
         <Typography
@@ -763,11 +838,11 @@ const SelectPackagePage = () => {
             opacity: pkg.badge ? 0.7 : 1,
           }}
         >
-          Preț standard: {pkg.standardPriceText}
+          Preț standard: {pkg.standardPriceText ?? (pkg.standardPrice ? `${pkg.standardPrice} ${pkg.currency ?? "EUR"}` : "-")}
         </Typography>
 
         <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
-          Preț actual: {pkg.currentPriceText}
+          Preț actual: {pkg.currentPriceText ?? `${pkg.discountedPrice ?? pkg.price} ${pkg.currency ?? "EUR"}`}
         </Typography>
 
         {pkg.costPerDayText && (
@@ -795,9 +870,9 @@ const SelectPackagePage = () => {
         {item.label}
       </Typography>
 
-      {item.durationDays && (
+      {typeof item.durationDays === "number" && (
         <Typography variant="body2" color={COLOR_TEXT} gutterBottom>
-          Durată: {item.durationDays} zile
+          Durată: {item.durationDays > 0 ? `${item.durationDays} zile` : "NELIMITAT"}
         </Typography>
       )}
 
@@ -889,7 +964,7 @@ const SelectPackagePage = () => {
 
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={getFixedPromotions()}
+              promotions={promotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
@@ -928,7 +1003,7 @@ const SelectPackagePage = () => {
           {/* Show promotions after base package is selected */}
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={getFixedPromotions()}
+              promotions={promotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
@@ -957,7 +1032,7 @@ const SelectPackagePage = () => {
 
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={getFixedPromotions()}
+              promotions={promotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
