@@ -86,7 +86,7 @@ const INITIAL_DATA = {
   builtSurface: "",              // Suprafață construită (m²)
   landSurface: "",               // Suprafață teren (m²)
   amenities: "",                 // Facilități
-  developerSite: null,             // Site dezvoltator
+  developerSite: "",             // Site dezvoltator
   frameType: "",                 // Tip chenar pe pagina de prezentare
   flyer: null as File | null,   // local file
   flyerUrl: "",                 // server URL (edit mode/backfill)
@@ -485,15 +485,6 @@ const ResidentialAnnouncementForm = () => {
               monthYearOnly   // 👈 afișează doar luna+an
             />
 
-            {/* Stadiu - presetat 'în construcție' dar editabil */}
-            <TextField
-              label="Stadiu"
-              name="stage"
-              value={formData.stage || "în construcție"}
-              onChange={handleInputChange}
-              fullWidth
-            />
-
             <TextField
               label="Nr. de etaje"
               name="floorsCount"
@@ -535,7 +526,7 @@ const ResidentialAnnouncementForm = () => {
             <TextField
               label="Site dezvoltator"
               name="developerSite"
-              value={formData.developerSite}
+              value={formData.developerSite || ""}   // ensure string
               onChange={handleInputChange}
               placeholder="https://..."
               fullWidth

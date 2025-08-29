@@ -104,102 +104,52 @@ const EnsembleAnnouncementDetailsPage = () => {
       </Box>
 
       <Grid container spacing={1}>
-        <Grid item xs={12} md={9}>
+        <Grid item xs={12} md={8}>
           <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
             <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
               Detalii proiect
             </Typography>
             <Divider sx={{ mb: 1 }} />
 
-            {a.city && (
-              <Typography variant="body2">
-                <strong>Oraș:</strong> {a.city}
-              </Typography>
-            )}
-            {a.county && (
-              <Typography variant="body2">
-                <strong>Județ:</strong> {a.county}
-              </Typography>
-            )}
-            {a.street && (
-              <Typography variant="body2">
-                <strong>Stradă:</strong> {a.street}
-              </Typography>
-            )}
-            {a.neighborhood && (
-              <Typography variant="body2">
-                <strong>Cartier/Zonă:</strong> {a.neighborhood}
-              </Typography>
-            )}
-            {a.announcementType && (
-              <Typography variant="body2">
-                <strong>Tip:</strong> {a.announcementType}
-              </Typography>
-            )}
-            {hasNumber(a.rooms) && (
-              <Typography variant="body2">
-                <strong>Camere:</strong> {a.rooms}
-              </Typography>
-            )}
-            {hasNumber(a.surface) && (
-              <Typography variant="body2">
-                <strong>Suprafață utilă:</strong> {a.surface} mp
-              </Typography>
-            )}
-            {hasNumber(a.builtSurface) && (
-              <Typography variant="body2">
-                <strong>Suprafață construită:</strong> {a.builtSurface} mp
-              </Typography>
-            )}
-            {hasNumber(a.landSurface) && (
-              <Typography variant="body2">
-                <strong>Suprafață teren:</strong> {a.landSurface} mp
-              </Typography>
-            )}
-            {hasNumber(a.floorsCount) && (
-              <Typography variant="body2">
-                <strong>Nr. de etaje:</strong> {a.floorsCount}
-              </Typography>
-            )}
-            {hasNumber(a.price) && (
-              <Typography variant="body2">
-                <strong>Preț:</strong> {a.price} {a.currency || "EUR"}
-              </Typography>
-            )}
-            {a.stage && (
-              <Typography variant="body2">
-                <strong>Stadiu:</strong> {a.stage}
-              </Typography>
-            )}
-            {a.constructionStart && (
-              <Typography variant="body2">
-                <strong>Începerea construcției:</strong>{" "}
-                {formatMonthYear(a.constructionStart)}
-              </Typography>
-            )}
-            {a.endDate && (
-              <Typography variant="body2">
-                <strong>Finalizare:</strong> {formatMonthYear(a.endDate)}
-              </Typography>
-            )}
-            {a.developerSite && (
-              <Typography variant="body2">
-                <strong>Site dezvoltator:</strong>{" "}
-                <Link
-                  href={a.developerSite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  underline="hover"
-                >
-                  {a.developerSite}
-                </Link>
-              </Typography>
-            )}
-            {a.frameType && (
-              <Typography variant="body2">
-                <strong>Tip chenar (prezentare):</strong> {a.frameType}
-              </Typography>
-            )}
+            {(() => {
+              const details: { label: string; value?: React.ReactNode }[] = [
+                a.city && { label: "Oraș", value: a.city },
+                a.county && { label: "Județ", value: a.county },
+                a.street && { label: "Stradă", value: a.street },
+                a.neighborhood && { label: "Cartier/Zonă", value: a.neighborhood },
+                a.announcementType && { label: "Tip", value: a.announcementType },
+                hasNumber(a.rooms) && { label: "Camere", value: a.rooms },
+                hasNumber(a.surface) && { label: "Suprafață utilă", value: `${a.surface} mp` },
+                hasNumber(a.builtSurface) && { label: "Suprafață construită", value: `${a.builtSurface} mp` },
+                hasNumber(a.landSurface) && { label: "Suprafață teren", value: `${a.landSurface} mp` },
+                hasNumber(a.floorsCount) && { label: "Nr. de etaje", value: a.floorsCount },
+                hasNumber(a.price) && { label: "Preț", value: `${a.price} ${a.currency || "EUR"}` },
+                a.stage && { label: "Stadiu", value: a.stage },
+                a.constructionStart && { label: "Începerea construcției", value: formatMonthYear(a.constructionStart) },
+                a.endDate && { label: "Finalizare", value: formatMonthYear(a.endDate) },
+                a.developerSite && {
+                  label: "Site dezvoltator",
+                  value: (
+                    <Link href={a.developerSite} target="_blank" rel="noopener noreferrer" underline="hover">
+                      {a.developerSite}
+                    </Link>
+                  ),
+                },
+                a.frameType && { label: "Tip chenar (prezentare)", value: a.frameType },
+              ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
+              return (
+                <Grid container spacing={1}>
+                  {details.map((d, idx) => (
+                    <Grid key={`${d.label}-${idx}`} item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>{d.label}:</strong> {d.value}
+                      </Typography>
+                    </Grid>
+                  ))}
+                </Grid>
+              );
+            })()}
           </Paper>
 
           {amenities.length > 0 && (
@@ -214,10 +164,6 @@ const EnsembleAnnouncementDetailsPage = () => {
                 ))}
               </Box>
             </Paper>
-          )}
-
-          {(a.flyerUrl) && (
-            <FlyerViewer url={a.flyerUrl} mimeType={a.flyerMimeType} />
           )}
 
           <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, mb: 1 }}>
@@ -243,16 +189,33 @@ const EnsembleAnnouncementDetailsPage = () => {
           )}
         </Grid>
 
-        <Grid item xs={12} md={3}>
-          {(a.logoUrl || a.phoneContact) && (
-            <Box sx={{ position: { md: "sticky" }, top: 20 }}>
-              <DeveloperContactCard
-                name={a.developerName || "Dezvoltator"}
-                phone={a.phoneContact || "N/A"}
-                logoUrl={a.logoUrl || "/default-logo.png"}
-              />
-            </Box>
-          )}
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              position: { md: "sticky" },
+              top: 20,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            {a.flyerUrl && (
+              <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, width: "100%" }}>
+                <Divider sx={{ mb: 1 }} />
+                <FlyerViewer url={a.flyerUrl} mimeType={a.flyerMimeType} />
+              </Paper>
+            )}
+
+            {(a.logoUrl || a.phoneContact) && (
+              <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, width: "100%", justifyContent: "center" }}>
+                <DeveloperContactCard
+                  name={a.developerName || "Dezvoltator"}
+                  phone={a.phoneContact || "N/A"}
+                  logoUrl={a.logoUrl || "/default-logo.png"}
+                />
+              </Paper>
+            )}
+          </Box>
         </Grid>
       </Grid>
 

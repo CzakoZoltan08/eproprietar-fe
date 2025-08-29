@@ -28,9 +28,9 @@ import { useStore } from "@/hooks/useStore";
 /* ---------------- layout ---------------- */
 
 export enum PromotionPackageType {
-    PROMOTE_7_DAYS = 'promote_7_days',
-    PROMOTE_15_DAYS = 'promote_15_days',
-    PROMOTE_30_DAYS = 'promote_30_days',
+  PROMOTE_7_DAYS = "promote_7_days",
+  PROMOTE_15_DAYS = "promote_15_days",
+  PROMOTE_30_DAYS = "promote_30_days",
 }
 
 const PageWrap = styled(Box)`
@@ -75,8 +75,10 @@ const PackageGrid = styled.div<{ $single: boolean }>`
 `;
 
 const StyledCard = styled(Card)<{ selected: boolean }>`
-  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
-  box-shadow: ${({ selected }) => (selected ? `0 4px 12px rgba(25, 103, 210, 0.2)` : "none")};
+  border: 2px solid
+    ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  box-shadow: ${({ selected }) =>
+    selected ? `0 4px 12px rgba(25, 103, 210, 0.2)` : "none"};
   transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
@@ -117,7 +119,8 @@ const PromotionGrid = styled.div<{ $single?: boolean }>`
 `;
 
 const PromoCard = styled(Card)<{ selected: boolean }>`
-  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  border: 2px solid
+    ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
   border-radius: 16px;
   padding: 24px;
   cursor: pointer;
@@ -342,17 +345,40 @@ type FixedPromotion = {
 };
 
 const getFixedPromotions = (): FixedPromotion[] => [
-  { id: "promo-basic", label: "⭐ Promovare BASIC", durationText: "7 zile",  price: 5,  currency: "EUR", benefit: "Mai multă expunere în listări",        stars: "⭐"   },
-  { id: "promo-plus",  label: "⭐⭐ Promovare PLUS",  durationText: "15 zile", price: 8,  currency: "EUR", benefit: "Vizibilitate dublă față de pachetul standard", stars: "⭐⭐"  },
-  { id: "promo-max",   label: "⭐⭐⭐ Promovare MAX",  durationText: "30 zile", price: 10, currency: "EUR", benefit: "Prezență susținută și constantă",      stars: "⭐⭐⭐" },
+  {
+    id: "promo-basic",
+    label: "⭐ Promovare BASIC",
+    durationText: "7 zile",
+    price: 5,
+    currency: "EUR",
+    benefit: "Mai multă expunere în listări",
+    stars: "⭐",
+  },
+  {
+    id: "promo-plus",
+    label: "⭐⭐ Promovare PLUS",
+    durationText: "15 zile",
+    price: 8,
+    currency: "EUR",
+    benefit: "Vizibilitate dublă față de pachetul standard",
+    stars: "⭐⭐",
+  },
+  {
+    id: "promo-max",
+    label: "⭐⭐⭐ Promovare MAX",
+    durationText: "30 zile",
+    price: 10,
+    currency: "EUR",
+    benefit: "Prezență susținută și constantă",
+    stars: "⭐⭐⭐",
+  },
 ];
 
 const FIXED_BY_TYPE: Record<string, FixedPromotion> = {
-  ["promote_7_days"]:  getFixedPromotions()[0], // BASIC
+  ["promote_7_days"]: getFixedPromotions()[0], // BASIC
   ["promote_15_days"]: getFixedPromotions()[1], // PLUS
   ["promote_30_days"]: getFixedPromotions()[2], // MAX
 };
-
 
 /* ---------------- Agency Exclusive package (default) ---------------- */
 
@@ -371,7 +397,8 @@ const getAgencyExclusivePackage = () => ({
 /* ---------------- Agency card (single column, centered) ---------------- */
 
 const AgencyCard = styled(Card)<{ selected: boolean }>`
-  border: 2px solid ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
+  border: 2px solid
+    ${({ selected }) => (selected ? COLOR_PRIMARY : COLOR_BORDER_PRIMARY)};
   border-radius: 16px;
   padding: 24px;
   text-align: center;
@@ -442,7 +469,8 @@ const PromotionCards = ({
 }) => (
   <>
     <SectionTitle mt={6} mb={2} style={{ textAlign: "center" }}>
-      Alege una dintre opțiunile de promovare pentru a atrage mai mulți vizitatori către anunțul tău:
+      Alege una dintre opțiunile de promovare pentru a atrage mai mulți vizitatori către
+      anunțul tău:
     </SectionTitle>
 
     <PromotionGrid>
@@ -504,23 +532,24 @@ const byKey = (arr: MaybeIdType[], key: "id" | "packageType") =>
 const enhancePromotionsFromFetched = (fetched: any[]): FixedPromotion[] => {
   if (!Array.isArray(fetched)) return [];
 
-  return fetched.map((item) => {
-    const type: PromotionPackageType | undefined = item?.promotionType as PromotionPackageType | undefined;
-    const fixed = type ? FIXED_BY_TYPE[type] : undefined;
+  return fetched
+    .map((item) => {
+      const type: PromotionPackageType | undefined =
+        (item?.promotionType as PromotionPackageType | undefined);
+      const fixed = type ? FIXED_BY_TYPE[type] : undefined;
 
-    // Compose UI-facing object. Keep fetched id. Prefer fetched price/currency if present.
-    return {
-      id: item.id,                                       // ← keep fetched id
-      label: fixed?.label ?? item.label ?? "Promovare",
-      durationText: fixed?.durationText ?? item.durationText ?? "",
-      price: Number(item.discountedPrice ?? item.price ?? fixed?.price ?? 0),
-      currency: (item.currency ?? fixed?.currency ?? "EUR").toUpperCase(),
-      benefit: fixed?.benefit ?? item.benefit ?? "",
-      stars: fixed?.stars, // purely visual
-      // Keep any extra fields if your UI needs them:
-      // ...item,
-    };
-  }).filter(Boolean);
+      // Compose UI-facing object. Keep fetched id. Prefer fetched price/currency if present.
+      return {
+        id: item.id, // ← keep fetched id
+        label: fixed?.label ?? item.label ?? "Promovare",
+        durationText: fixed?.durationText ?? item.durationText ?? "",
+        price: Number(item.discountedPrice ?? item.price ?? fixed?.price ?? 0),
+        currency: (item.currency ?? fixed?.currency ?? "EUR").toUpperCase(),
+        benefit: fixed?.benefit ?? item.benefit ?? "",
+        stars: fixed?.stars, // purely visual
+      };
+    })
+    .filter(Boolean);
 };
 
 const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
@@ -736,6 +765,22 @@ const SelectPackagePage = () => {
     [isEnsemble, isOwner, isAgency, selectedPackage?.currency]
   );
 
+  // ---------- NEW: sorting helpers ----------
+  const getPkgPrice = (pkg: any) =>
+    Number(
+      pkg?.discountedPrice ??
+        pkg?.price ??
+        pkg?.currentPrice ??
+        pkg?.standardPrice ??
+        Number.POSITIVE_INFINITY
+    );
+
+  const sortedPackages = useMemo(
+    () => [...packages].sort((a, b) => getPkgPrice(a) - getPkgPrice(b)),
+    [packages]
+  );
+  // ------------------------------------------
+
   const handleSubmit = async () => {
     if (!selectedPackage || !announcementId) return;
 
@@ -826,7 +871,11 @@ const SelectPackagePage = () => {
 
       <Box mt={2} mb={1.5}>
         <Typography variant="body2" color={COLOR_TEXT} sx={{ mb: 1 }}>
-          Durată: <b>{pkg.durationText ?? (pkg.durationDays > 0 ? `${pkg.durationDays} zile` : "NELIMITAT")}</b>
+          Durată:{" "}
+          <b>
+            {pkg.durationText ??
+              (pkg.durationDays > 0 ? `${pkg.durationDays} zile` : "NELIMITAT")}
+          </b>
         </Typography>
 
         <Typography
@@ -838,11 +887,15 @@ const SelectPackagePage = () => {
             opacity: pkg.badge ? 0.7 : 1,
           }}
         >
-          Preț standard: {pkg.standardPriceText ?? (pkg.standardPrice ? `${pkg.standardPrice} ${pkg.currency ?? "EUR"}` : "-")}
+          Preț standard:{" "}
+          {pkg.standardPriceText ??
+            (pkg.standardPrice ? `${pkg.standardPrice} ${pkg.currency ?? "EUR"}` : "-")}
         </Typography>
 
         <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
-          Preț actual: {pkg.currentPriceText ?? `${pkg.discountedPrice ?? pkg.price} ${pkg.currency ?? "EUR"}`}
+          Preț actual:{" "}
+          {pkg.currentPriceText ??
+            `${pkg.discountedPrice ?? pkg.price} ${pkg.currency ?? "EUR"}`}
         </Typography>
 
         {pkg.costPerDayText && (
@@ -888,7 +941,9 @@ const SelectPackagePage = () => {
 
       <Box>
         <Typography fontSize="1.6rem" fontWeight={900} color="primary">
-          {(item.discountedPrice ?? item.price) + " " + (item.currency ?? "EUR")}
+          {(item.discountedPrice ?? item.price) +
+            " " +
+            (item.currency ?? "EUR")}
         </Typography>
         {item.monthly && (
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
@@ -915,8 +970,8 @@ const SelectPackagePage = () => {
               Listare Ansambluri Rezidențiale
             </SectionTitle>
             <Typography color={COLOR_TEXT}>
-              Din dorința de a facilita accesul clienților la oferta de Locuințe Noi, am implementat
-              secțiunea <b>ANSAMBLURI REZIDENȚIALE</b> în cadrul platformei.
+              Din dorința de a facilita accesul clienților la oferta de Locuințe Noi, am
+              implementat secțiunea <b>ANSAMBLURI REZIDENȚIALE</b> în cadrul platformei.
             </Typography>
             <SectionTitle mt={4} mb={1.5}>
               Puteți beneficia de listare accesând unul dintre pachete:
@@ -924,7 +979,7 @@ const SelectPackagePage = () => {
           </HeaderBlock>
 
           <PackageGrid $single={false}>
-            {packages.map((pkg) => (
+            {sortedPackages.map((pkg) => (
               <StyledCard
                 key={pkg.id}
                 selected={selectedPackage?.id === pkg.id}
@@ -945,7 +1000,7 @@ const SelectPackagePage = () => {
           </HeaderBlock>
 
           <PackageGrid $single={false}>
-            {packages.map((pkg) => (
+            {sortedPackages.map((pkg) => (
               <StyledCard
                 key={pkg.id}
                 selected={selectedPackage?.id === pkg.id}
@@ -981,7 +1036,7 @@ const SelectPackagePage = () => {
           </Typography>
 
           <PackageGrid $single={true}>
-            {packages.map((pkg) => (
+            {sortedPackages.map((pkg) => (
               <AgencyCard
                 key={pkg.id}
                 selected={selectedPackage?.id === pkg.id}
@@ -1012,8 +1067,8 @@ const SelectPackagePage = () => {
       ) : (
         <>
           <SectionTitle mb={2}>Alege pachetul pentru anunțul tău</SectionTitle>
-          <PackageGrid $single={packages.length === 1}>
-            {packages.map((pkg) => (
+          <PackageGrid $single={sortedPackages.length === 1}>
+            {sortedPackages.map((pkg) => (
               <StyledCard
                 key={pkg.id}
                 selected={selectedPackage?.id === pkg.id}
@@ -1069,7 +1124,13 @@ const SelectPackagePage = () => {
                 {tab === 1 && (
                   <>
                     <Grid item xs={12} sm={6}>
-                      <TextField fullWidth label="CIF" name="cif" onChange={handleChange} value={form.cif} />
+                      <TextField
+                        fullWidth
+                        label="CIF"
+                        name="cif"
+                        onChange={handleChange}
+                        value={form.cif}
+                      />
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -1083,16 +1144,40 @@ const SelectPackagePage = () => {
                   </>
                 )}
                 <Grid item xs={12}>
-                  <TextField fullWidth label="Adresă" name="address" onChange={handleChange} value={form.address} />
+                  <TextField
+                    fullWidth
+                    label="Adresă"
+                    name="address"
+                    onChange={handleChange}
+                    value={form.address}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Oraș" name="city" onChange={handleChange} value={form.city} />
+                  <TextField
+                    fullWidth
+                    label="Oraș"
+                    name="city"
+                    onChange={handleChange}
+                    value={form.city}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Țară" name="country" onChange={handleChange} value={form.country} />
+                  <TextField
+                    fullWidth
+                    label="Țară"
+                    name="country"
+                    onChange={handleChange}
+                    value={form.country}
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField fullWidth label="Email" name="email" onChange={handleChange} value={form.email} />
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    onChange={handleChange}
+                    value={form.email}
+                  />
                 </Grid>
               </Grid>
             </Box>
