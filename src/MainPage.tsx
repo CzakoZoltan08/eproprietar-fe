@@ -20,7 +20,7 @@ import Image from "next/image";
 import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
-import bannerEproprietar from "./assets/banner_eproprietar.jpeg";
+import bannerEproprietar from "./assets/banner_eproprietar.png";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
 
