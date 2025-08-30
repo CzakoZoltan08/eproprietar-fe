@@ -80,7 +80,10 @@ export const handleSocialAuth = async (
     }
 
     userStore.setCurrentUser(userByEmail);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+      throw error; // let caller handle silently
+    }
     console.error(`${authProviderName} login failed:`, error);
     throw error;
   }

@@ -73,7 +73,6 @@ const LeftSide = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const yahooProvider = new OAuthProvider(AuthProvider.YAHOO);
-  yahooProvider.addScope("email"); // <-- critical
   yahooProvider.setCustomParameters({ prompt: "login" });
 
   const socialAuthConfigs = [
@@ -172,20 +171,27 @@ const LeftSide = () => {
   };
 
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
-    console.log('[SocialLogin] clicked:', authProviderName, 'providerId:', provider?.providerId);
     try {
       const enumName = providerMap[authProviderName];
-      if (!enumName) {
-        throw new Error("Provider necunoscut: " + authProviderName);
-      }
+      if (!enumName) throw new Error("Provider necunoscut: " + authProviderName);
 
       setIsLoading(true);
+      setRequestError("");
 
       await handleSocialAuth(auth, provider, userApi, userStore, enumName);
       router.replace(returnTo);
-    } catch (error) {
+    } catch (error: any) {
+      // user closed/cancelled the popup → treat as benign
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        console.log("Popup închis/anulat de utilizator.");
+        // DO NOT setRequestError here.
+        return;
+      }
+      
       console.error(`Autentificare ${authProviderName} eșuată`, error);
-      setIsLoading(false);
+      setRequestError(error?.message || "Autentificarea a eșuat. Încearcă din nou.");
+    } finally {
+      setIsLoading(false); // always clear loader, instantly
     }
   };
 
