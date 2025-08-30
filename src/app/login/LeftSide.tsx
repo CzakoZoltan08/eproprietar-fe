@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthProvider, AuthProvider as AuthProviderEnum } from "@/constants/authProviders";
 import { ChangeEvent, useState } from "react";
 import {
   FacebookAuthProvider,
@@ -11,7 +12,6 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthContainer from "./AuthContainer";
-import { AuthProvider } from "@/constants/authProviders";
 import { Box } from "@mui/material";
 import LoginForm from "./LoginForm";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
@@ -72,25 +72,26 @@ const LeftSide = () => {
   const [requestError, setRequestError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- Providers (Yahoo must request 'email' scope) ---
   const yahooProvider = new OAuthProvider(AuthProvider.YAHOO);
-  yahooProvider.addScope("email"); // <-- critical
+  yahooProvider.addScope("email");
   yahooProvider.setCustomParameters({ prompt: "login" });
 
   const socialAuthConfigs = [
     {
       name: "Google",
       provider: new GoogleAuthProvider(),
-      styleKey: "google" as "google",
+      styleKey: "google" as const,
     },
     {
       name: "Facebook",
       provider: new FacebookAuthProvider(),
-      styleKey: "facebook" as "facebook",
+      styleKey: "facebook" as const,
     },
     {
       name: "Yahoo",
       provider: yahooProvider,
-      styleKey: "yahoo" as "yahoo",
+      styleKey: "yahoo" as const,
     },
   ];
 
@@ -145,47 +146,66 @@ const LeftSide = () => {
 
       await loginWithEmailAndPassword(formData.email, formData.password);
 
-      const auth = getAuth();
-      const user = auth.currentUser;
+      const authInstance = getAuth();
+      const user = authInstance.currentUser;
       if (!user) throw new Error("Utilizatorul nu a fost găsit după autentificare.");
 
       const token = await getIdToken(user);
       if (!token) throw new Error("Nu s-a putut obține tokenul de autentificare.");
 
-      const userByEmail = await userApi.getUserByEmail(user.email || "");
+      const emailFromFirebase =
+        user.email ||
+        user.providerData?.find((p) => !!p.email)?.email ||
+        "";
+
+      if (!emailFromFirebase) {
+        throw new Error("Autentificarea a eșuat: email-ul este obligatoriu.");
+      }
+
+      const userByEmail = await userApi.getUserByEmail(emailFromFirebase);
       if (!userByEmail) throw new Error("Utilizatorul nu există în sistem.");
 
       userStore.setCurrentUser(userByEmail);
-      setIsLoading(false);
       router.replace(returnTo);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Autentificarea a eșuat:", error);
+      setRequestError(error?.message || "Email sau parolă incorecte!");
+    } finally {
       setIsLoading(false);
-      setRequestError("Email sau parolă incorecte!");
     }
   };
 
-  const providerMap: Record<string, AuthProvider> = {
-    Google: AuthProvider.GOOGLE,
-    Facebook: AuthProvider.FACEBOOK,
-    Yahoo: AuthProvider.YAHOO,
+  const providerMap: Record<string, AuthProviderEnum> = {
+    Google: AuthProviderEnum.GOOGLE,
+    Facebook: AuthProviderEnum.FACEBOOK,
+    Yahoo: AuthProviderEnum.YAHOO,
   };
 
+  // Instant spinner reset on popup-close / cancel
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
-    console.log('[SocialLogin] clicked:', authProviderName, 'providerId:', provider?.providerId);
+    const enumName = providerMap[authProviderName];
+    if (!enumName) {
+      console.error("Provider necunoscut:", authProviderName);
+      return;
+    }
+
+    setIsLoading(true);
+    setRequestError("");
+
     try {
-      const enumName = providerMap[authProviderName];
-      if (!enumName) {
-        throw new Error("Provider necunoscut: " + authProviderName);
-      }
-
-      setIsLoading(true);
-
+      console.log("[SocialLogin] clicked:", authProviderName, "providerId:", provider?.providerId);
       await handleSocialAuth(auth, provider, userApi, userStore, enumName);
       router.replace(returnTo);
-    } catch (error) {
-      console.error(`Autentificare ${authProviderName} eșuată`, error);
-      setIsLoading(false);
+    } catch (error: any) {
+      // Popup closed or a second popup was cancelled → clear immediately
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        console.log("Popup închis de utilizator / cerere anulată.");
+      } else {
+        console.error(`Autentificare ${authProviderName} eșuată`, error);
+        setRequestError(error?.message || "Autentificarea a eșuat. Încearcă din nou.");
+      }
+    } finally {
+      setIsLoading(false); // ← ensures spinner hides instantly on ANY exit path
     }
   };
 
