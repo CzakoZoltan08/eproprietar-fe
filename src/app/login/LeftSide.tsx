@@ -72,6 +72,10 @@ const LeftSide = () => {
   const [requestError, setRequestError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const yahooProvider = new OAuthProvider(AuthProvider.YAHOO);
+  yahooProvider.addScope("email"); // <-- critical
+  yahooProvider.setCustomParameters({ prompt: "login" });
+
   const socialAuthConfigs = [
     {
       name: "Google",
@@ -85,7 +89,7 @@ const LeftSide = () => {
     },
     {
       name: "Yahoo",
-      provider: new OAuthProvider(AuthProvider.YAHOO),
+      provider: yahooProvider,
       styleKey: "yahoo" as "yahoo",
     },
   ];
@@ -168,6 +172,7 @@ const LeftSide = () => {
   };
 
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
+    console.log('[SocialLogin] clicked:', authProviderName, 'providerId:', provider?.providerId);
     try {
       const enumName = providerMap[authProviderName];
       if (!enumName) {

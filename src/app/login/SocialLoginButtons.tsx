@@ -23,14 +23,17 @@ const buttonIcons: Record<AuthStyleKey, JSX.Element> = {
 const buttonStyles: Record<AuthStyleKey, any> = {
   google: {
     backgroundColor: "rgb(234, 67, 53)",
+    color: "white",
     "&:hover": { backgroundColor: "rgb(219, 50, 40)" },
   },
   facebook: {
     backgroundColor: "rgb(59, 89, 152)",
+    color: "white",
     "&:hover": { backgroundColor: "rgb(45, 67, 115)" },
   },
   yahoo: {
     backgroundColor: "rgb(96, 1, 210)",
+    color: "white",
     "&:hover": { backgroundColor: "rgb(75, 0, 145)" },
   },
 };
