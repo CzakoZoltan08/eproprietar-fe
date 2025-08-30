@@ -5,7 +5,11 @@ import * as breakpoints from "@/constants/breakpoints";
 import {
   Box,
   CircularProgress,
+  FormControl,
+  InputLabel,
   LinearProgress,
+  MenuItem,
+  Select,
   TextField,
   Tooltip,
   Typography,
@@ -40,7 +44,7 @@ const Styled = {
     max-width: 800px;
     margin: auto;
     overflow-x: hidden;
-    
+
     @media (max-width: 768px) {
       max-width: 100%;
       padding: 12px;
@@ -80,29 +84,36 @@ const INITIAL_DATA = {
   images: [] as File[],
   videos: [] as File[],
   apartmentTypeOther: "",
-  neighborhood: "",              // Cartier/zonă
-  constructionStart: "",         // Începerea construcției (vom folosi tot month+year)
-  floorsCount: "",               // Nr. de etaje
-  builtSurface: "",              // Suprafață construită (m²)
-  landSurface: "",               // Suprafață teren (m²)
-  amenities: "",                 // Facilități
-  developerSite: "",             // Site dezvoltator
-  frameType: "",                 // Tip chenar pe pagina de prezentare
-  flyer: null as File | null,   // local file
-  flyerUrl: "",                 // server URL (edit mode/backfill)
-  flyerMimeType: "",            // saved mime
+  neighborhood: "", // Cartier/zonă
+  constructionStart: "", // Începerea construcției (month+year)
+  floorsCount: "", // Nr. de etaje
+  builtSurface: "", // Suprafață construită (m²)
+  landSurface: "", // Suprafață teren (m²)
+  amenities: "", // Facilități
+  developerSite: "", // Site dezvoltator
+  frameType: "", // Tip chenar
+  flyer: null as File | null, // local file
+  flyerUrl: "", // server URL (edit mode/backfill)
+  flyerMimeType: "", // saved mime
+  userId: "", // ⬅️ for admin assignment
 };
 
 const ResidentialAnnouncementForm = () => {
-  const { userStore, announcementStore } = useStore();
-  const { user, updateUser } = userStore;
-  const { createAnnouncement, updateAnnouncement, createImageOrVideo } = announcementStore;
+  const { userStore, announcementStore, pricingStore } = useStore();
+  const { user, updateUser, fetchAllUsers, users, getCurrentUser } = userStore;
+  const {
+    createAnnouncement,
+    updateAnnouncement,
+    createImageOrVideo,
+    createPaymentSession,
+    sendAnnouncementCreationMail,
+  } = announcementStore;
 
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({
-  ...INITIAL_DATA,
-});
+    ...INITIAL_DATA,
+  });
   const [loading, setLoading] = useState(false);
   const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
   const [error, setError] = useState<string | null>(null);
@@ -110,14 +121,33 @@ const ResidentialAnnouncementForm = () => {
   const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Prefill a few defaults
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
       city: "Abrud",
       county: "Alba",
-      announcementType: "Apartament"
+      announcementType: "Apartament",
     }));
   }, []);
+
+  // Load current user / admin data
+  useEffect(() => {
+    // Ensure user is loaded
+    if (!user?.id) {
+      getCurrentUser();
+    }
+  }, [user?.id, getCurrentUser]);
+
+  useEffect(() => {
+    if (user?.id) {
+      // Load packages (needed for admin free plan flow)
+      pricingStore.getAnnouncementPackages(user.id);
+    }
+    if (user?.role === "admin") {
+      fetchAllUsers();
+    }
+  }, [user?.id, user?.role, fetchAllUsers, pricingStore]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -132,7 +162,7 @@ const ResidentialAnnouncementForm = () => {
   };
 
   const handleRemoveFlyer = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       flyer: null,
       flyerUrl: "",
@@ -179,7 +209,7 @@ const ResidentialAnnouncementForm = () => {
 
     let thumbnailUrl = "";
 
-    // ─── 1. Upload first image as thumbnail ───
+    // 1) Upload first image as thumbnail
     if (formData.images.length > 0) {
       const firstImage = formData.images[0];
       const fd = new FormData();
@@ -196,7 +226,7 @@ const ResidentialAnnouncementForm = () => {
       incrementImage();
     }
 
-    // ─── 2. Upload remaining images ───
+    // 2) Upload remaining images
     for (const image of formData.images.slice(1)) {
       const fd = new FormData();
       fd.append("file", image);
@@ -205,7 +235,7 @@ const ResidentialAnnouncementForm = () => {
       incrementImage();
     }
 
-    // ─── 3. Upload logo ───
+    // 3) Upload logo
     if (formData.logo) {
       const fd = new FormData();
       fd.append("file", formData.logo);
@@ -220,7 +250,7 @@ const ResidentialAnnouncementForm = () => {
       incrementImage();
     }
 
-    // ─── 4. Upload videos using reliable for...of loop ───
+    // 4) Upload videos
     for (const video of formData.videos) {
       const fd = new FormData();
       fd.append("file", video);
@@ -229,11 +259,11 @@ const ResidentialAnnouncementForm = () => {
       incrementVideo();
     }
 
-    // ─── 5. Upload flyer (PDF or image) ───
+    // 5) Upload flyer (PDF or image)
     if (formData.flyer) {
       const fd = new FormData();
       fd.append("file", formData.flyer);
-      fd.append("type", "flyer"); // backend should accept this
+      fd.append("type", "flyer");
 
       const resp = await createImageOrVideo(fd, announcementId);
       const url = resp?.optimized_url || resp?.url || "";
@@ -247,11 +277,18 @@ const ResidentialAnnouncementForm = () => {
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // small flush delay
   };
 
   const handleSubmit = async () => {
-    setIsSubmitted(true)
+    setIsSubmitted(true);
+
+    // quick basic requireds
+    if (!contactPhone || !formData.county || !formData.city || !formData.announcementType || !formData.title) {
+      setError("Te rugăm să completezi toate câmpurile obligatorii.");
+      return;
+    }
+
     const { logo, images, videos, flyer, ...cleanFormData } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
@@ -268,64 +305,104 @@ const ResidentialAnnouncementForm = () => {
       setLoading(true);
       setError(null);
 
-      if (!user?.id || !user.firebaseId) {
-        throw new Error("Utilizator neautentificat.");
+      // Find selected user (admin can assign)
+      let selectedUser = user;
+      if (user?.role === "admin") {
+        selectedUser = users.find((u) => u.id === formData.userId) || user;
       }
 
-      if (contactPhone && contactPhone !== user.phoneNumber) {
-        await updateUser(user.id, { phoneNumber: contactPhone });
+      if (!selectedUser?.id) {
+        throw new Error("Utilizator neautentificat sau nevalid.");
       }
+
+      // Update phone if changed
+      if (contactPhone && contactPhone !== (user?.phoneNumber || "")) {
+        await updateUser(selectedUser.id, { phoneNumber: contactPhone });
+      }
+
+      const isAdmin = user?.role === "admin";
 
       const payload = {
         ...cleanFormData,
         ...(formData.apartmentTypeOther ? { apartmentTypeOther: formData.apartmentTypeOther } : {}),
         phoneContact: contactPhone,
-        transactionType: serviceTypes[0],
+        transactionType: serviceTypes[0], // default for residential ensembles
         announcementType: formData.announcementType.toLowerCase(),
         providerType: "ensemble",
         rooms: 0,
         surface: 0,
         price: 0,
-        status: "pending",
-        user: { id: user.id, firebaseId: user.firebaseId },
-        streetFront: false, // Add default or form value as needed (boolean)
-        heightRegime: [], // Add default or form value as needed (string[])
-        urbanismDocuments: [], // Add default or form value as needed
-        utilities: {
-          curent: null,
-          apa: null,
-          canalizare: null,
-          gaz: null,   
-        },
+        status: isAdmin ? "active" : "pending",
+        user: { id: selectedUser.id, firebaseId: selectedUser.firebaseId ?? "" },
+
+        // Defaults for shared fields in unified backend model
+        streetFront: false,
+        heightRegime: [] as string[],
+        urbanismDocuments: [] as string[],
+        utilities: { curent: null, apa: null, canalizare: null, gaz: null },
         commercialSpaceType: "",
         usableSurface: 0,
-        builtSurface: 0,
+        builtSurface: Number(formData.builtSurface) || 0,
         spaceHeight: 0,
         hasStreetWindow: false,
         streetWindowLength: 0,
         hasStreetEntrance: false,
         hasLift: false,
         vehicleAccess: [] as string[],
+
         neighborhood: formData.neighborhood,
-        constructionStart: formData.constructionStart,         // ISO cu prima zi din lună
+        constructionStart: formData.constructionStart,
         floorsCount: Number(formData.floorsCount) || 0,
         landSurface: Number(formData.landSurface) || 0,
         amenities: formData.amenities
-          ? formData.amenities.split(",").map(a => a.trim()).filter(a => a)
+          ? formData.amenities.split(",").map((a) => a.trim()).filter((a) => a)
           : [],
         developerSite: formData.developerSite ? formData.developerSite : null,
         frameType: formData.frameType,
-        flyerUrl: formData.flyerUrl || "",         // if you prefill on edit
+        flyerUrl: formData.flyerUrl || "",
         flyerMimeType: formData.flyerMimeType || "",
       };
 
       const newAnnouncement = await createAnnouncement(payload);
       localStorage.setItem("announcementRealId", newAnnouncement.id);
+
       await uploadMedia(newAnnouncement.id);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // small flush delay
 
-      window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
+      if (isAdmin) {
+        // Record a free payment for admin-created ensemble
+        await createPaymentSession({
+          orderId: newAnnouncement.id,
+          packageId: pricingStore.freePlanId ?? "",
+          amount: 0,
+          originalAmount: 0,
+          currency: "RON",
+          invoiceDetails: {
+            name: "",
+            address: "",
+            city: "",
+            country: "",
+            email: "",
+            isTaxPayer: false,
+          },
+          products: [],
+        });
+
+        const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!;
+        const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`;
+        await sendAnnouncementCreationMail(
+          selectedUser.firstName ?? "",
+          selectedUser.email ?? "",
+          announcementUrl
+        );
+
+        // Redirect to success status page (admin)
+        window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
+      } else {
+        // Normal user -> go to payment packages flow
+        window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
+      }
     } catch (err: any) {
       console.error("Eroare la crearea anunțului:", err);
       setError("A apărut o problemă. Încearcă din nou.");
@@ -339,7 +416,7 @@ const ResidentialAnnouncementForm = () => {
       {loading ? (
         <>
           <CircularProgress />
-          {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
+          {imageUploadProgress.total > 0 || videoUploadProgress.total > 0 ? (
             <>
               <Typography mt={2}>
                 Se încarcă imaginile: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
@@ -381,6 +458,26 @@ const ResidentialAnnouncementForm = () => {
           <Styled.Subtitle>Publică un ansamblu rezidențial</Styled.Subtitle>
           {error && <Typography color="error" mb={2}>{error}</Typography>}
 
+          {/* Admin: assign to user */}
+          {user?.role === "admin" && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="user-select-label">Atribuie unui utilizator</InputLabel>
+              <Select
+                labelId="user-select-label"
+                name="userId"
+                value={formData.userId}
+                label="Atribuie unui utilizator"
+                onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value as string }))}
+              >
+                {users.map((u) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} ({u.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
           <Styled.FormBox>
             <RadioButtonsGroup
               options={propertyTypesResidential}
@@ -390,6 +487,7 @@ const ResidentialAnnouncementForm = () => {
               label="Tipul proprietății"
               error={formErrors.announcementType}
             />
+
             <TextField
               label="Telefon de contact"
               name="contactPhone"
@@ -403,13 +501,17 @@ const ResidentialAnnouncementForm = () => {
                   { ...formData, contactPhone: value },
                   "contactPhone"
                 );
-                setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : undefined }));
+                setFormErrors((prev) => ({
+                  ...prev,
+                  contactPhone: typeof phoneError === "string" ? phoneError : undefined,
+                }));
               }}
               required
               error={isSubmitted && !contactPhone}
-              helperText={isSubmitted && !contactPhone ? 'Acest câmp este obligatoriu' : ''}
+              helperText={isSubmitted && !contactPhone ? "Acest câmp este obligatoriu" : ""}
               fullWidth
             />
+
             <AutocompleteCounties
               label="Județ *"
               customWidth="100%"
@@ -421,16 +523,18 @@ const ResidentialAnnouncementForm = () => {
                 }));
               }}
               error={isSubmitted && !formData.county}
-              helperText={isSubmitted && !formData.county ? 'Acest câmp este obligatoriu' : ''}
+              helperText={isSubmitted && !formData.county ? "Acest câmp este obligatoriu" : ""}
             />
+
             <AutocompleteCities
               onChange={(event, value) => setFormData((prev) => ({ ...prev, city: value || "" }))}
               label="Localitate (oraș/comună) *"
               customWidth="100%"
               error={isSubmitted && !formData.city}
-              helperText={isSubmitted && !formData.city ? 'Acest câmp este obligatoriu' : ''}
+              helperText={isSubmitted && !formData.city ? "Acest câmp este obligatoriu" : ""}
               value={formData.city}
             />
+
             <TextField
               label="Stradă"
               name="street"
@@ -441,6 +545,7 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.street}
               fullWidth
             />
+
             <Tooltip title="Scrie un titlu atractiv și clar">
               <TextField
                 label="Titlul anunțului"
@@ -453,6 +558,7 @@ const ResidentialAnnouncementForm = () => {
                 fullWidth
               />
             </Tooltip>
+
             <TextField
               label="Descriere"
               name="description"
@@ -466,7 +572,9 @@ const ResidentialAnnouncementForm = () => {
               rows={4}
             />
 
-            <Typography variant="h6" mt={2}>Detalii ansamblu</Typography>
+            <Typography variant="h6" mt={2}>
+              Detalii ansamblu
+            </Typography>
 
             <TextField
               label="Cartier / zonă"
@@ -480,9 +588,9 @@ const ResidentialAnnouncementForm = () => {
               name="constructionStart"
               label="Începerea construcției"
               value={formData.constructionStart}
-              error={formErrors.constructionStart as unknown as string || ""} // dacă nu ai validare, poți lăsa ""
+              error={(formErrors.constructionStart as unknown as string) || ""}
               handleChange={handleConstructionStartChange}
-              monthYearOnly   // 👈 afișează doar luna+an
+              monthYearOnly
             />
 
             <TextField
@@ -526,12 +634,12 @@ const ResidentialAnnouncementForm = () => {
             <TextField
               label="Site dezvoltator"
               name="developerSite"
-              value={formData.developerSite || ""}   // ensure string
+              value={formData.developerSite || ""}
               onChange={handleInputChange}
               placeholder="https://..."
               fullWidth
             />
-            
+
             {formData.announcementType?.toLowerCase() === "apartament" && (
               <TextField
                 label="Tipuri de apartamente (ex: garsonieră, o cameră, două camere, etc.)"
@@ -545,6 +653,7 @@ const ResidentialAnnouncementForm = () => {
                 rows={4}
               />
             )}
+
             <TextField
               label="Stadiu construcție"
               name="stage"
@@ -555,14 +664,16 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.stage}
               fullWidth
             />
+
             <PrimaryDatePicker
               name="endDate"
               label="Data finalizării"
               value={formData.endDate}
               error={formErrors.endDate || ""}
               handleChange={handleDateChange}
-              monthYearOnly   // 👈 va afișa doar luna+an (ex: August 2026)
+              monthYearOnly
             />
+
             <Box width="100%" display="flex" justifyContent="center" mt={2}>
               <FlyerUploader
                 file={formData.flyer}
@@ -571,17 +682,10 @@ const ResidentialAnnouncementForm = () => {
                 mimeType={formData.flyerMimeType}
                 error={flyerError || undefined}
                 setError={setFlyerError}
-                onPreviewClickRemove={() => {
-                  setFormData(p => ({
-                    ...p,
-                    flyer: null,
-                    flyerUrl: "",
-                    flyerMimeType: "",
-                  }));
-                  setFlyerError(null);
-                }}
+                onPreviewClickRemove={handleRemoveFlyer}
               />
             </Box>
+
             <MediaUploader
               logo={formData.logo}
               setLogo={(file) => setFormData((prev) => ({ ...prev, logo: file }))}
