@@ -417,34 +417,40 @@ const AgencyCardInner = styled(Box)`
   align-items: center;
 `;
 
-const AgencyBody = ({ pkg }: { pkg: any }) => (
-  <AgencyCardInner>
-    <Typography variant="h6" fontWeight={700} gutterBottom>
-      ✅ {pkg.label}
-    </Typography>
+const AgencyBody = ({ pkg }: { pkg: any }) => {
+  const base = getBasePrice(pkg);
+  const eff = effectivePrice(pkg);
+  const hasDiscount = eff < base;
 
-    <Box mt={2} mb={2}>
-      {/* Old price line-through */}
-      <Typography
-        variant="body2"
-        color={COLOR_TEXT}
-        sx={{ mb: 1, textDecoration: "line-through", opacity: 0.7 }}
-      >
-        {pkg.originalPrice} euro / anunț (valabil nelimitat ca durată)
+  return (
+    <AgencyCardInner>
+      <Typography variant="h6" fontWeight={700} gutterBottom>
+        ✅ {pkg.label}
       </Typography>
 
-      {/* Highlighted current price + duration in primary */}
-      <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
-        {pkg.price} euro / anunț (valabil nelimitat ca durată)
-      </Typography>
-    </Box>
+      <Box mt={2} mb={2}>
+        {hasDiscount && (
+          <Typography
+            variant="body2"
+            color={COLOR_TEXT}
+            sx={{ mb: 1, textDecoration: "line-through", opacity: 0.7 }}
+          >
+            {base} euro / anunț (valabil nelimitat ca durată)
+          </Typography>
+        )}
 
-    <Box mt={2} textAlign="left" sx={{ maxWidth: 340 }}>
-      <Typography sx={{ mb: 1 }}>{pkg.details1}</Typography>
-      <Typography>{pkg.details2}</Typography>
-    </Box>
-  </AgencyCardInner>
-);
+        <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
+          {eff} euro / anunț (valabil nelimitat ca durată)
+        </Typography>
+      </Box>
+
+      <Box mt={2} textAlign="left" sx={{ maxWidth: 340 }}>
+        <Typography sx={{ mb: 1 }}>{pkg.details1}</Typography>
+        <Typography>{pkg.details2}</Typography>
+      </Box>
+    </AgencyCardInner>
+  );
+};
 
 const BonusBox = styled(Box)`
   padding: 14px 18px;
@@ -476,6 +482,10 @@ const PromotionCards = ({
     <PromotionGrid>
       {promotions.map((p) => {
         const isSelected = selectedPromotion?.id === p.id;
+        const base = getBasePrice(p);
+        const eff = effectivePrice(p);
+        const hasDiscount = eff < base;
+
         return (
           <PromoCard
             key={p.id}
@@ -492,15 +502,23 @@ const PromotionCards = ({
             <PromoValue>{p.label.replace(/^[⭐\s]+/, "")}</PromoValue>
 
             <PromoLabel>Durată</PromoLabel>
-            <PromoValue>{p.durationText}</PromoValue>
+            <PromoValue>{(p as any).durationText}</PromoValue>
 
             <PromoLabel>Preț</PromoLabel>
+            {hasDiscount && (
+              <Typography
+                variant="body2"
+                sx={{ textDecoration: "line-through", opacity: 0.7, mb: 0.5 }}
+              >
+                {base} {(p as any).currency ?? "EUR"}
+              </Typography>
+            )}
             <PromoPrice>
-              {p.price} {p.currency}
+              {eff} {(p as any).currency ?? "EUR"}
             </PromoPrice>
 
             <PromoLabel>Beneficiu</PromoLabel>
-            <PromoBenefit>{p.benefit}</PromoBenefit>
+            <PromoBenefit>{(p as any).benefit}</PromoBenefit>
           </PromoCard>
         );
       })}
@@ -538,22 +556,24 @@ const enhancePromotionsFromFetched = (fetched: any[]): FixedPromotion[] => {
         (item?.promotionType as PromotionPackageType | undefined);
       const fixed = type ? FIXED_BY_TYPE[type] : undefined;
 
-      // Compose UI-facing object. Keep fetched id. Prefer fetched price/currency if present.
       return {
-        id: item.id, // ← keep fetched id
+        id: item.id, // keep fetched id
         label: fixed?.label ?? item.label ?? "Promovare",
         durationText: fixed?.durationText ?? item.durationText ?? "",
-        price: Number(item.discountedPrice ?? item.price ?? fixed?.price ?? 0),
-        currency: (item.currency ?? fixed?.currency ?? "EUR").toUpperCase(),
+        price: Number(item.price ?? fixed?.price ?? 0),
+        currency: (item.currency ?? fixed?.currency ?? "EUR").toUpperCase() as "EUR",
         benefit: fixed?.benefit ?? item.benefit ?? "",
-        stars: fixed?.stars, // purely visual
-      };
+        stars: fixed?.stars,
+        // Optional discount fields may come from BE; we pass them through for effectivePrice()
+        ...(item.discountedPrice != null ? { discountedPrice: item.discountedPrice } : {}),
+        ...(item.discountAmount != null ? { discountAmount: item.discountAmount } : {}),
+        ...(item.discountPercent != null ? { discountPercent: item.discountPercent } : {}),
+      } as any;
     })
     .filter(Boolean);
 };
 
 const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
-  // match by id first, then by packageType
   const byId = byKey(defaults, "id");
   const byType = byKey(defaults, "packageType");
 
@@ -563,10 +583,8 @@ const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
       (item?.packageType && byType.get(item.packageType)) ||
       null;
 
-    // defaults provide labels/features/badges/etc; fetched wins on prices and ids
     const base = fallback ? { ...fallback, ...item } : { ...item };
 
-    // ensure features exist (fallback to mockFeatures by type)
     if (!base.features || base.features.length === 0) {
       const t = (base.packageType || "").toLowerCase();
       const mf = mockFeaturesMap[t];
@@ -575,7 +593,6 @@ const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
     return base;
   });
 
-  // if fetched is empty, return defaults as a fallback
   if (!merged.length) {
     return (defaults ?? []).map((d) => {
       const t = (d.packageType || "").toLowerCase();
@@ -588,6 +605,51 @@ const enhanceList = (fetched: MaybeIdType[], defaults: MaybeIdType[]) => {
 
   return merged;
 };
+
+/* ---------------- price helpers (DISCOUNT LOGIC) ---------------- */
+
+/** Returns the base price (no discounts applied) from a mixed object shape. */
+function getBasePrice(x: any): number {
+  const base = Number(
+    x?.price ??
+      x?.currentPrice ??
+      x?.standardPrice ??
+      x?.originalPrice ??
+      x?.standardPriceText?.toString().replace(/[^\d.,-]/g, "") ??
+      0
+  );
+  return isFinite(base) ? round2(base) : 0;
+}
+
+/** Calculates the effective price with discounts applied (discountedPrice wins). */
+function effectivePrice(x: any): number {
+  const base = getBasePrice(x);
+  if (!isFinite(base)) return 0;
+
+  // Priority 1: explicit discountedPrice
+  if (x?.discountedPrice != null && isFinite(Number(x.discountedPrice))) {
+    return Math.max(0, round2(Number(x.discountedPrice)));
+  }
+
+  // Priority 2: discountAmount (subtract amount)
+  if (x?.discountAmount != null && isFinite(Number(x.discountAmount))) {
+    return Math.max(0, round2(base - Number(x.discountAmount)));
+  }
+
+  // Priority 3: discountPercent (apply percentage)
+  if (x?.discountPercent != null && isFinite(Number(x.discountPercent))) {
+    const percent = Number(x.discountPercent);
+    return Math.max(0, round2(base * (1 - percent / 100)));
+  }
+
+  // No discount fields => base
+  return base;
+}
+
+/** Human-ish rounding */
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
 
 /* ---------------- component ---------------- */
 
@@ -669,7 +731,6 @@ const SelectPackagePage = () => {
           getPromotionPackages(user.id),
         ]);
 
-        // choose defaults by audience
         const pkgDefaults = isEnsemble
           ? getEnsemblePackages()
           : isOwner
@@ -679,8 +740,6 @@ const SelectPackagePage = () => {
           : [];
 
         const enhancedPackages = enhanceList(fetchedPackages ?? [], pkgDefaults);
-
-        // Persist
         setPackages(enhancedPackages);
 
         if (!isEnsemble && (isOwner || isAgency)) {
@@ -691,7 +750,6 @@ const SelectPackagePage = () => {
         }
       } catch (err) {
         console.error("Failed to load pricing options", err);
-        // fallbacks if fetch blows up
         const fallbackPkgs = isEnsemble
           ? getEnsemblePackages()
           : isOwner
@@ -726,30 +784,16 @@ const SelectPackagePage = () => {
     }
   }, [packages, isOwner, isAgency]);
 
-  /* Totals */
+  /* Totals (uses discount-aware helpers) */
   useEffect(() => {
-    const pkgPrice =
-      Number(
-        selectedPackage?.discountedPrice ??
-          selectedPackage?.price ??
-          selectedPackage?.currentPrice
-      ) || 0;
+    const pkgEff = selectedPackage ? effectivePrice(selectedPackage) : 0;
+    const promoEff = selectedPromotion ? effectivePrice(selectedPromotion) : 0;
 
-    const promoPrice =
-      Number(selectedPromotion?.discountedPrice ?? selectedPromotion?.price) || 0;
+    const pkgBase = selectedPackage ? getBasePrice(selectedPackage) : 0;
+    const promoBase = selectedPromotion ? getBasePrice(selectedPromotion) : 0;
 
-    const originalPkg =
-      Number(
-        selectedPackage?.originalPrice ??
-          selectedPackage?.standardPrice ??
-          selectedPackage?.price
-      ) || 0;
-
-    const originalPromo =
-      Number(selectedPromotion?.originalPrice ?? selectedPromotion?.price) || 0;
-
-    setTotalPrice(pkgPrice + promoPrice);
-    setOriginalTotalPrice(originalPkg + originalPromo);
+    setTotalPrice(round2(pkgEff + promoEff));
+    setOriginalTotalPrice(round2(pkgBase + promoBase));
   }, [selectedPackage, selectedPromotion]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -765,21 +809,17 @@ const SelectPackagePage = () => {
     [isEnsemble, isOwner, isAgency, selectedPackage?.currency]
   );
 
-  // ---------- NEW: sorting helpers ----------
-  const getPkgPrice = (pkg: any) =>
-    Number(
-      pkg?.discountedPrice ??
-        pkg?.price ??
-        pkg?.currentPrice ??
-        pkg?.standardPrice ??
-        Number.POSITIVE_INFINITY
-    );
-
+  // ---------- sorting helpers (use effectivePrice) ----------
   const sortedPackages = useMemo(
-    () => [...packages].sort((a, b) => getPkgPrice(a) - getPkgPrice(b)),
+    () => [...packages].sort((a, b) => effectivePrice(a) - effectivePrice(b)),
     [packages]
   );
-  // ------------------------------------------
+
+  const sortedPromotions = useMemo(
+    () => [...promotions].sort((a, b) => effectivePrice(a) - effectivePrice(b)),
+    [promotions]
+  );
+  // ---------------------------------------------------------
 
   const handleSubmit = async () => {
     if (!selectedPackage || !announcementId) return;
@@ -814,8 +854,8 @@ const SelectPackagePage = () => {
         orderId: announcementId,
         packageId: selectedPackage.id,
         promotionId: includePromotion ? selectedPromotion?.id ?? undefined : undefined,
-        amount: totalPrice,
-        originalAmount: originalTotalPrice,
+        amount: totalPrice, // already discount-aware
+        originalAmount: originalTotalPrice, // sum of base prices (no discounts)
         currency,
         discountCode: selectedPackage.discountCode ?? undefined,
         promotionDiscountCode: includePromotion
@@ -858,106 +898,118 @@ const SelectPackagePage = () => {
 
   /* ---------------- card body renderers ---------------- */
 
-  const OwnerCardBody = ({ pkg }: { pkg: any }) => (
-    <>
-      <Typography variant="h6" fontWeight={700} gutterBottom>
-        {pkg.label}
-      </Typography>
-      {pkg.subtitle && (
-        <Typography variant="body2" color="primary" gutterBottom>
-          {pkg.subtitle}
-        </Typography>
-      )}
+  const OwnerCardBody = ({ pkg }: { pkg: any }) => {
+    const base = getBasePrice(pkg);
+    const eff = effectivePrice(pkg);
+    const hasDiscount = eff < base;
 
-      <Box mt={2} mb={1.5}>
-        <Typography variant="body2" color={COLOR_TEXT} sx={{ mb: 1 }}>
-          Durată:{" "}
-          <b>
-            {pkg.durationText ??
-              (pkg.durationDays > 0 ? `${pkg.durationDays} zile` : "NELIMITAT")}
-          </b>
+    return (
+      <>
+        <Typography variant="h6" fontWeight={700} gutterBottom>
+          {pkg.label}
         </Typography>
-
-        <Typography
-          variant="body2"
-          color={COLOR_TEXT}
-          sx={{
-            mb: 1,
-            textDecoration: pkg.badge ? "line-through" : "none",
-            opacity: pkg.badge ? 0.7 : 1,
-          }}
-        >
-          Preț standard:{" "}
-          {pkg.standardPriceText ??
-            (pkg.standardPrice ? `${pkg.standardPrice} ${pkg.currency ?? "EUR"}` : "-")}
-        </Typography>
-
-        <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
-          Preț actual:{" "}
-          {pkg.currentPriceText ??
-            `${pkg.discountedPrice ?? pkg.price} ${pkg.currency ?? "EUR"}`}
-        </Typography>
-
-        {pkg.costPerDayText && (
-          <Typography fontWeight={700} color="primary" sx={{ mb: 1 }}>
-            Cost pe zi: {pkg.costPerDayText}
+        {pkg.subtitle && (
+          <Typography variant="body2" color="primary" gutterBottom>
+            {pkg.subtitle}
           </Typography>
         )}
-      </Box>
 
-      {pkg.highlights && (
-        <Box mt={2} textAlign="left" sx={{ maxWidth: 320, mx: "auto" }}>
-          {pkg.highlights.map((h: string, i: number) => (
-            <Typography key={i} color="primary" sx={{ mb: 0.5 }}>
-              {h}
+        <Box mt={2} mb={1.5}>
+          <Typography variant="body2" color={COLOR_TEXT} sx={{ mb: 1 }}>
+            Durată:{" "}
+            <b>
+              {pkg.durationText ??
+                (pkg.durationDays > 0 ? `${pkg.durationDays} zile` : "NELIMITAT")}
+            </b>
+          </Typography>
+
+          {hasDiscount && (
+            <Typography
+              variant="body2"
+              color={COLOR_TEXT}
+              sx={{ mb: 1, textDecoration: "line-through", opacity: 0.7 }}
+            >
+              Preț standard: {base} {pkg.currency ?? "EUR"}
             </Typography>
-          ))}
+          )}
+
+          <Typography fontSize="1.4rem" fontWeight={900} color="primary" sx={{ mb: 1 }}>
+            Preț actual: {eff} {pkg.currency ?? "EUR"}
+          </Typography>
+
+          {pkg.costPerDayText && (
+            <Typography fontWeight={700} color="primary" sx={{ mb: 1 }}>
+              Cost pe zi: {pkg.costPerDayText}
+            </Typography>
+          )}
         </Box>
-      )}
-    </>
-  );
 
-  const GenericCardBody = ({ item }: { item: any }) => (
-    <>
-      <Typography variant="h6" fontWeight={700} color="primary.dark" gutterBottom>
-        {item.label}
-      </Typography>
+        {pkg.highlights && (
+          <Box mt={2} textAlign="left" sx={{ maxWidth: 320, mx: "auto" }}>
+            {pkg.highlights.map((h: string, i: number) => (
+              <Typography key={i} color="primary" sx={{ mb: 0.5 }}>
+                {h}
+              </Typography>
+            ))}
+          </Box>
+        )}
+      </>
+    );
+  };
 
-      {typeof item.durationDays === "number" && (
-        <Typography variant="body2" color={COLOR_TEXT} gutterBottom>
-          Durată: {item.durationDays > 0 ? `${item.durationDays} zile` : "NELIMITAT"}
+  const GenericCardBody = ({ item }: { item: any }) => {
+    const base = getBasePrice(item);
+    const eff = effectivePrice(item);
+    const hasDiscount = eff < base;
+
+    return (
+      <>
+        <Typography variant="h6" fontWeight={700} color="primary.dark" gutterBottom>
+          {item.label}
         </Typography>
-      )}
 
-      {item.features?.length > 0 && (
-        <Box component="ul" sx={{ listStyle: "none", p: 0, m: "8px 0 16px" }}>
-          {item.features.map((f: string, idx: number) => (
-            <Box key={idx} component="li" sx={{ mb: 0.5 }}>
-              • {f}
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      <Box>
-        <Typography fontSize="1.6rem" fontWeight={900} color="primary">
-          {(item.discountedPrice ?? item.price) +
-            " " +
-            (item.currency ?? "EUR")}
-        </Typography>
-        {item.monthly && (
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            ({item.monthly} {item.currency ?? "EUR"}/lună)
+        {typeof item.durationDays === "number" && (
+          <Typography variant="body2" color={COLOR_TEXT} gutterBottom>
+            Durată: {item.durationDays > 0 ? `${item.durationDays} zile` : "NELIMITAT"}
           </Typography>
         )}
-        {item.note && (
-          <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.8 }}>
-            {item.note}
-          </Typography>
+
+        {item.features?.length > 0 && (
+          <Box component="ul" sx={{ listStyle: "none", p: 0, m: "8px 0 16px" }}>
+            {item.features.map((f: string, idx: number) => (
+              <Box key={idx} component="li" sx={{ mb: 0.5 }}>
+                • {f}
+              </Box>
+            ))}
+          </Box>
         )}
-      </Box>
-    </>
-  );
+
+        <Box>
+          {hasDiscount && (
+            <Typography
+              variant="body2"
+              sx={{ textDecoration: "line-through", opacity: 0.7 }}
+            >
+              {base} {item.currency ?? "EUR"}
+            </Typography>
+          )}
+          <Typography fontSize="1.6rem" fontWeight={900} color="primary">
+            {eff} {item.currency ?? "EUR"}
+          </Typography>
+          {item.monthly && (
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              ({item.monthly} {item.currency ?? "EUR"}/lună)
+            </Typography>
+          )}
+          {item.note && (
+            <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.8 }}>
+              {item.note}
+            </Typography>
+          )}
+        </Box>
+      </>
+    );
+  };
 
   /* ---------------- UI ---------------- */
 
@@ -1019,7 +1071,7 @@ const SelectPackagePage = () => {
 
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={promotions as FixedPromotion[]}
+              promotions={sortedPromotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
@@ -1027,7 +1079,6 @@ const SelectPackagePage = () => {
         </>
       ) : isAgency ? (
         <>
-          {/* Agency Exclusive – one centered card, single column */}
           <SectionTitle mb={1} style={{ textAlign: "center" }}>
             🏢 Agenți Imobiliari – Reprezentare Exclusivă
           </SectionTitle>
@@ -1055,10 +1106,9 @@ const SelectPackagePage = () => {
             <b> persoanelor fizice</b>, oferindu-i expunere maximă pe întreaga platformă!
           </BonusBox>
 
-          {/* Show promotions after base package is selected */}
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={promotions as FixedPromotion[]}
+              promotions={sortedPromotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
@@ -1087,7 +1137,7 @@ const SelectPackagePage = () => {
 
           {shouldShowPromotions && (
             <PromotionCards
-              promotions={promotions as FixedPromotion[]}
+              promotions={sortedPromotions as FixedPromotion[]}
               selectedPromotion={selectedPromotion}
               onSelect={(p) => setSelectedPromotion(p)}
             />
