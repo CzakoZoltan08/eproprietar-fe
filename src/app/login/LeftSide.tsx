@@ -86,11 +86,11 @@ const LeftSide = () => {
       provider: new FacebookAuthProvider(),
       styleKey: "facebook" as "facebook",
     },
-    {
-      name: "Yahoo",
-      provider: yahooProvider,
-      styleKey: "yahoo" as "yahoo",
-    },
+    // {
+    //   name: "Yahoo",
+    //   provider: yahooProvider,
+    //   styleKey: "yahoo" as "yahoo",
+    // },
   ];
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
