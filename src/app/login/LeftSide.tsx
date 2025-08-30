@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -8,17 +8,17 @@ import {
   getAuth,
   getIdToken,
 } from "firebase/auth";
+import { completeRedirectIfNeeded, startSocialAuth } from "./socialAuthHandler";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthContainer from "./AuthContainer";
-import { AuthProvider } from "@/constants/authProviders";
+import { AuthProvider as AuthProviderEnum } from "@/constants/authProviders";
 import { Box } from "@mui/material";
 import LoginForm from "./LoginForm";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
 import SocialLoginButtons from "./SocialLoginButtons";
 import { auth } from "@/config/firebase";
 import { generalValidation } from "@/utils/generalValidation";
-import { handleSocialAuth } from "./socialAuthHandler";
 import { observer } from "mobx-react";
 import { styled } from "@mui/material/styles";
 import { useMediaQuery } from "@/hooks/useMediaquery";
@@ -59,58 +59,61 @@ const LeftSide = () => {
   const rawReturnTo = searchParams.get("returnTo");
   const returnTo = rawReturnTo?.startsWith("/") ? rawReturnTo : "/";
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [formErrors, setFormErrors] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formErrors, setFormErrors] = useState({ email: "", password: "" });
   const [requestError, setRequestError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const yahooProvider = new OAuthProvider(AuthProvider.YAHOO);
+  // --- Providers (Yahoo: no extra scope needed now that Email+Profile are enabled in Yahoo) ---
+  const yahooProvider = new OAuthProvider("yahoo.com");
   yahooProvider.setCustomParameters({ prompt: "login" });
 
   const socialAuthConfigs = [
-    {
-      name: "Google",
-      provider: new GoogleAuthProvider(),
-      styleKey: "google" as "google",
-    },
-    {
-      name: "Facebook",
-      provider: new FacebookAuthProvider(),
-      styleKey: "facebook" as "facebook",
-    },
-    {
-      name: "Yahoo",
-      provider: yahooProvider,
-      styleKey: "yahoo" as "yahoo",
-    },
+    { name: "Google", provider: new GoogleAuthProvider(), styleKey: "google" as const },
+    { name: "Facebook", provider: new FacebookAuthProvider(), styleKey: "facebook" as const },
+    { name: "Yahoo", provider: yahooProvider, styleKey: "yahoo" as const },
   ];
+
+  // Complete redirect flow if we are returning from Yahoo/Google/Facebook
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // Show spinner if we know we initiated a redirect previously
+        if (typeof window !== "undefined" && sessionStorage.getItem("SOCIAL_REDIRECT_PENDING") === "1") {
+          setIsLoading(true);
+        }
+        const completed = await completeRedirectIfNeeded(auth, userApi, userStore);
+        if (completed && mounted) {
+          router.replace(returnTo);
+        }
+      } catch (err: any) {
+        console.error("Redirect auth failed:", err);
+        if (mounted) setRequestError(err?.message || "Autentificarea a eșuat după redirect.");
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [router, returnTo, userApi, userStore]);
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const sanitizePhoneNumber = (phone: string): string => {
-    return phone.replace(/\s+/g, "").replace(/[^+\d]/g, "");
-  };
+  const sanitizePhoneNumber = (phone: string): string =>
+    phone.replace(/\s+/g, "").replace(/[^+\d]/g, "");
 
   const handleSendOtp = async () => {
     try {
       setRequestError("");
-      const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
-      if (!sanitizedPhoneNumber.startsWith("+")) {
+      const sanitized = sanitizePhoneNumber(phoneNumber);
+      if (!sanitized.startsWith("+")) {
         throw new Error("Numărul de telefon trebuie să includă prefixul internațional (ex: +40).");
       }
       await setupRecaptcha(auth, "recaptcha-container");
-      const result = await sendOtp(auth, sanitizedPhoneNumber);
+      const result = await sendOtp(auth, sanitized);
       setConfirmationResult(result);
       setIsOtpSent(true);
     } catch (error: any) {
@@ -124,17 +127,16 @@ const LeftSide = () => {
       if (!confirmationResult) throw new Error("Rezultatul confirmării OTP lipsește.");
       await verifyPhoneOtp(confirmationResult, otp);
       router.replace(returnTo);
-    } catch (error) {
+    } catch {
       setRequestError("Verificarea codului a eșuat. Te rugăm să încerci din nou.");
     }
   };
 
   const onSubmit = async () => {
     setFormErrors({ email: "", password: "" });
-
     const errors = generalValidation(validationSchema, formData);
     if (errors && typeof errors === "object") {
-      setFormErrors((prev) => ({ ...prev, ...errors }));
+      setFormErrors(prev => ({ ...prev, ...errors }));
       return;
     }
 
@@ -144,54 +146,62 @@ const LeftSide = () => {
 
       await loginWithEmailAndPassword(formData.email, formData.password);
 
-      const auth = getAuth();
-      const user = auth.currentUser;
+      const authInstance = getAuth();
+      const user = authInstance.currentUser;
       if (!user) throw new Error("Utilizatorul nu a fost găsit după autentificare.");
 
       const token = await getIdToken(user);
       if (!token) throw new Error("Nu s-a putut obține tokenul de autentificare.");
 
-      const userByEmail = await userApi.getUserByEmail(user.email || "");
+      const emailFromFirebase =
+        user.email || user.providerData?.find(p => !!p.email)?.email || "";
+
+      if (!emailFromFirebase) throw new Error("Autentificarea a eșuat: email-ul este obligatoriu.");
+
+      const userByEmail = await userApi.getUserByEmail(emailFromFirebase);
       if (!userByEmail) throw new Error("Utilizatorul nu există în sistem.");
 
       userStore.setCurrentUser(userByEmail);
-      setIsLoading(false);
       router.replace(returnTo);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Autentificarea a eșuat:", error);
+      setRequestError(error?.message || "Email sau parolă incorecte!");
+    } finally {
       setIsLoading(false);
-      setRequestError("Email sau parolă incorecte!");
     }
   };
 
-  const providerMap: Record<string, AuthProvider> = {
-    Google: AuthProvider.GOOGLE,
-    Facebook: AuthProvider.FACEBOOK,
-    Yahoo: AuthProvider.YAHOO,
+  const providerMap: Record<string, AuthProviderEnum> = {
+    Google: AuthProviderEnum.GOOGLE,
+    Facebook: AuthProviderEnum.FACEBOOK,
+    Yahoo: AuthProviderEnum.YAHOO,
   };
 
   const handleSocialLogin = async (provider: any, authProviderName: string) => {
+    const enumName = providerMap[authProviderName];
+    if (!enumName) {
+      setRequestError("Provider necunoscut.");
+      return;
+    }
+
+    setIsLoading(true);
+    setRequestError("");
+
     try {
-      const enumName = providerMap[authProviderName];
-      if (!enumName) throw new Error("Provider necunoscut: " + authProviderName);
-
-      setIsLoading(true);
-      setRequestError("");
-
-      await handleSocialAuth(auth, provider, userApi, userStore, enumName);
-      router.replace(returnTo);
-    } catch (error: any) {
-      // user closed/cancelled the popup → treat as benign
-      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
-        console.log("Popup închis/anulat de utilizator.");
-        // DO NOT setRequestError here.
-        return;
+      const mode = await startSocialAuth(auth, provider, userApi, userStore, enumName);
+      // If we’re in redirect mode, the browser navigates away; no further action here.
+      if (mode === "popup") {
+        router.replace(returnTo);
       }
-      
+    } catch (error: any) {
       console.error(`Autentificare ${authProviderName} eșuată`, error);
+      // If it wasn't a popup/redirect issue, show an error
       setRequestError(error?.message || "Autentificarea a eșuat. Încearcă din nou.");
     } finally {
-      setIsLoading(false); // always clear loader, instantly
+      // Spinner OFF immediately unless the page is navigating (redirect mode)
+      if (typeof window === "undefined" || sessionStorage.getItem("SOCIAL_REDIRECT_PENDING") !== "1") {
+        setIsLoading(false);
+      }
     }
   };
 
