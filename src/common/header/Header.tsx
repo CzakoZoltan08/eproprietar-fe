@@ -94,6 +94,7 @@ const RightSection = styled.div`
   align-items: center;
   margin-left: auto;
   max-width: 200px;
+  gap: 12px;
 `;
 
 const SecondaryHeader = styled.div`
@@ -169,19 +170,29 @@ const DrawerContent = styled.div`
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { userStore: { getCurrentUser, user } } = useStore();
+  const {
+    userStore: { getCurrentUser, user },
+  } = useStore();
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const toggleMobileMenu = () => setMobileOpen(prev => !prev);
+  const toggleMobileMenu = () => setMobileOpen((prev) => !prev);
 
   useEffect(() => setOpenMenu(null), [pathname]);
-  useEffect(() => { if (!user?.id) getCurrentUser(); }, [user]);
+  useEffect(() => {
+    if (!user?.id) getCurrentUser();
+  }, [user, getCurrentUser]);
+
+  const isAdmin = user?.role === "admin";
 
   const handleMouseEnter = (menu: string) => setOpenMenu(menu);
   const handleMouseLeave = () => setOpenMenu(null);
 
-  const navigateWithFilters = (transactionType: string, type: string, rooms?: number) => {
+  const navigateWithFilters = (
+    transactionType: string,
+    type: string,
+    rooms?: number
+  ) => {
     let url = `/announcements?transactionType=${transactionType}&type=${type}`;
     url += `&price=9999999&minSurface=1&maxSurface=10000&status=active`;
     if (rooms) url += `&rooms=${rooms}`;
@@ -191,17 +202,19 @@ const Header = () => {
 
   const handleAddAnnouncementClick = () => {
     if (user === undefined) {
-      // Still loading — wait or block click
       console.warn("User is still loading...");
       return;
     }
-
     if (!user) {
       router.push("/login");
     } else {
       router.push("/create-announcement");
     }
+    setMobileOpen(false);
+  };
 
+  const handleManageUsersClick = () => {
+    router.push("/admin/users");
     setMobileOpen(false);
   };
 
@@ -233,13 +246,14 @@ const Header = () => {
           />
         </CenterSection>
 
+        {/* Top bar: only AuthButton */}
         <RightSection>
           <AuthButton />
         </RightSection>
       </PrincipalHeader>
 
       <SecondaryHeader>
-        {MENU_STRUCTURE.map(menu => (
+        {MENU_STRUCTURE.map((menu) => (
           <NavItem
             key={menu.label}
             onMouseEnter={() => handleMouseEnter(menu.label)}
@@ -247,10 +261,12 @@ const Header = () => {
           >
             {menu.label} {openMenu === menu.label ? <FaChevronUp /> : <FaChevronDown />}
             <DropdownMenu>
-              {menu.filters.map(item => (
+              {menu.filters.map((item) => (
                 <div
                   key={item.label}
-                  onClick={() => navigateWithFilters(menu.transactionType, item.type, item.rooms)}
+                  onClick={() =>
+                    navigateWithFilters(menu.transactionType, item.type, item.rooms)
+                  }
                 >
                   {item.label}
                 </div>
@@ -260,10 +276,15 @@ const Header = () => {
         ))}
 
         <Button
-          onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}
+          onClick={() =>
+            router.push(
+              "/announcements?providerType=ensemble&status=active&type=apartament"
+            )
+          }
           color="inherit"
         >
-          {"Bloc nou"}<br />
+          {"Bloc nou"}
+          <br />
           {"Ansambluri Rezidențiale"}
         </Button>
 
@@ -271,12 +292,24 @@ const Header = () => {
           onClick={() => router.push("/announcements?providerType=agency&status=active")}
           color="inherit"
         >
-          {"Anunțuri agenții cu exclusivitate"}<br />
+          {"Anunțuri agenții cu exclusivitate"}
+          <br />
           {"0% comision pentru cumpărător!"}
         </Button>
 
+        {/* Bottom bar: Add announcement + (if admin) Manage users */}
         <RightSection>
-          <PrimaryButton icon="add" text="Adaugă anunț" onClick={handleAddAnnouncementClick} />
+          <PrimaryButton
+            icon="add"
+            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
+            onClick={handleAddAnnouncementClick}
+          />
+          {isAdmin && (
+            <PrimaryButton
+              text="Utilizatori"
+              onClick={handleManageUsersClick}
+            />
+          )}
         </RightSection>
       </SecondaryHeader>
 
@@ -287,19 +320,28 @@ const Header = () => {
         PaperProps={{ sx: { background: colors.COLOR_PRIMARY } }}
       >
         <DrawerContent>
-            <PrimaryButton
-              icon="add"
-              text="Adaugă anunț"
-              onClick={handleAddAnnouncementClick}
-            />
+          <PrimaryButton
+            icon="add"
+            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
+            onClick={handleAddAnnouncementClick}
+          />
 
-          {MENU_STRUCTURE.map(menu => (
+          {isAdmin && (
+            <PrimaryButton
+              text="Utilizatori"
+              onClick={handleManageUsersClick}
+            />
+          )}
+
+          {MENU_STRUCTURE.map((menu) => (
             <div key={menu.label}>
               <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{menu.label}</div>
-              {menu.filters.map(item => (
+              {menu.filters.map((item) => (
                 <div
                   key={item.label}
-                  onClick={() => navigateWithFilters(menu.transactionType, item.type, item.rooms)}
+                  onClick={() =>
+                    navigateWithFilters(menu.transactionType, item.type, item.rooms)
+                  }
                 >
                   {item.label}
                 </div>
@@ -307,13 +349,25 @@ const Header = () => {
             </div>
           ))}
 
-          <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=ensemble&status=active&type=apartament")}>
-            {"Bloc nou/"}<br />
+          <div
+            style={{ fontWeight: "bold", marginBottom: "6px" }}
+            onClick={() =>
+              router.push(
+                "/announcements?providerType=ensemble&status=active&type=apartament"
+              )
+            }
+          >
+            {"Bloc nou/"}
+            <br />
             {"Ansambluri Rezidențiale"}
           </div>
 
-          <div style={{ fontWeight: "bold", marginBottom: "6px" }} onClick={() => router.push("/announcements?providerType=agency&status=active")}>
-            {"Anunțuri agenții cu exclusivitate"}<br />
+          <div
+            style={{ fontWeight: "bold", marginBottom: "6px" }}
+            onClick={() => router.push("/announcements?providerType=agency&status=active")}
+          >
+            {"Anunțuri agenții cu exclusivitate"}
+            <br />
             {"0% comision pentru cumpărător!"}
           </div>
         </DrawerContent>
