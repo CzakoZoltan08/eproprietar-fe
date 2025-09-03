@@ -383,7 +383,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      announcementType: prev.announcementType || propertyTypes[0],
+      announcementType: prev.announcementType || propertyTypes[0].id,
       transactionType: prev.transactionType || serviceTypes[0],
     }));
   }, []);
@@ -421,9 +421,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         const normalize = (value: string) =>
           value.toLowerCase().replace(/\s+/g, "_");
 
-        const normalizedType = propertyTypes.find(
-          (type) => normalize(type) === normalize(announcement.announcementType ?? "")
-        );
+        const normalizedTypeId =
+          propertyTypes.find((t) => normalize(t.id) === normalize(announcement.announcementType ?? ""))?.id
+          ?? propertyTypes[0].id;
 
         const normalizedTrans = serviceTypes.find(
           (type) =>
@@ -436,7 +436,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           setSketchPreview(announcement.sketchUrl);
           setFormData({
             userId: announcement.user?.id ?? "", // only use announcement user ID,
-            announcementType: normalizedType || propertyTypes[0],
+            announcementType: normalizedTypeId,
             providerType: formData.providerType,
             transactionType: normalizedTrans,
             title: announcement.title || "",
@@ -1018,11 +1018,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <RadioGroupContainer> 
               {/* Announcement Type */}
               <RadioButtonsGroup
-                options={propertyTypes}
-                value={formData.announcementType}
-                id="announcementType"
-                onChange={handleSelectChange}
                 label="Tip Proprietate"
+                id="announcementType"
+                value={formData.announcementType}            // holds the id, e.g. "Casa"
+                options={propertyTypes}                      // [{ id, value }, ...]
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                }
               />
 
               {/* Transaction Type */}

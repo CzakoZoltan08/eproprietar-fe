@@ -7,7 +7,15 @@ import HelperText from "@/common/error/HelperText";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 
-const RadioButtonsGroup = ({
+type StringOption = string;
+type ObjectOption = { id: string; value: string };
+type Option = StringOption | ObjectOption;
+
+function isObjectOption(o: Option): o is ObjectOption {
+  return typeof o === "object" && o !== null && "id" in o && "value" in o;
+}
+
+export default function RadioButtonsGroup({
   label,
   id,
   value,
@@ -17,34 +25,37 @@ const RadioButtonsGroup = ({
 }: {
   label: string;
   id: string;
-  value: string;
+  value: string; // always the selected id
   error?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  options: string[];
-}) => {
+  options: Option[]; // accepts ["A", "B"] or [{id, value}, ...]
+}) {
   return (
-    <FormControl>
+    <FormControl error={!!error}>
       <FormLabel id={id}>{label}</FormLabel>
       <RadioGroup
         aria-labelledby={id}
         name={id}
         value={value}
         onChange={onChange}
-        sx={{ display: "flex", flexDirection: "row" }}
+        sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 1 }}
       >
-        {options?.map((option, index) => (
-          <FormControlLabel
-            name={id}
-            value={option}
-            control={<Radio />}
-            label={option}
-            key={`${id}-${index}`}
-          />
-        ))}
+        {options?.map((option, index) => {
+          const optionId = isObjectOption(option) ? option.id : option;
+          const optionLabel = isObjectOption(option) ? option.value : option;
+
+          return (
+            <FormControlLabel
+              key={`${id}-${optionId}-${index}`}
+              name={id}
+              value={optionId}          // 🔑 emits the id
+              control={<Radio />}
+              label={optionLabel}        // 🏷️ shows the label
+            />
+          );
+        })}
       </RadioGroup>
       {error && <HelperText>{error}</HelperText>}
     </FormControl>
   );
-};
-
-export default RadioButtonsGroup;
+}

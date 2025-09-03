@@ -143,7 +143,13 @@ export const parkingCounts = [
   { id: "3", value: "3" },
 ];
 
-export const propertyTypes = ["Apartament", "Casa", "Teren", "Comercial", "Case la tara"];
+export const propertyTypes = [
+  { id: "Apartament",   value: "Apartamente" },
+  { id: "Casa",         value: "Case/Vile/Duplexuri" },
+  { id: "Teren",        value: "Terenuri" },
+  { id: "Comercial",    value: "Spații comerciale" },
+  { id: "Case la tara", value: "Cabane/Case la țară" },
+];
 
 export const propertyTypesResidential = ["Apartament", "Casa"];
 
