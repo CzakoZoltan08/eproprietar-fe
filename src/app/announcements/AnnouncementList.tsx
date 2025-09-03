@@ -181,6 +181,29 @@ const AnnouncementList = ({
     return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
   }
 
+  // ✅ Empty state — se afișează pentru orice providerType când nu există rezultate
+  if (announcements.length === 0) {
+    return (
+      <Paper
+        elevation={1}
+        sx={{
+          p: 3,
+          textAlign: "center",
+          borderRadius: 2,
+          border: "1px solid #e7e7e7",
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1, color: COLOR_TEXT, fontWeight: 600 }}>
+          Ups! Nu am găsit nimic acum…
+        </Typography>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
+          {`…dar nu-i nimic, poate chiar mâine apare exact oferta care ți se potrivește! 🍀\nÎncearcă să ajustezi filtrele și hai să vedem din nou.`}
+        </Typography>
+      </Paper>
+    );
+  }
+
   // If the providerType is "ensemble", keep the tile layout unchanged
   if (filters.providerType === "ensemble") {
     return (

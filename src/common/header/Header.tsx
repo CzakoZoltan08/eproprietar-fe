@@ -65,6 +65,10 @@ const PrincipalHeader = styled.div`
   height: 64px;
   padding: 0 40px;
   position: relative;
+
+  @media only screen and (max-width: ${breakpoints.MAX_PHONE}) {
+    padding: 0 12px;
+  }
 `;
 
 const LeftSection = styled.div`
@@ -167,6 +171,23 @@ const DrawerContent = styled.div`
   }
 `;
 
+/* MOBILE-ONLY: second row under logo containing the Add button */
+const MobileAddRow = styled.div`
+  display: none;
+
+  @media only screen and (max-width: ${breakpoints.MAX_PHONE}) {
+    display: flex;
+    background: ${colors.COLOR_PRIMARY};
+    padding: 8px 12px 12px;
+  }
+`;
+
+const FullWidth = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
+
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -222,6 +243,7 @@ const Header = () => {
     <Wrapper>
       <PrincipalHeader>
         <LeftSection>
+          {/* Burger menu kept on mobile */}
           <IconButton
             color="inherit"
             edge="start"
@@ -231,6 +253,7 @@ const Header = () => {
               padding: "12px",
               fontSize: "32px",
             }}
+            aria-label="Deschide meniul"
           >
             <MenuIcon sx={{ fontSize: "32px" }} />
           </IconButton>
@@ -246,11 +269,22 @@ const Header = () => {
           />
         </CenterSection>
 
-        {/* Top bar: only AuthButton */}
+        {/* Top bar: only AuthButton on the right */}
         <RightSection>
           <AuthButton />
         </RightSection>
       </PrincipalHeader>
+
+      {/* MOBILE-ONLY second row: Add button below the logo */}
+      <MobileAddRow>
+        <FullWidth>
+          <PrimaryButton
+            icon="add"
+            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
+            onClick={handleAddAnnouncementClick}
+          />
+        </FullWidth>
+      </MobileAddRow>
 
       <SecondaryHeader>
         {MENU_STRUCTURE.map((menu) => (
@@ -297,7 +331,7 @@ const Header = () => {
           {"0% comision pentru cumpărător!"}
         </Button>
 
-        {/* Bottom bar: Add announcement + (if admin) Manage users */}
+        {/* Desktop bottom bar: Add announcement + (if admin) Manage users */}
         <RightSection>
           <PrimaryButton
             icon="add"
@@ -320,11 +354,6 @@ const Header = () => {
         PaperProps={{ sx: { background: colors.COLOR_PRIMARY } }}
       >
         <DrawerContent>
-          <PrimaryButton
-            icon="add"
-            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
-            onClick={handleAddAnnouncementClick}
-          />
 
           {isAdmin && (
             <PrimaryButton

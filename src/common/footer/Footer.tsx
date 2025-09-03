@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import youTubeIcon from "../../assets/youtube-logo.svg";
 
 const FooterContainer = styled.footer<{ $padding: string }>`
-  background: #f9f9f9;
+  background: #eaf3ff;
   box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
   color: #575f7f;
   padding: ${(props) => props.$padding};
@@ -80,11 +80,11 @@ const GuideButton = styled.div`
   text-align: center;
 
   display: -webkit-box;
-  -webkit-line-clamp: 2;     /* keep height consistent if text longer */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 
-  min-height: 44px;          /* consistent visual height */
+  min-height: 44px;
   line-height: 1.2;
   word-break: break-word;
   display: flex;
@@ -100,14 +100,14 @@ const GuideButton = styled.div`
 const SocialTitle = styled.h5`
   margin: 32px 0 12px;
   color: #666;
-  text-align: center;  /* center horizontally */
+  text-align: center;
   width: 100%;
 `;
 
 const SocialRow = styled(Flex)`
   gap: 12px;
   margin-bottom: 16px;
-  justify-content: center; /* center icons under title */
+  justify-content: center;
 `;
 
 const LinkIcon = styled.a`
@@ -161,7 +161,6 @@ const Footer = () => {
           <Link onClick={() => goTo({ link: "/for-exclusive-agents" })}>
             Pentru agenți imobiliari în regim de exclusivitate
           </Link>
-
         </Section>
 
         {/* Ghid imobiliar – 4 butoane în 2 coloane */}

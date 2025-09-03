@@ -3,6 +3,7 @@
 import * as breakpoints from "@/constants/breakpoints";
 import * as palette from "@/constants/colors";
 
+import CookieBanner from "../cookieBanner/CookieBanner";
 import Footer from "@/common/footer/Footer";
 import Header from "@/common/header/Header";
 import React from "react";
@@ -41,5 +42,6 @@ export const Layout = ({
       )}
     </OuterContainer>
     <Footer />
+    <CookieBanner /> {/* ✅ cookie popup will overlay all pages */}
   </>
 );
