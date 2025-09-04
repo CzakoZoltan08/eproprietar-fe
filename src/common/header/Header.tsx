@@ -312,7 +312,7 @@ const Header = () => {
         <Button
           onClick={() =>
             router.push(
-              "/announcements?providerType=ensemble&status=active&type=apartament"
+              "/announcements?providerType=ensemble&status=active"
             )
           }
           color="inherit"
@@ -382,7 +382,7 @@ const Header = () => {
             style={{ fontWeight: "bold", marginBottom: "6px" }}
             onClick={() =>
               router.push(
-                "/announcements?providerType=ensemble&status=active&type=apartament"
+                "/announcements?providerType=ensemble&status=active"
               )
             }
           >

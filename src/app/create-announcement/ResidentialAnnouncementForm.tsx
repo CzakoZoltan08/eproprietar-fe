@@ -289,7 +289,14 @@ const ResidentialAnnouncementForm = () => {
       return;
     }
 
-    const { logo, images, videos, flyer, ...cleanFormData } = formData;
+    const {
+      logo,
+      images,
+      videos,
+      flyer,
+      userId: assignedUserId,
+      ...cleanFormData
+    } = formData;
     const errors = generalValidation(residentialAnnouncementValidationSchema, {
       ...cleanFormData,
       contactPhone,

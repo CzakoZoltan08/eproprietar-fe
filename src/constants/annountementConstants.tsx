@@ -151,7 +151,10 @@ export const propertyTypes = [
   { id: "Case la tara", value: "Cabane/Case la țară" },
 ];
 
-export const propertyTypesResidential = ["Apartament", "Casa"];
+export const propertyTypesResidential = [
+  { id: "Apartament", value: "Apartamente" },
+  { id: "Casa",       value: "Case/Vile/Duplexuri" },
+];
 
 export const serviceTypes = ["Vanzare", "Inchiriere"];
 
