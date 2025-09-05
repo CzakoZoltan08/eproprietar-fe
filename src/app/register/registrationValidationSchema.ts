@@ -4,8 +4,8 @@ const validationSchema = Joi.object({
   email: Joi.string()
     .email({ minDomainSegments: 2, tlds: false })
     .messages({
-      "string.email": "Email must be a valid email address!",
-      "string.empty": "The email address is required!",
+      "string.email": "Adresa de email nu este validă!",
+      "string.empty": "Adresa de email este obligatorie!",
     })
     .label("Email"),
   password: Joi.string()
@@ -13,32 +13,32 @@ const validationSchema = Joi.object({
     .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,64}$/)
     .messages({
       "string.pattern.base":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
+        "Parola trebuie să conțină cel puțin 8 caractere (1 literă mică, 1 literă mare și 1 cifră)",
       "string.min":
-        "Password should contain at least 8 characters (1 lowercase, 1 uppercase and 1 number)",
-      "string.empty": "The password is required!",
+        "Parola trebuie să conțină cel puțin 8 caractere (1 literă mică, 1 literă mare și 1 cifră)",
+      "string.empty": "Parola este obligatorie!",
     })
-    .label("Password"),
+    .label("Parolă"),
   passwordConfirm: Joi.string()
     .min(8)
     .valid(Joi.ref("password"))
     .messages({
-      "any.only": "The passwords do not match. Please try again",
-      "string.empty": "The password is required!",
+      "any.only": "Parolele nu se potrivesc. Te rugăm să încerci din nou.",
+      "string.empty": "Confirmarea parolei este obligatorie!",
     })
-    .label("Confirm password"),
+    .label("Confirmare parolă"),
   firstName: Joi.string()
     .messages({
-      "string.empty": "First Name Required",
+      "string.empty": "Prenumele este obligatoriu!",
     })
     .required()
-    .label("First Name"),
+    .label("Prenume"),
   lastName: Joi.string()
     .messages({
-      "string.empty": "Last Name Required",
+      "string.empty": "Numele este obligatoriu!",
     })
     .required()
-    .label("Last Name"),
+    .label("Nume"),
 });
 
 export default validationSchema;

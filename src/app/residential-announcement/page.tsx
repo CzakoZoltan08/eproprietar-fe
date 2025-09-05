@@ -7,7 +7,7 @@ import { Suspense } from "react";
 export default function Announcements() {
   return (
     <Layout paddingContainer>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Se încarcă anunțurile...</div>}>
         <AnnouncementList paginated={true} />
       </Suspense>
     </Layout>

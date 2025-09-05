@@ -31,7 +31,7 @@ const StyledMenu = styled(Menu)`
 const AuthButton = () => {
   const {
     authStore: { logout },
-    userStore: { isLoggedIn },
+    userStore: { isLoggedIn, user },
   } = useStore();
 
   const router = useRouter();
@@ -41,7 +41,10 @@ const AuthButton = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
+  const isLoading = user === undefined; // <-- add this
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (isLoading) return; // wait until loaded
     if (isLoggedIn) {
       setAnchorEl(event.currentTarget);
     } else {
@@ -82,7 +85,9 @@ const AuthButton = () => {
             : undefined
         }
       >
-        {isMobile
+        {isLoading
+          ? "..." // or spinner if desired
+          : isMobile
           ? !isLoggedIn
             ? "Login"
             : "" // icon-only
@@ -91,29 +96,32 @@ const AuthButton = () => {
           : "Contul meu"}
       </StyledButton>
 
-      <StyledMenu
-        id="fade-menu"
-        MenuListProps={{ "aria-labelledby": "fade-button" }}
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        TransitionComponent={Fade}
-      >
-        <MenuItem onClick={() => openPage("/my-account")} sx={{ padding: "2px" }}>
-          Profilul meu / Setări
-        </MenuItem>
-        <MenuItem onClick={() => openPage("/my-announcements")} sx={{ padding: "2px" }}>
-          Anunțurile mele
-        </MenuItem>
-        <MenuItem onClick={() => openPage("/saved-announcements")} sx={{ padding: "2px" }}>
-          Anunțuri salvate
-        </MenuItem>
-        <MenuItem onClick={onLogout} sx={{ padding: "2px" }}>
-          Logout
-        </MenuItem>
-      </StyledMenu>
+      {!isLoading && isLoggedIn && (
+        <StyledMenu
+          id="fade-menu"
+          MenuListProps={{ "aria-labelledby": "fade-button" }}
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          TransitionComponent={Fade}
+        >
+          <MenuItem onClick={() => openPage("/my-account")} sx={{ padding: "2px" }}>
+            Profilul meu / Setări
+          </MenuItem>
+          <MenuItem onClick={() => openPage("/my-announcements")} sx={{ padding: "2px" }}>
+            Anunțurile mele
+          </MenuItem>
+          <MenuItem onClick={() => openPage("/saved-announcements")} sx={{ padding: "2px" }}>
+            Anunțuri salvate
+          </MenuItem>
+          <MenuItem onClick={onLogout} sx={{ padding: "2px" }}>
+            Logout
+          </MenuItem>
+        </StyledMenu>
+      )}
     </div>
   );
 };
+
 
 export default observer(AuthButton);

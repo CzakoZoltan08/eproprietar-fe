@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
 import { Box, Divider } from "@mui/material";
+
 import { InputField } from "@/common/input/InputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
+import React from "react";
 
 const OtpVerification = ({
   isOtpSent,
@@ -24,31 +25,31 @@ const OtpVerification = ({
 }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Divider>or</Divider>
+      <Divider>sau</Divider>
       {!isOtpSent ? (
         <>
           <InputField
-            label="Phone Number"
+            label="Număr de telefon"
             name="phoneNumber"
             value={phoneNumber}
             onChange={(e) => onPhoneNumberChange(e.target.value)}
-            placeholder="+1XXXXXXXXXX"
+            placeholder="+40XXXXXXXXX"
           />
           <Box>
-            <PrimaryButton onClick={handleSendOtp} text="Send OTP" size="large" />
+            <PrimaryButton onClick={handleSendOtp} text="Trimite codul" size="large" />
           </Box>
         </>
       ) : (
         <>
           <InputField
-            label="Enter OTP"
+            label="Introdu codul OTP"
             name="otp"
             value={otp}
             onChange={(e) => onOtpChange(e.target.value)}
-            placeholder="6-digit code"
+            placeholder="Cod din 6 cifre"
           />
           <Box>
-            <PrimaryButton onClick={handleVerifyOtp} text="Verify OTP" size="large" />
+            <PrimaryButton onClick={handleVerifyOtp} text="Verifică codul" size="large" />
           </Box>
         </>
       )}

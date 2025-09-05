@@ -3,6 +3,7 @@
 import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
+import UploadInfoBox from "@/app/create-announcement/UploadInfoBox";
 import styled from "styled-components";
 
 const MAX_VIDEOS = 3;
@@ -12,8 +13,6 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 type MediaUploaderProps = {
-  thumbnail: File | null;
-  setThumbnail: (file: File | null) => void;
   logo?: File | null;
   setLogo?: (file: File | null) => void;
   images: File[];
@@ -33,28 +32,44 @@ const DropArea = styled.div<{ $isDragging: boolean }>`
   cursor: pointer;
   transition: background-color 0.3s, border-color 0.3s;
 
-  /* smaller padding on very small screens */
   @media (max-width: 360px) {
     padding: 12px;
   }
 `;
 
-const PreviewContainer = styled.div`
+/* IMAGES: grid ~120px min cell, square aspect; responsive down to 100px */
+const ImagesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
   margin-top: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+`;
+
+/* VIDEOS: grid ~180px min cell, 16:9 aspect; responsive down to 140px */
+const VideosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 `;
 
 const PreviewImage = styled.img`
   width: 100%;
-  height: 0;
-  padding-bottom: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
-  position: relative;
+
   &:hover {
     opacity: 0.7;
   }
@@ -62,11 +77,13 @@ const PreviewImage = styled.img`
 
 const PreviewVideo = styled.video`
   width: 100%;
+  aspect-ratio: 16 / 9;
   height: auto;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
+
   &:hover {
     opacity: 0.7;
   }
@@ -83,7 +100,7 @@ const ThumbnailWrapper = styled.div`
 
 const ThumbnailBox = styled.div`
   width: 100%;
-  max-width: 200px;
+  max-width: 220px; /* puțin mai mare pentru consistență vizuală */
   aspect-ratio: 1;
   border: 2px dashed #ccc;
   display: flex;
@@ -100,8 +117,8 @@ const ThumbnailBox = styled.div`
   }
 
   @media (max-width: 360px) {
-    max-width: 150px;
-    border-radius: 8px;
+    max-width: 160px;
+    border-radius: 10px;
   }
 `;
 
@@ -112,8 +129,6 @@ const ThumbnailPreviewImage = styled.img`
 `;
 
 const MediaUploader: React.FC<MediaUploaderProps> = ({
-  thumbnail,
-  setThumbnail,
   logo,
   setLogo,
   images = [],
@@ -126,19 +141,16 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const [isDraggingImages, setIsDraggingImages] = useState(false);
   const [isDraggingVideos, setIsDraggingVideos] = useState(false);
 
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  // Previews
   useEffect(() => {
     const urls = images.map((file) => URL.createObjectURL(file));
     setImagePreviews(urls);
@@ -152,15 +164,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   }, [videos]);
 
   useEffect(() => {
-    if (thumbnail) {
-      const url = URL.createObjectURL(thumbnail);
-      setThumbnailPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setThumbnailPreview(null);
-  }, [thumbnail]);
-
-  useEffect(() => {
     if (logo) {
       const url = URL.createObjectURL(logo);
       setLogoPreview(url);
@@ -169,15 +172,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setLogoPreview(null);
   }, [logo]);
 
-  // Validators
   const validateImages = (files: FileList | File[]) => {
     return Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setError("Only JPEG, PNG or WebP images are allowed.");
+        setError("Doar imagini JPEG, PNG sau WebP sunt permise.");
         return false;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        setError(`Image ${file.name} exceeds 5MB limit.`);
+        setError(`Imaginea ${file.name} depășește limita de 5MB.`);
         return false;
       }
       return true;
@@ -187,31 +189,15 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const validateVideos = (files: FileList | File[]) => {
     return Array.from(files).filter((file) => {
       if (!file.type.startsWith("video/")) {
-        setError("Only video files are allowed.");
+        setError("Sunt permise doar fișiere video.");
         return false;
       }
       if (file.size > MAX_VIDEO_SIZE) {
-        setError(`Video ${file.name} exceeds 100MB limit.`);
+        setError(`Videoclipul ${file.name} depășește limita de 100MB.`);
         return false;
       }
       return true;
     });
-  };
-
-  // Handlers...
-  const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      if (img.width > 1920 || img.height > 1080) {
-        setError("Thumbnail resolution cannot exceed 1920x1080.");
-        return;
-      }
-      setThumbnail(file);
-      setError("");
-    };
   };
 
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -221,7 +207,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     img.src = URL.createObjectURL(file);
     img.onload = () => {
       if (img.width > 1920 || img.height > 1080) {
-        setError("Logo resolution cannot exceed 1920x1080.");
+        setError("Rezoluția logo-ului nu poate depăși 1920x1080.");
         return;
       }
       setLogo(file);
@@ -234,11 +220,15 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     if (!files) return;
     const valid = validateImages(files);
     if (images.length + valid.length > MAX_IMAGES) {
-      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      setError(`Poți încărca maxim ${MAX_IMAGES} imagini.`);
       return;
     }
     setImages([...images, ...valid]);
     setError("");
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
   };
 
   const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -246,11 +236,15 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     if (!files) return;
     const valid = validateVideos(files);
     if (videos.length + valid.length > MAX_VIDEOS) {
-      setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
+      setError(`Poți încărca maxim ${MAX_VIDEOS} videoclipuri.`);
       return;
     }
     setVideos([...videos, ...valid]);
     setError("");
+
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
@@ -268,10 +262,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setIsDraggingImages(false);
     const valid = validateImages(e.dataTransfer.files);
     if (images.length + valid.length > MAX_IMAGES) {
-      setError(`Max ${MAX_IMAGES} images allowed.`);
+      setError(`Maxim ${MAX_IMAGES} imagini permise.`);
       return;
     }
     setImages([...images, ...valid]);
+    setError("");
   };
 
   const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -279,41 +274,23 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setIsDraggingVideos(false);
     const valid = validateVideos(e.dataTransfer.files);
     if (videos.length + valid.length > MAX_VIDEOS) {
-      setError(`Max ${MAX_VIDEOS} videos allowed.`);
+      setError(`Maxim ${MAX_VIDEOS} videoclipuri permise.`);
       return;
     }
     setVideos([...videos, ...valid]);
+    setError("");
   };
 
   return (
     <Box width="100%" maxWidth={isXs ? "100%" : 600} mx="auto" mt={4} px={isXs ? 1 : 0}>
-      {/* Thumbnail */}
-      <ThumbnailWrapper>
-        <Typography variant="h6">Thumbnail Image</Typography>
-        <ThumbnailBox onClick={() => thumbnailInputRef.current?.click()}>
-          {thumbnailPreview ? (
-            <ThumbnailPreviewImage src={thumbnailPreview} />
-          ) : (
-            <Typography color="textSecondary">Tap to upload</Typography>
-          )}
-        </ThumbnailBox>
-        <input
-          type="file"
-          accept="image/*"
-          ref={thumbnailInputRef}
-          style={{ display: "none" }}
-          onChange={handleThumbnailChange}
-        />
-      </ThumbnailWrapper>
-
       {/* Logo */}
       <ThumbnailWrapper>
-        <Typography variant="h6">Agency/Developer Logo (optional)</Typography>
+        <Typography variant="h6">Logo agenție/dezvoltator (opțional)</Typography>
         <ThumbnailBox onClick={() => logoInputRef.current?.click()}>
           {logoPreview ? (
             <ThumbnailPreviewImage src={logoPreview} />
           ) : (
-            <Typography color="textSecondary">Tap to upload</Typography>
+            <Typography color="textSecondary">Apasă pentru a încărca</Typography>
           )}
         </ThumbnailBox>
         <input
@@ -325,10 +302,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         />
       </ThumbnailWrapper>
 
-      {/* Images */}
-      <Typography mt={4} variant="h6">
-        Images
-      </Typography>
+      {/* Imagini */}
+      <Typography mt={4} variant="h6">Imagini</Typography>
+      <UploadInfoBox
+        maxFiles={MAX_IMAGES}
+        maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
+        allowedTypes={["JPG", "PNG", "WEBP"]}
+        uploadedCount={images.length}
+      />
       <DropArea
         $isDragging={isDraggingImages}
         onDragOver={(e) => {
@@ -339,7 +320,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onDrop={handleImageDrop}
         onClick={() => imageInputRef.current?.click()}
       >
-        Drag & drop images here or tap to select
+        Trage imaginile aici sau apasă pentru a selecta
       </DropArea>
       <input
         type="file"
@@ -349,16 +330,20 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         style={{ display: "none" }}
         onChange={handleImageUpload}
       />
-      <PreviewContainer>
+      <ImagesGrid>
         {imagePreviews.map((src, idx) => (
-          <PreviewImage key={idx} src={src} alt="preview" onClick={() => removeImage(idx)} />
+          <PreviewImage key={idx} src={src} alt="previzualizare" onClick={() => removeImage(idx)} />
         ))}
-      </PreviewContainer>
+      </ImagesGrid>
 
-      {/* Videos */}
-      <Typography mt={4} variant="h6">
-        Videos
-      </Typography>
+      {/* Videoclipuri */}
+      <Typography mt={4} variant="h6">Videoclipuri</Typography>
+      <UploadInfoBox
+        maxFiles={MAX_VIDEOS}
+        maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
+        allowedTypes={["MP4", "WEBM", "MOV"]}
+        uploadedCount={videos.length}
+      />
       <DropArea
         $isDragging={isDraggingVideos}
         onDragOver={(e) => {
@@ -369,7 +354,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         onDrop={handleVideoDrop}
         onClick={() => videoInputRef.current?.click()}
       >
-        Drag & drop videos here or tap to select
+        Trage videoclipurile aici sau apasă pentru a selecta
       </DropArea>
       <input
         type="file"
@@ -379,13 +364,12 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         style={{ display: "none" }}
         onChange={handleVideoUpload}
       />
-      <PreviewContainer>
+      <VideosGrid>
         {videoPreviews.map((src, idx) => (
           <PreviewVideo key={idx} src={src} controls onClick={() => removeVideo(idx)} />
         ))}
-      </PreviewContainer>
+      </VideosGrid>
 
-      {/* Error */}
       {error && (
         <Typography color="error" mt={2} align="center">
           {error}

@@ -39,23 +39,23 @@ const MyAccountComponent = () => {
   const handleUnregister = async () => {
     if (!user?.id) return;
     const confirmed = window.confirm(
-      "Are you sure you want to delete your account?"
+      "Ești sigur că vrei să ștergi contul tău?"
     );
     if (!confirmed) return;
 
     try {
       await deleteCurrentUser(user.id);
-      alert("Account deleted successfully.");
+      alert("Contul a fost șters cu succes.");
       window.location.href = "/";
     } catch (error) {
-      console.error("Failed to delete user:", error);
-      alert("Something went wrong while deleting your account.");
+      console.error("Ștergerea contului a eșuat:", error);
+      alert("Ceva nu a funcționat corect la ștergerea contului.");
     }
   };
 
   return (
     <Box>
-      {/* === Existing Account Content === */}
+      {/* === Conținutul contului existent === */}
       <Typography variant="h4" className={styles.header} color={COLOR_TEXT}>
         {LABELS.myAccount}
       </Typography>
@@ -79,31 +79,8 @@ const MyAccountComponent = () => {
 
         <Box className={styles.section}>
           <Button color="error" variant="contained" onClick={handleUnregister}>
-            Delete My Account
+            Șterge contul meu
           </Button>
-        </Box>
-
-        {/* === Banner Section with Overlay Text === */}
-        <Box
-          component="a"
-          href="https://totuldespreimobiliare.ro/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.banner}
-        >
-          <img
-            src={bannerImage.src}
-            alt='"Totul" despre imobiliare'
-            className={styles.bannerImage}
-          />
-
-            <Typography className={styles.bannerText}>
-            <b>
-              "Totul" despre imobiliare - Cumpara Cartea
-              <br />
-              Proiect sprijinit de eproprietar.ro!
-            </b>
-            </Typography>
         </Box>
       </Box>
     </Box>

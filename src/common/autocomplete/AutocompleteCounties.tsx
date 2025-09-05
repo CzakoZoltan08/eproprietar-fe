@@ -9,13 +9,15 @@ const AutocompleteCounties = ({
   customWidth,
   backgroundColor,
   error,
+  helperText,
   value,
 }: {
   onChange: (event: any, value: string | null) => void;
   label: string;
   customWidth?: string;
   backgroundColor?: string;
-  error?: string;
+  error?: boolean;
+  helperText?: string;
   value?: string;
 }) => {
   const [countyOptions, setCountyOptions] = useState<string[]>([]);
@@ -24,12 +26,6 @@ const AutocompleteCounties = ({
   useEffect(() => {
     const uniqueCounties = Array.from(new Set(counties));
     setCountyOptions(uniqueCounties);
-
-    // if (!value && uniqueCounties.length > 0) {
-    //   const initialCounty = uniqueCounties[0];
-    //   setSelectedCounty(initialCounty);
-    //   onChange(null, initialCounty);
-    // }
   }, []);
 
   useEffect(() => {
@@ -49,6 +45,7 @@ const AutocompleteCounties = ({
       customWidth={customWidth}
       backgroundColor={backgroundColor}
       error={error}
+      helperText={helperText}
       value={selectedCounty || ""}
     />
   );

@@ -66,10 +66,9 @@ const LeftSide = () => {
   };
 
   const onSubmit = async () => {
-    setIsSubmitting(true); // Show loading state
-    setRequestError(""); // Clear previous errors
-  
-    // Validate form data
+    setIsSubmitting(true);
+    setRequestError("");
+
     const errors = generalValidation(validationSchema, formData);
     if (errors && typeof errors === "object") {
       setFormErrors({
@@ -79,29 +78,24 @@ const LeftSide = () => {
         firstName: errors.firstName || "",
         lastName: errors.lastName || "",
       });
-      setIsSubmitting(false); // Stop loading state
+      setIsSubmitting(false);
       return;
     }
-  
+
     try {
-      // Call the registration logic
       await register(
         formData.email,
         formData.password,
         formData.firstName,
         formData.lastName
       );
-  
-      setIsSubmitting(false); // Stop loading state
-  
-      // Redirect user to login page after successful registration
+
+      setIsSubmitting(false);
       router.replace("/login");
     } catch (error: any) {
-      console.error("Registration error:", error);
-      setIsSubmitting(false); // Stop loading state
-  
-      // Set error message based on response or fallback to a default message
-      const errorMessage = error?.message || "An error occurred during registration.";
+      console.error("Eroare la înregistrare:", error);
+      setIsSubmitting(false);
+      const errorMessage = error?.message || "A apărut o eroare în timpul înregistrării.";
       setRequestError(errorMessage);
     }
   };
@@ -111,7 +105,7 @@ const LeftSide = () => {
       <FormHelperText
         component="span"
         sx={{
-          display: "inline-block", // Enables ellipsis
+          display: "inline-block",
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -128,7 +122,7 @@ const LeftSide = () => {
       {isMobile && (
         <Image src={logo} alt="eproprietar" width={152} style={{ marginTop: "32px" }} />
       )}
-      <Typography variant="h4">Register</Typography>
+      <Typography variant="h4">Înregistrare</Typography>
       <Box display="flex" flexDirection="column" gap={2}>
         <Box
           display="flex"
@@ -147,12 +141,12 @@ const LeftSide = () => {
             onChange={handleInputChange}
             error={!!formErrors.email}
             helperText={<CustomHelperText text={formErrors.email || " "} />}
-            placeholder="Enter email"
+            placeholder="Introduceți emailul"
           />
           {isRegisterWithEmail && (
             <>
               <InputField
-                label="Password"
+                label="Parolă"
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
@@ -160,7 +154,7 @@ const LeftSide = () => {
                 type="password"
               />
               <InputField
-                label="Confirm Password"
+                label="Confirmare parolă"
                 name="passwordConfirm"
                 value={formData.passwordConfirm}
                 onChange={handleInputChange}
@@ -169,30 +163,30 @@ const LeftSide = () => {
               />
               <TextField
                 id="register-firstName-field"
-                label="First Name"
+                label="Prenume"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
                 error={!!formErrors.firstName}
                 helperText={<CustomHelperText text={formErrors.firstName || " "} />}
-                placeholder="Enter first name"
+                placeholder="Introduceți prenumele"
               />
               <TextField
                 id="register-lastName-field"
-                label="Last Name"
+                label="Nume"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
                 error={!!formErrors.lastName}
                 helperText={<CustomHelperText text={formErrors.lastName || " "} />}
-                placeholder="Enter last name"
+                placeholder="Introduceți numele"
               />
               {requestError && <ErrorText>{requestError}</ErrorText>}
             </>
           )}
         </Box>
         {isRegisterWithEmail && (
-          <PrimaryButton onClick={onSubmit} text="Inregistrare" size="large" />
+          <PrimaryButton onClick={onSubmit} text="Înregistrare" size="large" />
         )}
       </Box>
     </Container>

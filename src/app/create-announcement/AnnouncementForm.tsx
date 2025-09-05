@@ -1,12 +1,15 @@
 "use client";
 
-import { Box, CircularProgress, FormControl, InputLabel, LinearProgress, MenuItem, Modal, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Checkbox, CircularProgress, FormControl, FormControlLabel, InputLabel, LinearProgress, MenuItem, Modal, Radio, RadioGroup, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import React, { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import {
   apartamentPartitionings,
   apartmentFloors,
+  balconyCounts,
   balconyTypes,
   comfortLevels,
+  kitchenOptionsMax2,
+  parkingCounts,
   parkingTypes,
   propertyTypes,
   roomOptions,
@@ -16,6 +19,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
+import FormHelpTooltip from "./FormHelpTooltip";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
@@ -23,7 +27,9 @@ import { ProviderType } from "@/constants/provider-types.enum";
 import RadioButtonsGroup from "@/common/radio/RadioGroup";
 import SelectDropdown from "@/common/dropdown/SelectDropdown";
 import TextField from "@mui/material/TextField";
+import UploadInfoBox from "./UploadInfoBox";
 import { observer } from "mobx-react";
+import { reaction } from "mobx";
 import sketch1 from "../../assets/sketches/1 camera varianta 2.svg";
 import sketch10 from "../../assets/sketches/garsoniera.svg";
 import sketch11 from "../../assets/sketches/2.1camere.svg";
@@ -138,9 +144,12 @@ const RadioGroupContainer = styled.div`
   margin-bottom: 16px;
 `;
 
-const DropArea = styled.div<{ $isDragging: boolean }>`
-  border: 2px dashed ${({ $isDragging }) => ($isDragging ? "#007BFF" : "#ccc")};
-  background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
+const DropArea = styled.div<{ $isDragging: boolean; $hasError?: boolean }>`
+  border: 2px dashed
+    ${({ $isDragging, $hasError }) =>
+      $hasError ? "#f44336" : $isDragging ? "#007BFF" : "#ccc"};
+  background-color: ${({ $isDragging }) =>
+    $isDragging ? "#f0f8ff" : "transparent"};
   padding: 20px;
   text-align: center;
   width: 85%;
@@ -245,19 +254,22 @@ const StyledTextField = styled(TextField)`
   width: 100%; /* Take the full width of InputContainer */
 `;
 
-const MAX_VIDEOS = 3;
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEOS = 1;
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 150MB
 
-const MAX_IMAGES = 20;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGES = 15;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function normalizeAnnouncementType(type: string): string {
+  return type.toLowerCase() === "case la tara" ? "case_la_tara" : type.toLowerCase();
+}
 
 const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const {
-    userStore: { user, getCurrentUser, updateUser, fetchAllUsers, users: usersList },
-    announcementStore: { updateAnnouncement, createImageOrVideo, currentAnnouncement, createAnnouncement, sendAnnouncementCreationMail, getAnnouncementById },
-    pricingStore : { freePlanId, getAnnouncementPackages },
-    announcementStore: { createPaymentSession },
+    userStore,
+    announcementStore,
+    pricingStore
   } = useStore();
 
   const sketchFileInputRef = useRef<HTMLInputElement>(null);
@@ -266,8 +278,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const [openModal, setOpenModal] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  const HEIGHT_REGIMES = ["S", "D", "P", "E", "E2", "E3", "E4", "E5", "M", "POD"];
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const [formData, setFormData] = useState({
-    userId: user?.id || "",
+    userId: userStore.user?.id || "",
     announcementType: "",
     providerType: item,
     transactionType: "",
@@ -275,6 +291,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     description: "",
     price: "",
     surface: "",
+    landSurface: "",
     city: "",
     county: "",
     street: "",
@@ -286,17 +303,45 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     numberOfKitchens: "",
     balcony: "",
     parking: "",
-    thumbnail: null as File | string | null, // Thumbnail file can be File or string (URL)
+    balconyCount: "",
+    parkingCount: "",
     images: [] as File[],
     videos: [] as File[], // Store multiple videos
     sketch: null as File | string | null,
+    streetFront: false,
+    heightRegime: [] as string[],
+    streetFrontLength: 0, // in ml
+    landType: "", // Constructii, Agricol, etc.
+    landPlacement: "", // Intravilan, Extravilan
+    urbanismDocuments: [] as string[], // Multi-select
+    utilities: {
+      curent: null as boolean | null,
+      apa: null as boolean | null,
+      canalizare: null as boolean | null,
+      gaz: null as boolean | null,
+    },
+    commercialSpaceType: "",
+    usableSurface: 0,
+    builtSurface: 0,
+    spaceHeight: 0,
+    hasStreetWindow: false,
+    streetWindowLength: 0,
+    hasStreetEntrance: false,
+    hasLift: false,
+    vehicleAccess: [] as string[]
   });
+
+  type MediaItem = {
+    file?: File;
+    url?: string;
+  };
+
+  const [imageItems, setImageItems] = useState<MediaItem[]>([]);
+  const [videoItems, setVideoItems] = useState<MediaItem[]>([]);
 
   const isApartment = formData.announcementType === "Apartament";
 
-  const [contactPhone, setContactPhone] = useState<string>(user?.phoneNumber || "");
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null); // Preview URL
-  const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+  const [contactPhone, setContactPhone] = useState<string>("");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Store preview URLs for images
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -314,25 +359,31 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const searchParams = useSearchParams();
   const isEdit = params?.id && pathname.includes("/edit-announcement");
 
+  const isImageError = error.toLowerCase().includes("image") || error.toLowerCase().includes("jpeg") || error.toLowerCase().includes("webp");
+  const isVideoError = error.toLowerCase().includes("video") || error.toLowerCase().includes("mp4") || error.toLowerCase().includes("100mb");
+
+  const [originalMediaCounts, setOriginalMediaCounts] = useState({ images: 0, videos: 0 });
+
+
   // Load current user
   useEffect(() => {
-    if (!user?.id) {
-      getCurrentUser();
-    } else if (user.role === 'admin') {
-      fetchAllUsers();
+    if (!userStore.user?.id) {
+      userStore.getCurrentUser();
+    } else if (userStore.user.role === 'admin') {
+      userStore.fetchAllUsers();
     }
-  }, [user]);
+  }, [userStore.user?.role]);
 
   useEffect(() => {
-    if (user?.id) {
-      getAnnouncementPackages(user.id);
+    if (userStore.user?.id) {
+      pricingStore.getAnnouncementPackages(userStore.user.id);
     }
-  }, [user]);
+  }, [userStore.user]);
 
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      announcementType: prev.announcementType || propertyTypes[0],
+      announcementType: prev.announcementType || propertyTypes[0].id,
       transactionType: prev.transactionType || serviceTypes[0],
     }));
   }, []);
@@ -341,7 +392,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   useEffect(() => {
     if (isEdit && params?.id) {
       const id = Array.isArray(params.id) ? params.id[0] : params.id;
-      getAnnouncementById(id);
+      announcementStore.getAnnouncementById(id);
     }
   }, [isEdit, params?.id]);
 
@@ -359,83 +410,119 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   // Load current announcement for editing
   useEffect(() => {
-    if (isEdit && currentAnnouncement) {
-      // ─── A) Map basic fields ───
-      const normalizedType = propertyTypes.find(
-        (type) =>
-          type.toLowerCase() ===
-          currentAnnouncement.announcementType?.toLowerCase()
-      );
-      const normalizedTrans = serviceTypes.find(
-        (type) =>
-          type.toLowerCase() ===
-          currentAnnouncement.transactionType?.toLowerCase()
-      ) || serviceTypes[0];
+    const disposer = reaction(
+      () => ({
+        announcement: announcementStore.currentAnnouncement,
+        users: userStore.users,
+      }),
+      ({ announcement, users }) => {
+        if (!isEdit || !announcement) return;
 
-      setFormData({
-        userId: currentAnnouncement.user?.id || user?.id || "",
-        announcementType: normalizedType || propertyTypes[0],
-        providerType: formData.providerType,
-        transactionType: normalizedTrans,
-        title: currentAnnouncement.title || "",
-        description: currentAnnouncement.description || "",
-        price: currentAnnouncement.price?.toString() || "",
-        surface: currentAnnouncement.surface?.toString() || "",
-        city: currentAnnouncement.city || "",
-        county: currentAnnouncement.county || "",
-        street: currentAnnouncement.street || "",
-        rooms: currentAnnouncement.rooms?.toString() || "",
-        baths: currentAnnouncement.baths?.toString() || "",
-        partitioning: currentAnnouncement.partitioning || "",
-        comfortLevel: currentAnnouncement.comfortLevel?.toString() || "",
-        floor: currentAnnouncement.floor?.toString() || "",
-        numberOfKitchens: currentAnnouncement.numberOfKitchens?.toString() || "",
-        balcony: currentAnnouncement.balcony || "",
-        parking: currentAnnouncement.parking || "",
-        // ─── B) Prefill existing thumbnail URL as string ───
-        thumbnail: currentAnnouncement.imageUrl || null,
-        // We leave `formData.images` empty: newly selected Files go here
-        images: [],
-        // We leave `formData.videos` empty: newly selected Files go here
-        videos: [],
-        // ─── C) Prefill existing sketch URL as string ───
-        sketch: currentAnnouncement.sketchUrl || null,
-      });
+        const normalize = (value: string) =>
+          value.toLowerCase().replace(/\s+/g, "_");
 
-      // ─── D) Prefill thumbnail preview ───
-      if (currentAnnouncement.imageUrl) {
-        setThumbnailPreview(currentAnnouncement.imageUrl);
-      }
+        const normalizedTypeId =
+          propertyTypes.find((t) => normalize(t.id) === normalize(announcement.announcementType ?? ""))?.id
+          ?? propertyTypes[0].id;
 
-      // ─── E) Prefill sketch preview ───
-      if (currentAnnouncement.sketchUrl) {
-        setSketchPreview(currentAnnouncement.sketchUrl);
-      }
+        const normalizedTrans = serviceTypes.find(
+          (type) =>
+            type.toLowerCase() ===
+            announcement.transactionType?.toLowerCase()
+        ) || serviceTypes[0];
 
-      // ─── F) Prefill images preview array ───
-      if (Array.isArray(currentAnnouncement.images)) {
-        // Assume each image is { original: string, thumbnail: string }
-        const existingImageUrls = currentAnnouncement.images.map(
-          (imgObj) => imgObj.original
+        // Sketch
+        if (announcement.sketchUrl) {
+          setSketchPreview(announcement.sketchUrl);
+          setFormData({
+            userId: announcement.user?.id ?? "", // only use announcement user ID,
+            announcementType: normalizedTypeId,
+            providerType: formData.providerType,
+            transactionType: normalizedTrans,
+            title: announcement.title || "",
+            description: announcement.description || "",
+            price: announcement.price?.toString() || "",
+            surface: announcement.surface?.toString() || "",
+            landSurface: announcement.landSurface?.toString() || "",
+            city: announcement.city || "",
+            county: announcement.county || "",
+            street: announcement.street || "",
+            rooms: announcement.rooms?.toString() || "",
+            baths: announcement.baths?.toString() || "",
+            partitioning: announcement.partitioning || "",
+            comfortLevel: announcement.comfortLevel?.toString() || "",
+            floor: announcement.floor?.toString() || "",
+            numberOfKitchens: announcement.numberOfKitchens?.toString() || "",
+            balcony: announcement.balcony || "",
+            parking: announcement.parking || "",
+            balconyCount: announcement.balconyCount?.toString() || "",
+            parkingCount: announcement.parkingCount?.toString() || "",
+            // We leave `formData.images` empty: newly selected Files go here
+            images: [],
+            // We leave `formData.videos` empty: newly selected Files go here
+            videos: [],
+            // ─── C) Prefill existing sketch URL as string ───
+            sketch: announcement.sketchUrl || null,
+            heightRegime: announcement.heightRegime || [],
+            streetFront: announcement.streetFront || false,
+            landPlacement: announcement.landPlacement || "",
+            streetFrontLength: announcement.streetFrontLength || 0,
+            landType: announcement.landType || "",
+            urbanismDocuments: announcement.urbanismDocuments || [],
+            utilities: {
+              curent: announcement.utilities?.curent ?? null,
+              apa: announcement.utilities?.apa ?? null,
+              canalizare: announcement.utilities?.canalizare ?? null,
+              gaz: announcement.utilities?.gaz ?? null,   
+            },
+            builtSurface: announcement.builtSurface || 0,
+            commercialSpaceType: announcement.commercialSpaceType || "",
+            hasLift: announcement.hasLift || false,
+            usableSurface: announcement.usableSurface || 0,
+            spaceHeight: announcement.spaceHeight || 0,
+            hasStreetWindow: announcement.hasStreetWindow || false,
+            streetWindowLength: announcement.streetWindowLength || 0,
+            hasStreetEntrance: announcement.hasStreetEntrance || false,
+            vehicleAccess: announcement.vehicleAccess || [],
+          });
+        }
+
+        // Videos
+        if (Array.isArray(announcement.videos)) {
+          const videoUrls = announcement.videos.map((v) => v.original);
+          setVideoItems(videoUrls.map((url) => ({ url })));
+          setVideoPreviews(videoUrls);
+        }
+
+        // Images
+        const filteredImages = (announcement.images ?? []).filter(
+          (img) => img.original !== announcement.sketchUrl
         );
-        setImagePreviews(existingImageUrls);
-      }
+        setImageItems(filteredImages.map((img) => ({ url: img.original })));
+        setImagePreviews(filteredImages.map((img) => img.original));
 
-      // ─── G) Prefill videos preview array ───
-      if (Array.isArray(currentAnnouncement.videos)) {
-        // Assume each video is { original: string, format: string }
-        const existingVideoUrls = currentAnnouncement.videos.map(
-          (vidObj) => vidObj.original
-        );
-        setVideoPreviews(existingVideoUrls);
-      }
+        // userId
+        const announcementUserId = announcement.user?.id;
+        if (announcementUserId && users.some((u) => u.id === announcementUserId)) {
+          setFormData((prev) => ({
+            ...prev,
+            userId: announcementUserId,
+          }));
+        }
 
-      // ─── H) Prefill contact phone ───
-      if (!contactPhone && currentAnnouncement.user?.phoneNumber) {
-        setContactPhone(currentAnnouncement.user.phoneNumber);
+        setOriginalMediaCounts({
+          images: filteredImages.length,
+          videos: announcement.videos?.length ?? 0,
+        });
+      },
+      {
+        fireImmediately: true, // important!
+        delay: 0, // optional: ensures it's async but not delayed
       }
-    }
-  }, [currentAnnouncement, isEdit]);
+    );
+
+    return () => disposer();
+  }, [isEdit, contactPhone]);
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -451,34 +538,14 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setFormData({ ...formData, [name as string]: value });
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-  
-    if (file) {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        if (img.width > 1920 || img.height > 1080) {
-          setError("Image resolution cannot exceed 1920x1080.");
-          return;
-        }
-  
-        setFormData({ ...formData, thumbnail: file });
-        setThumbnailPreview(img.src);
-        setError('');
-      };
-    }
-  };
-  
   const validateImageFiles = (files: FileList | File[]) => {
     let validImages: File[] = Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setError("Only JPEG, PNG, or WebP images are allowed.");
+        setError("Sunt permise doar imagini JPEG, PNG sau WebP.");
         return false;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        setError(`Image ${file.name} exceeds 5MB limit.`);
+        setError(`Imaginea ${file.name} depășește limita de 10MB.`);
         return false;
       }
       
@@ -490,27 +557,15 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-
-    if (!files) {
-      return;
-    }
+    if (!files) return;
 
     const validImages = validateImageFiles(files);
+    const newItems = validImages.map((file) => ({ file }));
 
-    if (formData.images.length + validImages.length > MAX_IMAGES) {
-      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
-      return;
-    }
+    setImageItems((prev) => [...prev, ...newItems]);
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...validImages],
-    }));
-    setImagePreviews((prev) => [
-      ...prev,
-      ...validImages.map((file) => URL.createObjectURL(file)),
-    ]);
-    setError('');
+    // 👇 important: reset input value so selecting same files again works
+    event.target.value = "";
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -519,19 +574,29 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     const files = event.dataTransfer.files;
 
     const validImages = validateImageFiles(files);
-    if (formData.images.length + validImages.length > MAX_IMAGES) {
-      setError(`You can upload a maximum of ${MAX_IMAGES} images.`);
+    if (imageItems.length + validImages.length > MAX_IMAGES) {
+      setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
       return;
     }
-    
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...validImages],
-    }));
-    setImagePreviews((prev) => [
-      ...prev,
-      ...validImages.map((file) => URL.createObjectURL(file)),
-    ]);
+
+    const newItems = validImages.map((file) => ({ file }));
+    setImageItems((prev) => [...prev, ...newItems]);
+    setError('');
+  };
+
+  const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingVideos(false);
+    const files = event.dataTransfer.files;
+
+    const validVideos = validateVideoFiles(files);
+    if (videoItems.length + validVideos.length > MAX_VIDEOS) {
+      setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
+      return;
+    }
+
+    const newItems = validVideos.map((file) => ({ file }));
+    setVideoItems((prev) => [...prev, ...newItems]);
     setError('');
   };
 
@@ -551,27 +616,19 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const handleImageRemove = (index: number) => {
-    setFormData((prev) => {
-      const updatedImages = [...prev.images];
-      updatedImages.splice(index, 1);
-      return { ...prev, images: updatedImages };
-    });
-    setImagePreviews((prev) => {
-      const updatedPreviews = [...prev];
-      updatedPreviews.splice(index, 1);
-      return updatedPreviews;
-    });
+    setImageItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateVideoFiles = (files: FileList | File[]) => {
     let validVideos: File[] = Array.from(files).filter((file) => {
       if (!file.type.startsWith("video/")) {
-        setError("Only video files are allowed.");
+        setError("Sunt permise doar fișiere video.");
         return false;
       }
 
       if (file.size > MAX_VIDEO_SIZE) {
-        setError(`File ${file.name} exceeds 100MB limit.`);
+        setError(`Fișierul ${file.name} depășește limita de 100MB.`);
+
         return false;
       }
       
@@ -583,46 +640,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
   const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      
-      const validVideos = validateVideoFiles(files);
-      if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-        setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
-        return;
-      }
+    if (!files) return;
 
-      setFormData((prev) => ({
-        ...prev,
-        videos: [...prev.videos, ...validVideos],
-      }));
-      setVideoPreviews((prev) => [
-        ...prev,
-        ...validVideos.map((file) => URL.createObjectURL(file)),
-      ]);
-      setError('');
-    }
-  };
-
-  const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const files = event.dataTransfer.files;
-    
     const validVideos = validateVideoFiles(files);
-    if (formData.videos.length + validVideos.length > MAX_VIDEOS) {
-      setError(`You can upload a maximum of ${MAX_VIDEOS} videos.`);
-      return;
-    }
+    const newItems = validVideos.map((file) => ({ file }));
 
-    setFormData((prev) => ({
-      ...prev,
-      videos: [...prev.videos, ...validVideos],
-    }));
-    setVideoPreviews((prev) => [
-      ...prev,
-      ...validVideos.map((file) => URL.createObjectURL(file)),
-    ]);
-    setError('');
+    setVideoItems((prev) => [...prev, ...newItems]);
   };
 
   const handleVideoDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -641,16 +664,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   };
 
   const handleVideoRemove = (index: number) => {
-    setFormData((prev) => {
-      const updatedVideos = [...prev.videos];
-      updatedVideos.splice(index, 1);
-      return { ...prev, videos: updatedVideos };
-    });
-    setVideoPreviews((prev) => {
-      const updatedPreviews = [...prev];
-      updatedPreviews.splice(index, 1);
-      return updatedPreviews;
-    });
+    setVideoItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSketchChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -669,9 +683,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setOpenModal(false);
   };
 
-  const uploadMedia = async (announcementId: string) => {
-    const totalImages = formData.images.length + (formData.thumbnail ? 1 : 0);
-    const totalVideos = formData.videos.length;
+  const uploadMedia = async (
+    announcementId: string
+  ) => {
+    const totalImages =
+      imageItems.filter((i) => i.file).length +
+      imageItems.filter((i) => i.url).length +
+      (formData.sketch ? 1 : 0);
+
+    const totalVideos =
+      videoItems.filter((i) => i.file).length +
+      (videoItems.filter((i) => i.url).length);
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
     setVideoUploadProgress({ uploaded: 0, total: totalVideos });
@@ -681,166 +703,213 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         ...prev,
         uploaded: prev.uploaded + 1,
       }));
+
     const incrementVideo = () =>
       setVideoUploadProgress((prev) => ({
         ...prev,
         uploaded: prev.uploaded + 1,
       }));
 
-    // 1) Upload any brand-new images (File objects in formData.images)
-    const imageUploads = formData.images.map((imageFile) =>
-      (async () => {
-        const df = new FormData();
-        df.append("file", imageFile);
-        df.append("type", "image");
-        await createImageOrVideo(df, announcementId);
-        incrementImage();
-      })()
-    );
+    const uploadAll = async (
+      items: MediaItem[],
+      type: 'image' | 'video',
+      increment: () => void
+    ) => {
+      for (const item of items) {
+        if (!item.file) continue; // ⛔ skip existing if not deleting
 
-    // 2) Upload the thumbnail (could be File or existing string URL)
-    if (formData.thumbnail) {
-      const df = new FormData();
-      if (formData.thumbnail instanceof File) {
-        df.append("file", formData.thumbnail);
-      } else if (typeof formData.thumbnail === "string") {
-        // Fetch the existing URL → convert to Blob → File
-        const resp = await fetch(formData.thumbnail);
-        const blob = await resp.blob();
-        const name = `thumbnail‐${Date.now()}.jpg`;
-        const file = new File([blob], name, { type: blob.type });
-        df.append("file", file);
+        const form = new FormData();
+
+        if (item.file) {
+          form.append('file', item.file);
+        } else if (item.url) {
+          const res = await fetch(item.url);
+          const blob = await res.blob();
+          const ext = blob.type.split('/')[1] || 'jpg';
+          const file = new File([blob], `existing-${Date.now()}.${ext}`, {
+            type: blob.type,
+          });
+          form.append('file', file);
+        } else {
+          continue;
+        }
+
+        form.append('type', type);
+        await announcementStore.createImageOrVideo(form, announcementId);
+        increment();
       }
-      df.append("type", "image");
+    };
 
-      const uploadResp = await createImageOrVideo(df, announcementId);
-      if (uploadResp?.optimized_url) {
-        await updateAnnouncement(announcementId, {
-          imageUrl: uploadResp.optimized_url,
+    // 1. Upload first image as thumbnail (new or existing)
+    const firstImage = imageItems[0];
+    if (firstImage) {
+      const form = new FormData();
+      if (firstImage.file) {
+        form.append('file', firstImage.file);
+      } else if (firstImage.url) {
+        const res = await fetch(firstImage.url);
+        const blob = await res.blob();
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const file = new File([blob], `thumbnail-${Date.now()}.${ext}`, {
+          type: blob.type,
         });
+        form.append('file', file);
+      } else {
+        console.warn("⚠️ No valid file or URL for thumbnail", firstImage);
+        return;
+      }
+
+      form.append('type', 'image');
+      const result = await announcementStore.createImageOrVideo(form, announcementId);
+      
+      if (result?.optimized_url) {
+        await announcementStore.updateAnnouncement(announcementId, {
+          imageUrl: result.optimized_url,
+        });
+      } else {
+        console.warn("⚠️ Thumbnail uploaded, but no optimized_url returned");
       }
       incrementImage();
     }
 
-    // 3) Upload the sketch (could be File or existing string URL)
+    // 3. Upload sketch
     if (formData.sketch) {
-      const df2 = new FormData();
+      const form = new FormData();
       if (formData.sketch instanceof File) {
-        df2.append("file", formData.sketch);
-      } else if (typeof formData.sketch === "string") {
-        const resp2 = await fetch(formData.sketch);
-        const blob2 = await resp2.blob();
-        const name2 = `sketch‐${Date.now()}.jpg`;
-        const file2 = new File([blob2], name2, { type: blob2.type });
-        df2.append("file", file2);
-      }
-      df2.append("type", "image");
-
-      const uploadResp2 = await createImageOrVideo(df2, announcementId);
-      if (uploadResp2?.optimized_url) {
-        await updateAnnouncement(announcementId, {
-          sketchUrl: uploadResp2.optimized_url,
+        form.append('file', formData.sketch);
+      } else if (typeof formData.sketch === 'string') {
+        const res = await fetch(formData.sketch);
+        const blob = await res.blob();
+        const file = new File([blob], `sketch-${Date.now()}.jpg`, {
+          type: blob.type,
         });
+        form.append('file', file);
+      }
+      form.append('type', 'image');
+      const result = await announcementStore.createImageOrVideo(form, announcementId);
+      if (result?.optimized_url) {
+        await announcementStore.updateAnnouncement(announcementId, {
+          sketchUrl: result.optimized_url,
+        });
+      } else {
+        console.warn("⚠️ Sketch upload succeeded but no optimized_url returned");
       }
       incrementImage();
     }
 
-    // 4) Upload any brand-new videos (File objects in formData.videos)
-    const videoUploads = formData.videos.map((videoFile) =>
-      (async () => {
-        const df3 = new FormData();
-        df3.append("file", videoFile);
-        df3.append("type", "video");
-        await createImageOrVideo(df3, announcementId);
-        incrementVideo();
-      })()
-    );
+    // 2. Upload remaining images
+    await uploadAll(imageItems.slice(1), 'image', incrementImage);
 
-    // 5) Wait for all uploads to finish
-    await Promise.all([Promise.all(imageUploads), Promise.all(videoUploads)]);
-  };  
+    // 4. Upload videos
+    await uploadAll(videoItems, 'video', incrementVideo);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  };
 
   const onSubmit = async () => {
+    setIsSubmitted(true);
+
     if (!formData.title || !formData.description || !formData.price || !formData.city || !formData.county) {	
-      setError("Please fill in all required fields.");
+      setError("Te rugăm să completezi toate câmpurile obligatorii.");
       return;
     }
   
     if (!contactPhone) {
-      setError("Contact phone number is required.");
+      setError("Numărul de telefon este obligatoriu.");
       return;
     }
 
-    if (!formData.sketch) {
-      setError("You must select or upload a sketch image.");
-      return;
+    if (formData.announcementType === "Casa" || formData.announcementType === "Case la tara") {
+      if (!formData.surface || !formData.landSurface) {
+        setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
+        return;
+      }
     }
-  
-    if (!formData.thumbnail) {
-      setError("You must upload a thumbnail image.");
-      return;
+
+    if (formData.announcementType === "Teren") {
+      if (!formData.landSurface || !formData.streetFrontLength) {
+        setError("Pentru tipul 'Casa', câmpurile marcate cu * sunt obligatorii.");
+        return;
+      }
+    }
+
+    if (formData.announcementType === 'Comercial') {
+      if (!formData.commercialSpaceType) {
+        alert('Câmpul "Tip spațiu" este obligatoriu.');
+        return;
+      }
     }
   
     setLoading(true);
     setError("");
   
     try {
-      const { thumbnail, sketch, ...data } = formData;
+      const { sketch, ...data } = formData;
 
-      const selectedUser = user && user.role === 'admin'
-        ? usersList.find(u => u.id === formData.userId)
-        : user;
+      const selectedUser = userStore.user && userStore.user.role === 'admin'
+        ? userStore.users.find(u => u.id === formData.userId)
+        : userStore.user;
       if (!selectedUser || !selectedUser.id) throw new Error('User not found');
   
       const announcementDraft = {
         ...data,
-        announcementType: data.announcementType.toLowerCase(),
+        announcementType: normalizeAnnouncementType(data.announcementType),
         price: Number(data.price),
         rooms: Number(data.rooms),
         baths: Number(data.baths),
         numberOfKitchens: Number(data.numberOfKitchens),
         floor: Number(data.floor),
         surface: Number(data.surface),
-        status: user && user.role === 'admin' ? 'active' : 'pending',
+        landSurface: Number(data.landSurface),
+        streetFrontLength: Number(data.streetFrontLength) ?? 0,
+        balconyCount: data.balconyCount !== undefined && data.balconyCount !== null ? Number(data.balconyCount) : undefined,
+        parkingCount: data.parkingCount !== undefined && data.parkingCount !== null ? Number(data.parkingCount) : undefined,
+        status: userStore.user && userStore.user.role === 'admin' ? 'active' : 'pending',
         phoneContact: contactPhone, // Add phoneContact property
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
         deleteMedia: false
       };
   
       // 1. Update phone number if changed
-      if (contactPhone !== user?.phoneNumber && user?.id) {
-        await updateUser(user.id, { phoneNumber: contactPhone });
+      const normalizePhone = (p: string) => p.replace(/^\+?4/, "").replace(/\s/g, "");
+      if (normalizePhone(contactPhone) !== normalizePhone(userStore.user?.phoneNumber || "")) {
+        if (userStore.user && typeof userStore.user.id === "string") {
+          await userStore.updateUser(userStore.user.id, { phoneNumber: contactPhone });
+        }
       }
 
-      if (isEdit && currentAnnouncement?.id) {
+      if (isEdit && announcementStore.currentAnnouncement?.id) {
         // ─── EDITING AN EXISTING ANNOUNCEMENT ──
         // 2a. Call updateAnnouncement instead of createAnnouncement
         announcementDraft.status = 'active';
-        announcementDraft.deleteMedia = true; // Ensure we delete old media
-        await updateAnnouncement(currentAnnouncement.id, announcementDraft);
+        announcementDraft.deleteMedia = true;
+
+        await announcementStore.updateAnnouncement(announcementStore.currentAnnouncement.id, announcementDraft);
 
         // 3a. Upload media on top of the existing announcement’s ID
-        await uploadMedia(currentAnnouncement.id);
+        await uploadMedia(announcementStore.currentAnnouncement.id);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 👈 Give time for final flush
 
         // 4a. Redirect or show a “success” page for editing
         // (choose whatever makes sense: maybe go back to listing or details page)
         // e.g.:
-        window.location.href = `/announcements/${currentAnnouncement.id}`;
+        window.location.href = `/announcements/${announcementStore.currentAnnouncement.id}`;
       } else {
 
         // 2. Actually create the announcement
-        const newAnnouncement = await createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
+        const newAnnouncement = await announcementStore.createAnnouncement(announcementDraft) as unknown as PropertyAnnouncementModel;
 
         // 4. Upload media in the background
         await uploadMedia(newAnnouncement.id);
 
-        const isAdmin = user?.role === 'admin';
+        const isAdmin = userStore.user?.role === 'admin';
 
         if (isAdmin) {
           // record free payment for admin
-          await createPaymentSession({
+          await announcementStore.createPaymentSession({
             orderId: newAnnouncement.id,
-            packageId: freePlanId ?? "",
+            packageId: pricingStore.freePlanId ?? "",
             amount: 0,
             originalAmount: 0,
             currency: 'RON',
@@ -857,7 +926,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
           const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!
           const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`; 
-          await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
+          await announcementStore.sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
 
           // redirect to admin detail view
             window.location.href = `/payment-status?orderId=${newAnnouncement.id}&success=true`;
@@ -868,7 +937,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
     } catch (error) {
       console.error("Error saving announcement:", error);
-      setError("An error occurred while saving the announcement.");
+      setError("A apărut o eroare la salvarea anunțului.");
     } finally {
       setLoading(false);
     }
@@ -882,7 +951,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           {(imageUploadProgress.total > 0 || videoUploadProgress.total > 0) ? (
             <>
               <Typography mt={2}>
-                Uploading images: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
+                Se încarcă imaginile: {imageUploadProgress.uploaded}/{imageUploadProgress.total}
               </Typography>
               {imageUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -894,7 +963,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               )}
 
               <Typography mt={2}>
-                Uploading videos: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
+                Se încarcă videoclipurile: {videoUploadProgress.uploaded}/{videoUploadProgress.total}
               </Typography>
               {videoUploadProgress.total > 0 && (
                 <Box width="100%" mt={1}>
@@ -908,17 +977,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               {(imageUploadProgress.uploaded < imageUploadProgress.total ||
                 videoUploadProgress.uploaded < videoUploadProgress.total) && (
                 <Typography mt={2} fontStyle="italic">
-                  Finishing uploads, please wait...
+                  Finalizare încărcare, te rugăm să aștepți...
                 </Typography>
               )}
             </>
           ) : (
-            <Typography mt={2}>Creating your announcement...</Typography>
+            <Typography mt={2}>Se creează anunțul...</Typography>
           )}
         </>
       ) : (
         <>
-          <SubtitleAdvice>{isEdit ? "Edit Announcement" : "Create Announcement"}</SubtitleAdvice>
+          <SubtitleAdvice>{isEdit ? "Editează Anunțul" : "Creează Anunțul"}</SubtitleAdvice>
 
           {error && (
             <Typography color="error" sx={{ marginBottom: "16px", textAlign: "center" }}>
@@ -926,17 +995,17 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             </Typography>
           )}
 
-          {user && user.role === 'admin' && (
+          {userStore.user && userStore.user.role === 'admin' && (
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="user-select-label">Assign To User</InputLabel>
+              <InputLabel id="user-select-label">Atribuie unui utilizator</InputLabel>
               <Select
                 labelId="user-select-label"
                 name="userId"
                 value={formData.userId}
-                label="Assign To User"
+                label="Atribuie unui utilizator"
                 onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value as string }))}
               >
-                {usersList.map(u => (
+                {userStore.users.map(u => (
                   <MenuItem key={u.id} value={u.id}>
                     {u.firstName} {u.lastName} ({u.email})
                   </MenuItem>
@@ -949,11 +1018,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <RadioGroupContainer> 
               {/* Announcement Type */}
               <RadioButtonsGroup
-                options={propertyTypes}
-                value={formData.announcementType}
+                label="Tip Proprietate"
                 id="announcementType"
-                onChange={handleSelectChange}
-                label="Announcement Type"
+                value={formData.announcementType}            // holds the id, e.g. "Casa"
+                options={propertyTypes}                      // [{ id, value }, ...]
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                }
               />
 
               {/* Transaction Type */}
@@ -962,13 +1033,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 value={formData.transactionType}
                 id="transactionType"
                 onChange={handleSelectChange}
-                label="Transaction Type"
+                label="Tip Tranzacție"
               />
             </RadioGroupContainer>
           
             {/* County */}
             <AutocompleteCounties
-              label="County"
+              label="Județ *"
               customWidth="100%"
               value={formData.county}
               onChange={(event, value) => {
@@ -977,53 +1048,84 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                   county: value || "",
                 }));
               }}
+              error={isSubmitted && !formData.county}
+              helperText={isSubmitted && !formData.county ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* City */}
             <AutocompleteCities
-              label="City"
+              label="Oraș *"
               customWidth="100%"
               value={formData.city}
               onChange={(e, value) =>
                 setFormData((prev) => ({ ...prev, city: value || "" }))
               }
+              error={isSubmitted && !formData.city}
+              helperText={isSubmitted && !formData.city ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* Street */}
-            <StyledTextField
-              label="Street"
-              name="street"
-              value={formData.street}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            {formData.announcementType !== "Teren" && (
+            <Box width="100%" mb={2}>
+              <Typography variant="subtitle1">Stradă</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                Adaugă strada exactă. Nu include numere de telefon, emailuri sau linkuri.
+              </Typography>
+              <StyledTextField
+                label="Stradă"
+                name="street"
+                value={formData.street}
+                onChange={handleInputChange}
+                fullWidth
+                required
+                error={isSubmitted && !formData.street}
+                helperText={isSubmitted && !formData.street ? 'Acest câmp este obligatoriu' : ''}
+              />
+            </Box>)}
 
             {/* Title */}
-            <StyledTextField
-              label="Title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            <Box width="100%">
+              <Box width="100%" mb={2}>
+                <Typography variant="subtitle1">Titlu</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                  Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule, numere de telefon, emailuri sau linkuri.
+                </Typography>
+                <StyledTextField
+                  label="Titlu"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  fullWidth
+                  required
+                  error={isSubmitted && !formData.title}
+                  helperText={isSubmitted && !formData.title ? 'Acest câmp este obligatoriu' : ''}
+                />
+              </Box>
+            </Box>
 
             {/* Description */}
-            <StyledTextField
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              multiline
-              rows={4}
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-            />
+            <Box width="100%" mb={2}>
+              <Typography variant="subtitle1">Descriere</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                Vrei să atragi cumpărători serioși? Include detalii reale despre suprafață, camere, anul construcției, renovări, zonă și facilități. Evită exagerările.
+              </Typography>
+              <StyledTextField
+                label="Descriere"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                multiline
+                rows={4}
+                fullWidth
+                required
+                error={isSubmitted && !formData.description}
+                helperText={isSubmitted && !formData.description ? 'Acest câmp este obligatoriu' : ''}
+              />
+            </Box>
 
             {/* Phone Number */}
             <PhoneInputField
-              label="Contact Phone Number"
+              label="Număr de Telefon *"
               name="contactPhone"
               value={contactPhone}
               onChange={(phoneValue) => setContactPhone(phoneValue)}
@@ -1033,41 +1135,432 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
             {/* Price */}
             <TextField
-              label="Price (€)"
+              label="Preț (€)"
               name="price"
               value={formData.price}
               onChange={handleInputChange}
               type="number"
               fullWidth
-              required
               sx={{ marginBottom: "16px" }}
+              required
+              error={isSubmitted && !formData.price}
+              helperText={isSubmitted && !formData.price ? 'Acest câmp este obligatoriu' : ''}
             />
 
             {/* Surface */}
             <TextField
-              label="Surface (sqm)"
+              label="Suprafață (sqm)"
               name="surface"
               value={formData.surface}
               onChange={handleInputChange}
               type="number"
               fullWidth
               sx={{ marginBottom: "16px" }}
+              required
+              error={isSubmitted && !formData.surface}
+              helperText={isSubmitted && !formData.surface ? 'Acest câmp este obligatoriu' : ''}
             />
+
+            {/* Land Surface - only for houses */}
+            {(formData.announcementType === "Casa" || formData.announcementType === "Case la tara") && (
+              <>
+                {/* Suprafață teren */}
+                <TextField
+                  label="Suprafață teren (mp)"
+                  name="landSurface"
+                  value={formData.landSurface}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ marginBottom: "16px" }}
+                  required
+                  error={isSubmitted && !formData.landSurface}
+                  helperText={isSubmitted && !formData.landSurface ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Front la stradă */}
+                <Box width="100%" textAlign="center" mt={3}>
+                  <Typography variant="h6">Front la stradă</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Bifează dacă imobilul are deschidere directă la drum public. Aceasta este o caracteristică importantă în evaluarea proprietății.
+                  </Typography>
+                </Box>
+
+                <FormControl component="fieldset" sx={{ mt: 2 }}>
+                  <RadioButtonsGroup
+                    options={["Da", "Nu"]}
+                    value={formData.streetFront ? "Da" : "Nu"}
+                    id="streetFront"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        streetFront: e.target.value === "Da",
+                      }))
+                    }
+                    label=""
+                  />
+                </FormControl>
+
+                {/* Front la stradă (ml) - doar dacă streetFront === true */}
+                {formData.streetFront && (
+                  <TextField
+                    label="Front la stradă (ml)"
+                    name="streetFrontLength"
+                    type="number"
+                    value={formData.streetFrontLength || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        streetFrontLength: Number(e.target.value),
+                      }))
+                    }
+                    fullWidth
+                    sx={{ marginTop: 2 }}
+                  />
+                )}
+
+                {/* Regim înălțime */}
+                <Box width="100%" textAlign="center" mt={3}>
+                  <Typography variant="h6">Regim înălțime</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Selectează nivelurile de înălțime existente ale clădirii. Poți alege mai multe opțiuni dacă este cazul (ex: Subsol + Parter + Etaj).
+                  </Typography>
+                </Box>
+
+                <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+                  {HEIGHT_REGIMES.map((regime) => (
+                    <FormControlLabel
+                      key={regime}
+                      control={
+                        <Checkbox
+                          checked={formData.heightRegime.includes(regime)}
+                          onChange={() => {
+                            setFormData((prev) => {
+                              const selected = prev.heightRegime.includes(regime);
+                              return {
+                                ...prev,
+                                heightRegime: selected
+                                  ? prev.heightRegime.filter((r) => r !== regime)
+                                  : [...prev.heightRegime, regime],
+                              };
+                            });
+                          }}
+                        />
+                      }
+                      label={regime}
+                    />
+                  ))}
+                </Box>
+              </>
+            )}
+
+            {formData.announcementType === "Teren" && (
+              <>
+                {/* Address */}
+                <TextField
+                  label="La stradă / zonă"
+                  name="street"
+                  value={formData.street}
+                  onChange={handleInputChange}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.street}
+                  helperText={isSubmitted && !formData.street ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Suprafață teren */}
+                <TextField
+                  label="Suprafață teren (mp)"
+                  name="landSurface"
+                  value={formData.landSurface}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.landSurface}
+                  helperText={isSubmitted && !formData.landSurface ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Front la stradă */}
+                <TextField
+                  label="Front la stradă (ml)"
+                  name="streetFrontLength"
+                  value={formData.streetFrontLength}
+                  onChange={handleInputChange}
+                  type="number"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  required
+                  error={isSubmitted && !formData.streetFrontLength}
+                  helperText={isSubmitted && !formData.streetFrontLength ? 'Acest câmp este obligatoriu' : ''}
+                />
+
+                {/* Tip teren */}
+                <SelectDropdown
+                  label="Tip teren"
+                  name="landType"
+                  value={formData.landType}
+                  options={["Constructii", "Agricol", "Pădure", "Pășune", "Livadă"].map((v) => ({ id: v, value: v }))}
+                  handleChange={handleSelectChange}
+                />
+
+                {/* Amplasare */}
+                <SelectDropdown
+                  label="Amplasare"
+                  name="landPlacement"
+                  value={formData.landPlacement}
+                  options={["Intravilan", "Extravilan"].map((v) => ({ id: v, value: v }))}
+                  handleChange={handleSelectChange}
+                />
+
+                {/* Urbanism */}
+                <Box mt={3}>
+                  <Typography variant="h6">Urbanism</Typography>
+                  <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+                    {["PUZ", "PUD", "Studiu GEO", "Certificat urbanism", "Autorizație construcție"].map((doc) => (
+                      <FormControlLabel
+                        key={doc}
+                        control={
+                          <Checkbox
+                            checked={formData.urbanismDocuments.includes(doc)}
+                            onChange={() => {
+                              setFormData((prev) => {
+                                const selected = prev.urbanismDocuments.includes(doc);
+                                return {
+                                  ...prev,
+                                  urbanismDocuments: selected
+                                    ? prev.urbanismDocuments.filter((d) => d !== doc)
+                                    : [...prev.urbanismDocuments, doc],
+                                };
+                              });
+                            }}
+                          />
+                        }
+                        label={doc}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Utilități generale */}
+                <Box mt={3}>
+                  <Typography variant="h6">Utilități generale</Typography>
+                  {(["curent", "apa", "canalizare", "gaz"] as Array<keyof typeof formData.utilities>).map((util) => (
+                    <FormControl key={util} component="fieldset" sx={{ mt: 1 }}>
+                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        {util.charAt(0).toUpperCase() + util.slice(1)}
+                      </Typography>
+                      <RadioButtonsGroup
+                        options={["Da", "Nu"]}
+                        id={util}
+                        value={formData.utilities[util] === true ? "Da" : formData.utilities[util] === false ? "Nu" : ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            utilities: {
+                              ...prev.utilities,
+                              [util]: e.target.value === "Da",
+                            },
+                          }))
+                        }
+                        label=""
+                      />
+                    </FormControl>
+                  ))}
+                </Box>
+              </>
+            )}
+
+            {formData.announcementType === "Comercial" && (
+            <>
+              {/* Tip spațiu (obligatoriu) */}
+              <FormControl fullWidth required sx={{ mb: 2 }}>
+                <InputLabel id="commercial-space-type-label">Tip spațiu</InputLabel>
+                <Select
+                  labelId="commercial-space-type-label"
+                  id="commercialSpaceType"
+                  value={formData.commercialSpaceType || ''}
+                  label="Tip spațiu"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      commercialSpaceType: e.target.value,
+                    }))
+                  }
+                  required
+                  error={isSubmitted && !formData.commercialSpaceType}
+                >
+                  {['comercial', 'birouri', 'industrial'].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option[0].toUpperCase() + option.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Suprafață utilă */}
+              <TextField
+                label="Suprafață utilă (mp)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.usableSurface || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    usableSurface: Number(e.target.value),
+                  }))
+                }
+                required
+                error={isSubmitted && !formData.usableSurface}
+                helperText={isSubmitted && !formData.usableSurface ? 'Acest câmp este obligatoriu' : ''}
+              />
+
+              {/* Suprafață construită */}
+              <TextField
+                label="Suprafață construită (mp)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.builtSurface || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    builtSurface: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Înălțime spațiu */}
+              <TextField
+                label="Înălțime spațiu (m)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.spaceHeight || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    spaceHeight: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Vitrină la stradă */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Vitrină la stradă</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasStreetWindow ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasStreetWindow: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Front vitrină la stradă */}
+              <TextField
+                label="Front vitrină la stradă (ml)"
+                type="number"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={formData.streetWindowLength || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    streetWindowLength: Number(e.target.value),
+                  }))
+                }
+              />
+
+              {/* Intrare din stradă */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Intrare din stradă</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasStreetEntrance ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasStreetEntrance: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Lift */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Lift</Typography>
+                <RadioGroup
+                  row
+                  value={formData.hasLift ? 'Da' : 'Nu'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasLift: e.target.value === 'Da',
+                    }))
+                  }
+                >
+                  <FormControlLabel value="Da" control={<Radio />} label="Da" />
+                  <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Acces auto */}
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <Typography variant="h6">Acces auto</Typography>
+                <Box display="flex" flexWrap="wrap" gap={1}>
+                  {['TIR', 'Autocar', 'Camioane', 'Autoturism'].map((vehicle) => (
+                    <FormControlLabel
+                      key={vehicle}
+                      control={
+                        <Checkbox
+                          checked={formData.vehicleAccess.includes(vehicle)}
+                          onChange={(e) => {
+                            setFormData((prev) => {
+                              const access = prev.vehicleAccess.includes(vehicle)
+                                ? prev.vehicleAccess.filter((v) => v !== vehicle)
+                                : [...prev.vehicleAccess, vehicle];
+                              return { ...prev, vehicleAccess: access };
+                            });
+                          }}
+                        />
+                      }
+                      label={vehicle}
+                    />
+                  ))}
+                </Box>
+              </FormControl>
+            </>
+          )}
 
             {isApartment && (
               <>
                 {/* Number of Rooms */}
                 <SelectDropdown
-                  label="Number of Rooms"
+                  label="Număr camere *"
                   options={roomOptions}
                   name="rooms"
                   value={formData.rooms}
                   handleChange={handleSelectChange}
+                  error={isSubmitted && !formData.rooms}
+                  helperText={isSubmitted && !formData.rooms ? 'Acest câmp este obligatoriu' : ''}
                 />
 
                 {/* Number of Baths */}
                 <SelectDropdown
-                  label="Number of Baths"
+                  label="Număr băi"
                   options={roomOptions}
                   name="baths"
                   value={formData.baths}
@@ -1076,8 +1569,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Number of Kitchens */}
                 <SelectDropdown
-                  label="Number of Kitchens"
-                  options={roomOptions}
+                  label="Număr bucătării"
+                  options={kitchenOptionsMax2}
                   name="numberOfKitchens"
                   value={formData.numberOfKitchens}
                   handleChange={handleSelectChange}
@@ -1085,7 +1578,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Partitioning */}
                 <SelectDropdown
-                  label="Partitioning"
+                  label="Compartimentare"
                   options={apartamentPartitionings}
                   name="partitioning"
                   value={formData.partitioning}
@@ -1094,7 +1587,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Comfort Level */}
                 <SelectDropdown
-                  label="Comfort Level"
+                  label="Nivel confort"
                   options={comfortLevels}
                   name="comfortLevel"
                   value={formData.comfortLevel}
@@ -1103,25 +1596,43 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 {/* Floor */}
                 <SelectDropdown
-                  label="Floor"
+                  label="Etaj"
                   options={apartmentFloors}
                   name="floor"
                   value={formData.floor}
                   handleChange={handleSelectChange}
                 />
 
+                {/* Număr balcoane */}
+                <SelectDropdown
+                  label="Număr balcoane"
+                  options={balconyCounts}
+                  name="balconyCount"
+                  value={formData.balconyCount}
+                  handleChange={handleSelectChange}
+                />
+
                 {/* Balcony */}
                 <SelectDropdown
-                  label="Balcony"
+                  label="Tip balcon"
                   options={balconyTypes.map((type, index) => ({ id: index, value: type }))}
                   name="balcony"
                   value={formData.balcony}
                   handleChange={handleSelectChange}
                 />
 
+                {/* Parcare/Garaj – număr */}
+                <SelectDropdown
+                  label="Parcare/Garaj (număr)"
+                  options={parkingCounts}
+                  name="parkingCount"
+                  value={formData.parkingCount}
+                  handleChange={handleSelectChange}
+                />
+
                 {/* Parking */}
                 <SelectDropdown
-                  label="Parking"
+                  label="Tip parcare"
                   options={parkingTypes.map((type, index) => ({ id: index, value: type }))}
                   name="parking"
                   value={formData.parking}
@@ -1130,38 +1641,21 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               </>
             )}
 
-            {/* Thumbnail Upload */}
+            {/* Sketch */}
             <ThumbnailContainer>
-              <Typography variant="h6">Thumbnail Image</Typography>
-              
-              <ThumbnailPreviewWrapper onClick={() => thumbnailFileInputRef.current?.click()}>
-                {thumbnailPreview ? (
-                  <ThumbnailPreviewImage src={thumbnailPreview} alt="Thumbnail Preview" />
-                ) : (
-                  <Typography sx={{ color: "#aaa", textAlign: "center" }}>
-                    No Image
-                  </Typography>
-                )}
-              </ThumbnailPreviewWrapper>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-                ref={thumbnailFileInputRef}
-              />
-            </ThumbnailContainer>
-
-            <ThumbnailContainer>
-              <Typography variant="h6">Apartment Sketch / Floor Plan</Typography>
+              <Box width="100%" textAlign="center">
+                <Typography variant="h6">Schiță / Plan</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                  Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.
+                </Typography>
+              </Box>
 
               <ThumbnailPreviewWrapper onClick={() => setOpenModal(true)}>
                 {sketchPreview ? (
-                  <ThumbnailPreviewImage src={sketchPreview} alt="Sketch Preview" />
+                  <ThumbnailPreviewImage src={sketchPreview} alt="Previzualizare schiță" />
                 ) : (
                   <Typography sx={{ color: "#aaa", textAlign: "center" }}>
-                    Click to upload or select
+                    Click pentru a încărca sau a selecta
                   </Typography>
                 )}
               </ThumbnailPreviewWrapper>
@@ -1169,8 +1663,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               <Modal open={openModal} onClose={() => setOpenModal(false)}>
                 <ModalContent>
                   <Tabs value={tabIndex} onChange={(_, newIndex) => setTabIndex(newIndex)}>
-                    <Tab label="Upload" />
-                    <Tab label="Choose Sample" />
+                    <Tab label="Încarcă" />
+                    <Tab label="Alege model" />
                   </Tabs>
 
                   {tabIndex === 0 && (
@@ -1188,12 +1682,25 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                     <PreviewContainer>
                       {PREDEFINED_SKETCHES.map((src, index) => (
                         <PreviewFile key={index} onClick={() => handlePredefinedSketchClick(src.src)}>
-                          <Typography variant="body2">Sketch {index + 1}</Typography>
-                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Sketch ${index + 1}`} />
+                          <Typography variant="body2">Schiță {index + 1}</Typography>
+                          <ThumbnailPreviewImage src={typeof src === "string" ? src : src.src} alt={`Schiță ${index + 1}`} />
                         </PreviewFile>
                       ))}
                     </PreviewContainer>
                   )}
+
+                  <Box mt={2} p={2} bgcolor="#fff7e6" border="1px dashed #ffa726" borderRadius={2}>
+                    <Typography variant="body2" fontWeight="500">
+                      📝 Sugestie:
+                    </Typography>
+                    <Typography variant="body2">
+                      DACA NU AI GĂSIT SCHIȚA IMOBILULUI ÎN DOSARUL TĂU CU ACTE, NICI ÎN MODELE CREATE DE NOI, TE SFĂTUIM SĂ FACI O SCHIȚĂ DE MÂNĂ, O FOTOGRAFIEZI ȘI O ADAUGI LA ANUNȚ.
+                    </Typography>
+                    <Typography variant="body2" mt={1} fontWeight="600" color="green">
+                      ✅ Ai șanse cu 70% mai mari să vinzi dacă publici schița de imobil!
+                    </Typography>
+                  </Box>
+
                 </ModalContent>
               </Modal>
 
@@ -1204,16 +1711,29 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               )}
             </ThumbnailContainer>
 
-            <Typography variant="h6">Add Images</Typography>
+            <Box width="100%" textAlign="center">
+              <Typography variant="h6">Adaugă imagini</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!
+              </Typography>
+            </Box>
+
+            <UploadInfoBox
+              maxFiles={MAX_IMAGES}
+              maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
+              allowedTypes={["JPG", "PNG", "WEBP"]}
+              uploadedCount={imageItems.length}
+            />
 
             <DropArea
               $isDragging={isDragging}
+              $hasError={isImageError}
               onClick={handleClick}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              Drag & Drop images here or click to browse
+              Trage imaginile aici sau apasă pentru a selecta
             </DropArea>
             <input
               type="file"
@@ -1225,24 +1745,38 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             <PreviewContainer>
-              {imagePreviews.map((src, index) => (
+              {imageItems.map((item, index) => (
                 <PreviewImage
                   key={index}
-                  src={src}
-                  alt={`Preview ${index}`}
-                  onClick={() => handleImageRemove(index)} // Remove image on click
+                  src={item.url || URL.createObjectURL(item.file!)}
+                  alt={`Image ${index}`}
+                  onClick={() => handleImageRemove(index)}
                 />
               ))}
             </PreviewContainer>
 
+            <Box width="100%" textAlign="center">
+              <Typography variant="h6">Adaugă videoclipuri</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței. Clipurile video cresc șansele de vânzare cu până la 70%!
+              </Typography>
+            </Box>
+
+            <UploadInfoBox
+              maxFiles={MAX_VIDEOS}
+              maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
+              uploadedCount={videoItems.length}
+            />
+
             <DropArea
               $isDragging={isDraggingVideos}
+              $hasError={isVideoError}
               onClick={handleVideoClick}
               onDragOver={handleVideoDragOver}
               onDragLeave={handleVideoDragLeave}
               onDrop={handleVideoDrop}
             >
-              Drag & Drop videos here or click to browse
+              Trage videoclipurile aici sau apasă pentru a selecta
             </DropArea>
             <input
               type="file"
@@ -1254,18 +1788,20 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             />
 
             <PreviewContainer>
-              {videoPreviews.map((src, index) => (
+              {videoItems.map((item, index) => (
                 <PreviewVideo
                   key={index}
-                  src={src}
+                  src={item.url || URL.createObjectURL(item.file!)}
                   controls
-                  onClick={() => handleVideoRemove(index)} // Remove video on click
+                  onClick={() => handleVideoRemove(index)}
                 />
               ))}
             </PreviewContainer>
 
             {error && (
-              <Typography color="error">{error}</Typography>
+              <Typography color="error" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
             )}
 
 
@@ -1273,8 +1809,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
           {/* Submit Button */}
           <PrimaryButton
-            text={isEdit ? "Update Announcement" : "Create Announcement"}
-            onClick={onSubmit}
+            text={isEdit ? "Actualizează Anunțul" : "Creează Anunțul"}
+            onClick={() => onSubmit()}
             sx={{ marginTop: "20px" }}
           />
         </>

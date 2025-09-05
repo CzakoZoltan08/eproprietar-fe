@@ -23,7 +23,7 @@ const MyAnnouncementsWrapper = () => {
 
     const alreadySet =
       params.get("userId") === user.id &&
-      params.get("title") === "Anunturile mele";
+      params.get("title") === "Anunțurile mele";
 
     if (alreadySet) {
       setShouldRender(true);
@@ -32,13 +32,13 @@ const MyAnnouncementsWrapper = () => {
 
     params.set("page", "1");
     params.set("userId", user.id);
-    params.set("title", "Anunturile mele");
+    params.set("title", "Anunțurile mele");
 
     router.replace(`/my-announcements?${params.toString()}`);
   }, [user, searchParams, router]);
 
   if (!user?.id || !shouldRender) {
-    return <div>Loading...</div>;
+    return <div>Se încarcă...</div>;
   }
 
   return (

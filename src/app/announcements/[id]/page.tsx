@@ -6,12 +6,15 @@ import "slick-carousel/slick/slick-theme.css";
 import { ArrowLeft, ArrowRight, Pause, PlayArrow } from "@mui/icons-material";
 import { Box, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
+import UnifiedMediaGallery, { MediaItem } from "./UnifiedMediaGallery";
 
 import CharacteristicsCard from "@/app/announcements/[id]/CharacteristicsCard";
 import ContactCardComponent from "@/app/announcements/[id]/ContactCard";
 import DescriptionCard from "@/app/announcements/[id]/DescriptionCard";
+import HistoryStatsCard from "./HistoryStatsCard";
 import { Layout } from "@/common/layout/Layout";
 import { SIZES_NUMBER_TINY_SMALL } from "@/constants/breakpoints";
+import ShareButtonsCard from "@/common/shareButtons/ShareButtonsCard";
 import Slider from "react-slick";
 import TitleCard from "@/app/announcements/[id]/TitleCard";
 import { observer } from "mobx-react";
@@ -25,69 +28,53 @@ const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
   flex-direction: ${(p) => p.$flexdirection};
   justify-content: space-between;
-  align-items: stretch;   /* ← stretch, not flex-start */
-  gap: 2px;
+  align-items: stretch;
+  gap: 0px; /* compact spacing */
   width: 100%;
 `;
 
-// Adjust your ContactContainer:
 const ContactContainer = styled.div`
-  flex: 0 0 300px;       /* ↪ never shrink below or grow beyond 300px */
+  flex: 0 0 300px;
   max-width: 300px;
-  
+  margin-left: 8px !important; /* Ensure it doesn't shrink */
+
   @media (max-width: 600px) {
-    flex: 1 1 100%;       /* ↪ full-width on small screens */
+    flex: 1 1 100%;
     max-width: 100%;
+    margin-top: 0;
   }
 `;
 
 const ColumnBox = styled(Box)`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0px; /* compact vertical spacing */
 `;
-
-// Near the top, replace your MediaContainer & ResponsiveBox with:
 
 const MediaContainer = styled(Box)<{ $flexdirection: string }>`
   display: flex;
   flex-direction: ${(p) => p.$flexdirection};
-  flex-wrap: wrap;            /* ↪ allow items to wrap on narrow screens */
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 0px;
   width: 100%;
 `;
 
-const ResponsiveBox = styled(Box)`
-  flex: 1 1 0;                 /* ↪ allow shrinking and growing */
-  min-width: 0;                /* ↪ necessary for flex items to shrink below content width */
-  max-width: 100%;             /* ↪ don’t exceed parent width */
-  overflow: hidden;
-
-  @media (max-width: 600px) {
-    flex-basis: 100%;          /* ↪ on small screens each takes full width */
-    max-width: 100%;
-  }
-`;
-
-
-const GalleryContainer = styled.div`
+const GalleryAlignmentWrapper = styled.div`
+  display: flex;
+  justify-content: center;
   width: 100%;
-  max-width: 800px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  position: relative;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    height: auto; /* Allows it to scale dynamically */
-  }
-
-  @media (max-width: 480px) {
-    max-width: 100vw; /* Ensures no horizontal scrolling */
-    padding: 0 8px;
-    overflow-x: hidden;
-  }
+  margin: 0;
+  padding: 0;
 `;
+
+const VideoContainerLegacy = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  overflow: visible;
+`;
+
+
 
 // 🔹 Custom navigation arrows with better styling
 const ArrowButton = styled.button<{ $left?: boolean }>`
@@ -534,6 +521,237 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   );
 };
 
+// --- AdditionalDetailsCard: shows new fields only when present ---
+const SectionCard = styled(Box)`
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+`;
+
+const Row = styled.div`
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Label = styled.span`
+  color: #666;
+  font-size: 14px;
+`;
+
+const Value = styled.span`
+  color: #111;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: pre-wrap;
+`;
+
+// Accept "any" to avoid TS friction with your store model
+const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }) => {
+  if (!announcement) return null;
+
+  // Pull values safely
+  const {
+    // Land
+    landType,
+    landPlacement,
+    urbanismDocuments,
+    utilities,
+    // House (Casa / Case la tara)
+    streetFront,
+    streetFrontLength,
+    heightRegime,
+    // Apartment
+    balconyCount,
+    parkingCount,
+    // Commercial
+    commercialSpaceType,
+    usableSurface,
+    builtSurface,
+    spaceHeight,
+    hasStreetWindow,
+    streetWindowLength,
+    hasStreetEntrance,
+    hasLift,
+    vehicleAccess,
+  } = announcement ?? {};
+
+  // Transform helpers
+  const toYesNo = (v: boolean | null | undefined) =>
+    v === true ? "Da" : v === false ? "Nu" : undefined;
+
+  const joinArr = (arr?: string[]) => Array.isArray(arr) && arr.length ? arr.join(", ") : undefined;
+
+  const utilRows: (string | undefined)[][] = [
+    ["Curent", toYesNo(utilities?.curent)],
+    ["Apă", toYesNo(utilities?.apa)],
+    ["Canalizare", toYesNo(utilities?.canalizare)],
+    ["Gaz", toYesNo(utilities?.gaz)],
+  ].filter(([, v]) => v !== undefined);
+
+  // Decide if we have anything to show
+  const hasAnything =
+    !!landType ||
+    !!landPlacement ||
+    (urbanismDocuments && urbanismDocuments.length > 0) ||
+    utilRows.length > 0 ||
+    typeof streetFront === "boolean" ||
+    (typeof streetFrontLength === "number" && streetFrontLength > 0) ||
+    (heightRegime && heightRegime.length > 0) ||
+    (typeof balconyCount === "number" && balconyCount > 0) ||
+    (typeof parkingCount === "number" && parkingCount > 0) ||
+    !!commercialSpaceType ||
+    (typeof usableSurface === "number" && usableSurface > 0) ||
+    (typeof builtSurface === "number" && builtSurface > 0) ||
+    (typeof spaceHeight === "number" && spaceHeight > 0) ||
+    typeof hasStreetWindow === "boolean" ||
+    (typeof streetWindowLength === "number" && streetWindowLength > 0) ||
+    typeof hasStreetEntrance === "boolean" ||
+    typeof hasLift === "boolean" ||
+    (vehicleAccess && vehicleAccess.length > 0);
+
+  if (!hasAnything) return null;
+
+  return (
+    <SectionCard>
+      <Typography variant="h6" sx={{ mb: 1.5 }}>
+        Detalii suplimentare
+      </Typography>
+
+      {/* --- LAND (Teren) --- */}
+      {landType && (
+        <Row>
+          <Label>Tip teren</Label>
+          <Value>{landType}</Value>
+        </Row>
+      )}
+      {landPlacement && (
+        <Row>
+          <Label>Amplasare</Label>
+          <Value>{landPlacement}</Value>
+        </Row>
+      )}
+      {urbanismDocuments?.length > 0 && (
+        <Row>
+          <Label>Urbanism</Label>
+          <Value>{joinArr(urbanismDocuments)}</Value>
+        </Row>
+      )}
+      {utilRows.length > 0 && (
+        <>
+          {utilRows.map(([k, v]) => (
+            <Row key={k}>
+              <Label>{k}</Label>
+              <Value>{v}</Value>
+            </Row>
+          ))}
+        </>
+      )}
+
+      {/* --- HOUSE (Casa / Case la tara) --- */}
+      {typeof streetFront === "boolean" && (
+        <Row>
+          <Label>Front la stradă</Label>
+          <Value>{toYesNo(streetFront)}</Value>
+        </Row>
+      )}
+      {streetFront && typeof streetFrontLength === "number" && streetFrontLength > 0 && (
+        <Row>
+          <Label>Front la stradă (ml)</Label>
+          <Value>{streetFrontLength}</Value>
+        </Row>
+      )}
+      {heightRegime?.length > 0 && (
+        <Row>
+          <Label>Regim înălțime</Label>
+          <Value>{joinArr(heightRegime)}</Value>
+        </Row>
+      )}
+
+      {/* --- APARTMENT --- */}
+      {typeof balconyCount === "number" && balconyCount > 0 && (
+        <Row>
+          <Label>Număr balcoane</Label>
+          <Value>{balconyCount}</Value>
+        </Row>
+      )}
+      {typeof parkingCount === "number" && parkingCount > 0 && (
+        <Row>
+          <Label>Locuri parcare/garaj</Label>
+          <Value>{parkingCount}</Value>
+        </Row>
+      )}
+
+      {/* --- COMMERCIAL (Comercial) --- */}
+      {commercialSpaceType && (
+        <Row>
+          <Label>Tip spațiu</Label>
+          <Value>{commercialSpaceType[0].toUpperCase() + commercialSpaceType.slice(1)}</Value>
+        </Row>
+      )}
+      {typeof usableSurface === "number" && usableSurface > 0 && (
+        <Row>
+          <Label>Suprafață utilă (mp)</Label>
+          <Value>{usableSurface}</Value>
+        </Row>
+      )}
+      {typeof builtSurface === "number" && builtSurface > 0 && (
+        <Row>
+          <Label>Suprafață construită (mp)</Label>
+          <Value>{builtSurface}</Value>
+        </Row>
+      )}
+      {typeof spaceHeight === "number" && spaceHeight > 0 && (
+        <Row>
+          <Label>Înălțime spațiu (m)</Label>
+          <Value>{spaceHeight}</Value>
+        </Row>
+      )}
+      {typeof hasStreetWindow === "boolean" && (
+        <Row>
+          <Label>Vitrină la stradă</Label>
+          <Value>{toYesNo(hasStreetWindow)}</Value>
+        </Row>
+      )}
+      {typeof streetWindowLength === "number" && streetWindowLength > 0 && (
+        <Row>
+          <Label>Front vitrină (ml)</Label>
+          <Value>{streetWindowLength}</Value>
+        </Row>
+      )}
+      {typeof hasStreetEntrance === "boolean" && (
+        <Row>
+          <Label>Intrare din stradă</Label>
+          <Value>{toYesNo(hasStreetEntrance)}</Value>
+        </Row>
+      )}
+      {typeof hasLift === "boolean" && (
+        <Row>
+          <Label>Lift</Label>
+          <Value>{toYesNo(hasLift)}</Value>
+        </Row>
+      )}
+      {vehicleAccess?.length > 0 && (
+        <Row>
+          <Label>Acces auto</Label>
+          <Value>{joinArr(vehicleAccess)}</Value>
+        </Row>
+      )}
+    </SectionCard>
+  );
+};
+
 const AnnouncementDetailPage: React.FC = () => {
   const { announcementStore } = useStore();
   const { getAnnouncementById, fetchAnnouncementImages, currentAnnouncement } = announcementStore;
@@ -573,36 +791,39 @@ const AnnouncementDetailPage: React.FC = () => {
 
   const images = currentAnnouncement?.images ?? [];
   const videos = currentAnnouncement?.videos ?? [];
+  const sketchUrl = currentAnnouncement?.sketchUrl;
+
+  const media: MediaItem[] = [
+    ...images.map((img) => ({ type: "image" as const, src: img.original })),
+    ...videos.map((vid) => ({ type: "video" as const, src: vid.original, format: vid.format })),
+    ...(sketchUrl ? [{ type: "floorplan" as const, src: sketchUrl }] : []),
+  ];
 
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <Box flex={1} display="flex" flexDirection="column" gap={1}>
-        <MediaContainer $flexdirection={isMobile ? "column" : "row"}>
-          <ResponsiveBox>
-            <GalleryContainerImage>
-              {images.length > 0 ? (
-                <ImageGallery images={images} />
-              ) : (
-                <Box>No images available</Box>
-              )}
-            </GalleryContainerImage>
-          </ResponsiveBox>
-
-          {videos.length > 0 && (
-            <ResponsiveBox>
-              <GalleryContainer>
-                <VideoGallery videos={videos} />
-              </GalleryContainer>
-            </ResponsiveBox>
+        <GalleryAlignmentWrapper>
+          {media.length > 0 ? (
+            <UnifiedMediaGallery media={media} />
+          ) : (
+            <Box>No media available</Box>
           )}
-        </MediaContainer>
+        </GalleryAlignmentWrapper>
 
-        {currentAnnouncement && currentAnnouncement.description && <DescriptionCard />}
+        <AdditionalDetailsCard announcement={currentAnnouncement} />
+
         <CharacteristicsCard />
+
+        {currentAnnouncement?.description && <DescriptionCard />}
       </Box>
 
+      {/* Right-side content (fixed width) */}
       <ContactContainer>
-        <ContactCardComponent />
+          <ContactCardComponent />
+          {currentAnnouncement?.createdAt && (
+            <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />
+          )}
+          <ShareButtonsCard />
       </ContactContainer>
     </DetailsContainer>
   );

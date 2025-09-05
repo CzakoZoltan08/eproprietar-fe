@@ -3,31 +3,27 @@
 import * as breakpoints from "@/constants/breakpoints";
 import * as palette from "@/constants/colors";
 
+import CookieBanner from "../cookieBanner/CookieBanner";
 import Footer from "@/common/footer/Footer";
 import Header from "@/common/header/Header";
-import { MAX_PHONE } from "@/constants/breakpoints";
 import React from "react";
 import styled from "styled-components";
 
-const Container = styled.div`
-  background: ${palette.COLOR_LIGHT_GREY};
+const OuterContainer = styled.div`
+  background: ${palette.COLOR_LIGHT_GREY}; /* ✅ full page background */
   width: 100vw;
-  min-height: 100vh;
-  color: ${palette.COLOR_WHITE};
+  min-height: 75vh;
 `;
 
-const PaddingContainer = styled.div`
-  background: ${palette.COLOR_LIGHT_GREY};
-  min-height: 100vh;
-  color: ${palette.COLOR_WHITE};
-  padding: 60px 120px;
-  max-width: 100vw; /* Prevents horizontal overflow */
+const InnerContainer = styled.div`
+  max-width: 1200px;              /* ✅ responsive max width */
+  margin: 0 auto;                 /* ✅ center horizontally */
+  padding: 60px 24px;             /* ✅ default padding */
 
   @media only screen and (max-width: ${breakpoints.MAX_PHONE}) {
-    padding: 24px 12px; /* Reduce side padding to keep it centered */
+    padding: 24px 12px;           /* ✅ tighter on phones */
   }
 `;
-
 
 export const Layout = ({
   children,
@@ -38,11 +34,14 @@ export const Layout = ({
 }) => (
   <>
     <Header />
-    {paddingContainer ? (
-      <PaddingContainer>{children}</PaddingContainer>
-    ) : (
-      <Container>{children}</Container>
-    )}
+    <OuterContainer>
+      {paddingContainer ? (
+        <InnerContainer>{children}</InnerContainer>
+      ) : (
+        children
+      )}
+    </OuterContainer>
     <Footer />
+    <CookieBanner /> {/* ✅ cookie popup will overlay all pages */}
   </>
 );

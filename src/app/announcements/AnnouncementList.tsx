@@ -25,7 +25,6 @@ const sanitizeFilters = (filters: Record<string, any>) =>
 const AnnouncementList = ({
   paginated = true,
   defaultFilters = {},
-  title = "",
   source = "paginated",
 }: {
   paginated: boolean;
@@ -71,8 +70,15 @@ const AnnouncementList = ({
       initialFilters.transactionType = searchParams.get("transactionType")!;
     }
 
-    if (searchParams.get("price")) {
-      initialFilters.price = `$lte:${searchParams.get("price")}`;
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+
+    if (minPrice && maxPrice) {
+      initialFilters.price = `$between:${minPrice},${maxPrice}`;
+    } else if (minPrice) {
+      initialFilters.price = `$gte:${minPrice}`;
+    } else if (maxPrice) {
+      initialFilters.price = `$lte:${maxPrice}`;
     }
 
     const minSurface = searchParams.get("minSurface");
@@ -84,6 +90,16 @@ const AnnouncementList = ({
 
     if (maxSurface) {
       initialFilters.maxSurface = parseInt(maxSurface, 10);
+    }
+
+    const minLandSurface = searchParams.get("minLandSurface");
+    const maxLandSurface = searchParams.get("maxLandSurface");
+
+    if (minLandSurface) {
+      initialFilters.minLandSurface = parseInt(minLandSurface, 10);
+    }
+    if (maxLandSurface) {
+      initialFilters.maxLandSurface = parseInt(maxLandSurface, 10);
     }
 
     if (searchParams.get("city")) {
@@ -165,6 +181,29 @@ const AnnouncementList = ({
     return <CircularProgress sx={{ margin: "0 auto", display: "block" }} size={42} />;
   }
 
+  // ✅ Empty state — se afișează pentru orice providerType când nu există rezultate
+  if (announcements.length === 0) {
+    return (
+      <Paper
+        elevation={1}
+        sx={{
+          p: 3,
+          textAlign: "center",
+          borderRadius: 2,
+          border: "1px solid #e7e7e7",
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1, color: COLOR_TEXT, fontWeight: 600 }}>
+          Ups! Nu am găsit nimic acum…
+        </Typography>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
+          {`…dar nu-i nimic, poate chiar mâine apare exact oferta care ți se potrivește! 🍀\nÎncearcă să ajustezi filtrele și hai să vedem din nou.`}
+        </Typography>
+      </Paper>
+    );
+  }
+
   // If the providerType is "ensemble", keep the tile layout unchanged
   if (filters.providerType === "ensemble") {
     return (
@@ -183,25 +222,71 @@ const AnnouncementList = ({
     );
   }
 
-  // If the providerType is "agency", render a two-column (list + detail) layout
+  // If the providerType is "agency", render a two-column (list + detail) layout (NO SCROLL, USE PAGING)
   if (filters.providerType === "agency") {
     return (
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "3fr 1fr", // left column wider, right narrower
+          gridTemplateColumns: {
+            xs: "1fr",     // single column on mobile
+            md: "3fr 1fr", // list left, details right on desktop
+          },
           gap: "24px",
           alignItems: "start",
           marginBottom: "24px",
         }}
       >
-        {/* Left Column: render AnnouncementListItem directly (no Paper) */}
-        <Box
+        {/* Right Column: Paper with either details or explanation (shown first on mobile) */}
+        <Paper
+          elevation={2}
           sx={{
-            maxHeight: "calc(100vh - 150px)",
-            overflowY: "auto",
+            p: 2,
+            order: { xs: 1, md: 2 }, // show first on mobile, second on desktop
           }}
         >
+          {selectedAnnouncement ? (
+            <>
+              <Typography
+                variant="h5"
+                sx={{ mb: 1, fontWeight: 600, color: COLOR_TEXT }}
+              >
+                {selectedAnnouncement.title}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                {selectedAnnouncement.price} EUR — {selectedAnnouncement.surface} mp
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body2" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
+                {selectedAnnouncement.description}
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Typography variant="h6" sx={{ mb: 2, color: COLOR_TEXT }}>
+                Ce înseamnă Reprezentarea Exclusivă?
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: "pre-line", wordBreak: "break-word", color: COLOR_TEXT }}
+              >{`Am creat această secțiune special pentru tine, o secțiune care conține anunțuri imobiliare publicate exclusiv de agenți care au un contract oficial de reprezentare directă cu proprietarul imobilului, pentru a avea acces la toate imobilele de pe piața imobiliara si a le putea accesa fără a plăti comision!
+🟢 Ce înseamnă asta pentru tine, ca potențial cumpărător?
+✅ Informații corecte și verificate – Agentul are acces direct la toate detaliile importante despre imobil și este obligat să ofere transparență totală.
+✅ Fără anunțuri dublate sau false – Fiecare proprietate este unică în platformă, fără suprapuneri sau confuzii.
+✅ Un singur punct de contact – Comunici cu un agent autorizat, profesionist, care reprezintă interesele vânzătorului în mod exclusiv.
+✅ Timp câștigat – Nu mai pierzi vremea cu vizionări inutile sau oferte neclare.
+✅ Proces de achiziție clar și controlat – Ai parte de un flux bine organizat, cu pași clari de la vizionare până la semnarea contractului.
+✅ Documentație completă și sprijin juridic – Poți primi sprijin în obținerea actelor, evaluări sau consultanță juridică prin agentul responsabil.
+✅ Acces la proprietăți înaintea pieței largi – Unele imobile în regim exclusiv nu sunt listate în altă parte.
+________________________________________
+🎯 Reprezentarea Exclusivă este o garanție a profesionalismului în tranzacțiile imobiliare.
+Explorează această secțiune cu încredere – ai acces la cele mai serioase și sigure oferte din piață!`}</Typography>
+            </>
+          )}
+        </Paper>
+
+        {/* Left Column: Announcement list with paging (no scroll) */}
+        <Box sx={{ order: { xs: 2, md: 1 } }}>
           {announcements.map((item, index) => (
             <Box
               key={`agency-item-${index}`}
@@ -229,41 +314,6 @@ const AnnouncementList = ({
             </Box>
           )}
         </Box>
-
-        {/* Right Column: use Paper for textual details */}
-        <Paper
-          elevation={2}
-          sx={{
-            p: 2,
-            maxHeight: "calc(100vh - 150px)",
-            overflowY: "auto",
-          }}
-        >
-          {selectedAnnouncement ? (
-            <>
-              <Typography
-                variant="h5"
-                sx={{ mb: 1, fontWeight: 600, color: COLOR_TEXT }}
-              >
-                {selectedAnnouncement.title}
-              </Typography>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {selectedAnnouncement.price} EUR — {selectedAnnouncement.surface} mp
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Typography variant="body2" sx={{ whiteSpace: "pre-line", color: COLOR_TEXT }}>
-                {selectedAnnouncement.description}
-              </Typography>
-
-              {/* Adaugă aici câmpurile suplimentare (de ex. adresă, camere etc.) */}
-            </>
-          ) : (
-            <Typography variant="body2" color={COLOR_TEXT}>
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-            </Typography>
-          )}
-        </Paper>
       </Box>
     );
   }

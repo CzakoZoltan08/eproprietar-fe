@@ -7,7 +7,7 @@ import { Suspense } from "react";
 export default function SavedAnnouncements() {
   return (
     <AuthLayout>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Se încarcă anunțurile salvate...</div>}>
         <SavedAnnouncementsWrapper />
       </Suspense>
     </AuthLayout>

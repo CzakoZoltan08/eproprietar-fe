@@ -1,26 +1,26 @@
 import {
   Box,
   FormControl,
+  FormHelperText,
+  InputLabel,
   MenuItem,
   Select,
   SelectChangeEvent,
 } from "@mui/material";
 
-import { ChangeEvent } from "react";
-import InputLabel from "@mui/material/InputLabel";
 import { SxProps } from "@mui/system";
 
 interface DropdownProps {
   label?: string;
   additionalText?: string;
   value: string | number;
-  handleChange: (
-    event: SelectChangeEvent<string | number>,
-  ) => void;
-  options: Array<{ id: string | number; value: string | number }>;  // Allow both types
+  handleChange: (event: SelectChangeEvent<string | number>) => void;
+  options: Array<{ id: string | number; value: string | number }>;
   sx?: SxProps;
   labelStyle?: SxProps;
   name: string;
+  error?: boolean;
+  helperText?: string;
 }
 
 const SelectDropdown = ({
@@ -32,14 +32,16 @@ const SelectDropdown = ({
   additionalText = "",
   name,
   labelStyle,
+  error,
+  helperText,
 }: DropdownProps) => {
   return (
-    <FormControl fullWidth sx={sx}>
+    <FormControl fullWidth sx={sx} error={error}>
       {label && (
         <InputLabel sx={{ pl: "10px", ...labelStyle }} variant="standard">
           {label}
         </InputLabel>
-      )} 
+      )}
       <Select
         sx={{
           height: "100%",
@@ -61,6 +63,7 @@ const SelectDropdown = ({
           </MenuItem>
         ))}
       </Select>
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 };

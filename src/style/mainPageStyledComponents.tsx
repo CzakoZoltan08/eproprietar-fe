@@ -15,7 +15,7 @@ export const SelectDropdownContainer = styled.div<SelectDropdownContainerProps>`
 export const Container = styled.div`
   background: ${palette.COLOR_CONTRAST};
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh; /* ✅ allows the content to grow */
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -40,6 +40,7 @@ export const SearchContainer = styled(Flex)`
   background: ${palette.COLOR_WHITE};
   padding: 16px 24px;
   border-radius: 12px;
+  margin-top: 48px !important;
   box-shadow: -1px 0px 20px -6px rgba(5, 20, 42, 0.5);
   border: 2px solid rgba(21, 85, 174, 0.5);
   display: flex;

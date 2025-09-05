@@ -28,23 +28,21 @@ export const AnnouncementCard = styled.div`
 export const ImageContainer = styled.div`
   flex-shrink: 0;
   position: relative;
-  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
 
-  img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    object-fit: cover;
-  }
-
-  @media (min-width: 768px) {
-    width: 250px;
-    height: 200px;
-  }
+  width: 250px;
+  height: 200px;
 
   @media (max-width: 768px) {
     width: 100%;
+    aspect-ratio: 4 / 3;
     height: auto;
+  }
+
+  img {
+    border-radius: 8px;
+    object-fit: cover;
   }
 `;
 

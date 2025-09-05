@@ -15,6 +15,7 @@ import { Box, CircularProgress } from "@mui/material";
 import {
   COLOR_RED_BUTTON,
   COLOR_TEXT_LIGHT,
+  COLOR_WHITE,
 } from "@/constants/colors";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -49,6 +50,20 @@ const IconButtonWrapper = styled.div`
   display: flex;
   gap: 12px;
   z-index: 2;
+`;
+
+const PromotedBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: ${COLOR_RED_BUTTON};
+  color: ${COLOR_WHITE};
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 2;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 `;
 
 const StyledFavoriteIcon = styled(FavoriteIcon)`
@@ -167,6 +182,7 @@ const AnnouncementListItem = ({
       onClick={onSelect}
       style={{ position: "relative", cursor: onSelect ? "pointer" : "default" }}
     >
+      {item.isPromoted && <PromotedBadge>Promovat</PromotedBadge>}
       <IconButtonWrapper>
         {user?.id !== item.user?.id ? (
           isFavorized ? (
@@ -190,8 +206,13 @@ const AnnouncementListItem = ({
         <Image
           src={item.imageUrl || DEFAULT_IMAGE_URL}
           alt={item.imageUrl || "EProprietar"}
-          width={IMAGE_WIDTH}
-          height={IMAGE_HEIGHT}
+          fill
+          style={{
+            objectFit: "cover",
+            borderRadius: "8px",
+          }}
+          sizes="(max-width: 768px) 100vw, 250px"
+          priority={false}
         />
       </ImageContainer>
 
@@ -202,16 +223,18 @@ const AnnouncementListItem = ({
             {item.rooms && <span>{formatRooms(item.rooms)}&nbsp;</span>}
             {item.surface}
             <span>mp</span>
+            <br />
+            <br />
+            {item.price} <span>Euro</span>
           </Subtitle>
 
           <Price>
-            {item.price} EUR
-            <br />
             <PriceMP>
-              {calculatePricePerSquareMeter(item.price, item.surface)}{" "}
-              {Currency.EUR}/{Unit.SQUARE_METER}
+              {calculatePricePerSquareMeter(item.price, item.surface)} {Currency.EUR}/{Unit.SQUARE_METER}
             </PriceMP>
           </Price>
+
+
         </FlexRowToColumn>
 
         <Description>{item.description}</Description>

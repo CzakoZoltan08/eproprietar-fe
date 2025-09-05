@@ -1,3 +1,4 @@
+import { auth, initAuthPersistence } from "@/config/firebase";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { makeAutoObservable, runInAction } from "mobx";
 
@@ -7,12 +8,12 @@ import autoBind from "auto-bind";
 
 export class UserStore {
   userApi: UserApi;
-  user: UserModel | null;
+  user: UserModel | null | undefined = undefined; // ✅ initially undefined (loading)
   users: UserModel[] = [];
 
   constructor(userApi: UserApi) {
     this.userApi = userApi;
-    this.user = null;
+    // this.user = null; ❌ Do NOT overwrite undefined (used for loading state)
     this.users = [];
 
     makeAutoObservable(this);
@@ -20,24 +21,35 @@ export class UserStore {
   }
 
   getCurrentUser(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const auth = getAuth();
-  
-      onAuthStateChanged(auth, async (user: any) => {
-        if (user) {
-          try {
-            const userByEmail = await this.userApi.getUserByEmail(user.email);
+    return new Promise(async (resolve, reject) => {
+      try {
+        await initAuthPersistence(); // ✅ set local persistence before checking auth
+
+        onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            try {
+              const userByEmail = await this.userApi.getUserByEmail(firebaseUser.email || "");
+              runInAction(() => {
+                this.user = userByEmail;
+              });
+              resolve();
+            } catch (error) {
+              runInAction(() => {
+                this.user = null;
+              });
+              reject(error);
+            }
+          } else {
             runInAction(() => {
-              this.user = userByEmail;
+              this.user = null;
             });
             resolve();
-          } catch (error) {
-            reject(error);
           }
-        } else {
-          resolve(); // Resolve even if no user is authenticated
-        }
-      }, reject); // Reject if onAuthStateChanged encounters an error
+        }, reject);
+      } catch (err) {
+        console.error("Failed to initialize Firebase persistence", err);
+        reject(err);
+      }
     });
   }
 
@@ -48,13 +60,13 @@ export class UserStore {
         this.users = all;
       });
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error("Failed to fetch users:", error);
       runInAction(() => {
         this.users = [];
       });
     }
   }
-  
+
   setCurrentUser(currentUser: UserModel | null) {
     runInAction(() => {
       this.user = currentUser;
@@ -76,7 +88,6 @@ export class UserStore {
       this.user = null;
     });
 
-    // Optional: Sign out from Firebase
     const auth = getAuth();
     await auth.signOut();
   }

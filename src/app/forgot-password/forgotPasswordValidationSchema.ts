@@ -1,8 +1,8 @@
 import Joi from "joi";
 
 const ERROR_MESSAGES = {
-  EMAIL_INVALID: "Invalid email address",
-  EMAIL_REQUIRED: "Email is required"
+  EMAIL_INVALID: "Adresă de email invalidă",
+  EMAIL_REQUIRED: "Emailul este obligatoriu",
 };
 
 const validationSchema = Joi.object({

@@ -5,15 +5,19 @@ export const typeOptions = [
   },
   {
     id: "casa",
-    value: "Cabane/Case la tara",
+    value: "Case/Vile/Duplexuri",
   },
   {
     id: "teren",
     value: "Terenuri",
   },
   {
-    id: "spatii_comerciale",
+    id: "comercial",
     value: "Spații comerciale",
+  },
+  {
+    id: "case_la_tara",
+    value: "Cabane/Case la tara",
   }
 ];
 
@@ -97,24 +101,60 @@ export const comfortLevels = [
     id: "4",
     value: "Lux",
   },
+  {
+    id: "5",
+    value: "Sporit"
+  },
 ];
 
 export const apartmentFloors = [
-  {
-    id: "0",
-    value: "Parter",
-  },
-  {
-    id: "1",
-    value: "Etaj 1",
-  },
-  {
-    id: "2",
-    value: "Etaj 2",
-  },
+  { id: "demisol", value: "Demisol" },
+  { id: "parter", value: "Parter" },
+  { id: "1", value: "1" },
+  { id: "2", value: "2" },
+  { id: "3", value: "3" },
+  { id: "4", value: "4" },
+  { id: "5", value: "5" },
+  { id: "6", value: "6" },
+  { id: "7", value: "7" },
+  { id: "8", value: "8" },
+  { id: "9", value: "9" },
+  { id: "10", value: "10" },
+  { id: "peste10", value: "Peste 10" },
+  { id: "mansarda", value: "Mansardă" },
 ];
 
-export const propertyTypes = ["Apartament", "Casa", "Teren", "Comercial"];
+export const kitchenOptionsMax2 = [
+  { id: "0", value: "0" },
+  { id: "1", value: "1" },
+  { id: "2", value: "2" },
+];
+
+export const balconyCounts = [
+  { id: "1", value: "1" },
+  { id: "2", value: "2" },
+  { id: "3", value: "3" },
+  { id: "4", value: "4" }
+];
+
+export const parkingCounts = [
+  { id: "1", value: "1" },
+  { id: "2", value: "2" },
+  { id: "3", value: "3" },
+];
+
+export const propertyTypes = [
+  { id: "Apartament",   value: "Apartamente" },
+  { id: "Casa",         value: "Case/Vile/Duplexuri" },
+  { id: "Teren",        value: "Terenuri" },
+  { id: "Comercial",    value: "Spații comerciale" },
+  { id: "Case la tara", value: "Cabane/Case la țară" },
+];
+
+export const propertyTypesResidential = [
+  { id: "Apartament", value: "Apartamente" },
+  { id: "Casa",       value: "Case/Vile/Duplexuri" },
+];
 
 export const serviceTypes = ["Vanzare", "Inchiriere"];
 
@@ -122,6 +162,8 @@ export const balconyTypes = [
   "Inchis termopan",
   "Inchis sticla",
   "Deschis",
+  "Logie",
+  "Terasa",
   "Nu are",
 ];
 export const parkingTypes = [

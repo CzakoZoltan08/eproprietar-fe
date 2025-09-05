@@ -2,7 +2,6 @@ import * as breakpoints from "./constants/breakpoints";
 
 import {
   Container,
-  Divider,
   SearchContainer,
   SelectDropdownContainer,
   Subtitle,
@@ -20,9 +19,8 @@ import FloatingCardWrapper from "./common/floatingCard/FloatingCardWrapper";
 import Image from "next/image";
 import { MESSAGES } from "./constants/messages";
 import { PrimaryButton } from "./common/button/PrimaryButton";
-import { ResponsiveLogoContainer } from "./style/ResponsiveLogoContainer";
 import SelectDropdown from "./common/dropdown/SelectDropdown";
-import logo from "./assets/logo-white.svg";
+import bannerEproprietar from "./assets/banner_eproprietar.png";
 import { useMediaQuery } from "react-responsive";
 import { useStore } from "@/hooks/useStore";
 
@@ -33,10 +31,14 @@ function getDropdownValuesNumberRange(start: number, end: number, step: number) 
   }));
 }
 
+const TRANSACTION_TABS = [
+  { id: "vanzare", label: "Vânzare", value: "Vânzare" },
+  { id: "inchiriere", label: "Închiriere", value: "Închiriere" },
+];
+
 export const Main = () => {
   const {
-    announcementStore: { fetchPaginatedAnnouncements },
-    userStore : { getCurrentUser, user }
+    userStore: { getCurrentUser, user },
   } = useStore();
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -64,13 +66,21 @@ export const Main = () => {
   }, [user?.id, getCurrentUser]);
 
   useEffect(() => {
-    setPriceOptions(
-      getDropdownValuesNumberRange(
-        DROPDOWN_RANGES.PRICE.START,
-        DROPDOWN_RANGES.PRICE.END,
-        DROPDOWN_RANGES.PRICE.STEP
-      )
-    );
+    const smallSteps = getDropdownValuesNumberRange(5000, 50000, 5000);      // 5k → 50k
+    const mediumSteps = getDropdownValuesNumberRange(60000, 500000, 10000);  // 60k → 500k
+    const bigSteps = getDropdownValuesNumberRange(600000, 900000, 100000);   // 600k → 900k
+    const millionSteps = Array.from({ length: 10 }, (_, i) => ({
+      id: (i + 1) * 1_000_000,
+      value: (i + 1) * 1_000_000,
+    })); // 1M → 10M
+
+    setPriceOptions([
+      ...smallSteps,
+      ...mediumSteps,
+      ...bigSteps,
+      ...millionSteps
+    ]);
+    
     setMinSurfaceOptions(
       getDropdownValuesNumberRange(
         DROPDOWN_RANGES.SURFACE.START,
@@ -113,7 +123,8 @@ export const Main = () => {
 
     [
       ["page", "1"],
-      ["price", filters.PRICE],
+      ["minPrice", filters.MIN_PRICE],
+      ["maxPrice", filters.MAX_PRICE],
       ["minSurface", filters.MIN_SURFACE],
       ["maxSurface", filters.MAX_SURFACE],
       isCabaneType
@@ -127,8 +138,11 @@ export const Main = () => {
       handleQueryParams(queryParams, key!.toString(), value)
     );
 
-    // 🛑 DO NOT CALL fetchPaginatedAnnouncements HERE
-    // ✅ Just update the URL
+    if (["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE)) {
+      handleQueryParams(queryParams, "minLandSurface", filters.LAND_SURFACE_MIN);
+      handleQueryParams(queryParams, "maxLandSurface", filters.LAND_SURFACE_MAX);
+    }
+
     router.push(`${Endpoints.ANNOUNCEMENTS}?${queryParams.toString()}`);
   };
 
@@ -136,7 +150,49 @@ export const Main = () => {
     return null;
   }
 
-  const citiesAutcompleteWidth = isDesktop ? "" : "100%";
+  const renderTransactionTabs = () => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start", // ← ensures left alignment
+        gap: "16px",
+        marginBottom: "16px",
+        flexWrap: "wrap",
+        fontWeight: 800,
+        fontSize: "0.875rem",
+        fontFamily: '"Roboto", sans-serif',
+        lineHeight: "1.75",
+        width: "100%", // ← makes sure it spans full width of parent
+      }}
+    >
+      {TRANSACTION_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() =>
+            setFilters((prev) => ({
+              ...prev,
+              TRANSACTION_TYPE: tab.value,
+            }))
+          }
+          style={{
+            padding: "10px 20px",
+            borderRadius: "24px",
+            border: "1px solid #ccc",
+            backgroundColor:
+              filters.TRANSACTION_TYPE === tab.value ? "#1976d2" : "#fff",
+            color:
+              filters.TRANSACTION_TYPE === tab.value ? "#fff" : "#333",
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "background-color 0.3s",
+          }}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const renderFilters = () => (
     <div
@@ -145,12 +201,12 @@ export const Main = () => {
         flexDirection: isDesktop ? "row" : "column",
         flexWrap: "nowrap",
         gap: "16px",
-        alignItems: isDesktop ? "center" : "stretch", // center vertically on desktop
+        alignItems: isDesktop ? "center" : "stretch",
         justifyContent: "space-between",
         width: isDesktop ? "100%" : "90%",
       }}
     >
-      {filters.TYPE === "Cabane/Case la tara" ? (
+      {["Cabane/Case la tara", "Terenuri"].includes(filters.TYPE) ? (
         <AutocompleteCounties
           onChange={(event, value) =>
             setFilters({ ...filters, COUNTY: value?.toString() ?? "" })
@@ -167,6 +223,16 @@ export const Main = () => {
           customWidth={isDesktop ? undefined : "100%"}
         />
       )}
+
+      {filters.TYPE === "Terenuri" && (
+          <AutocompleteCities
+          onChange={(event, value) =>
+            setFilters({ ...filters, CITY: value?.toString() ?? "" })
+          }
+          label={MESSAGES.SEARCH_CITY_LABEL}
+          customWidth={isDesktop ? undefined : "100%"}
+        />
+        )}
 
       <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
         <SelectDropdown
@@ -215,13 +281,50 @@ export const Main = () => {
         sx={{ flex: "1 1 30%" }}
       />
 
+      {["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE) && (
+        <>
+          <SelectDropdown
+            name="minLandSurface"
+            label="Suprafață teren minimă"
+            options={minSurfaceOptions}
+            value={filters.LAND_SURFACE_MIN}
+            handleChange={(event) =>
+              setFilters({ ...filters, LAND_SURFACE_MIN: Number(event.target.value) })
+            }
+            sx={{ flex: "1 1 30%" }}
+          />
+
+          <SelectDropdown
+            name="maxLandSurface"
+            label="Suprafață teren maximă"
+            options={maxSurfaceOptions}
+            value={filters.LAND_SURFACE_MAX}
+            handleChange={(event) =>
+              setFilters({ ...filters, LAND_SURFACE_MAX: Number(event.target.value) })
+            }
+            sx={{ flex: "1 1 30%" }}
+          />
+        </>
+      )}
+
       <SelectDropdown
-        name="price"
-        label={MESSAGES.SEARCH_PRICE_LABEL}
+        name="minPrice"
+        label="Preț minim"
         options={priceOptions}
-        value={filters.PRICE}
+        value={filters.MIN_PRICE}
         handleChange={(event) =>
-          setFilters({ ...filters, PRICE: Number(event.target.value) })
+          setFilters({ ...filters, MIN_PRICE: Number(event.target.value) })
+        }
+        sx={{ flex: "1 1 30%" }}
+      />
+
+      <SelectDropdown
+        name="maxPrice"
+        label="Preț maxim"
+        options={priceOptions}
+        value={filters.MAX_PRICE}
+        handleChange={(event) =>
+          setFilters({ ...filters, MAX_PRICE: Number(event.target.value) })
         }
         sx={{ flex: "1 1 30%" }}
       />
@@ -231,7 +334,7 @@ export const Main = () => {
         text="Caută"
         onClick={onSearch}
         fullWidth={!isDesktop}
-        size="large" // ensures 56px height
+        size="large"
         sx={{
           flex: "1 1 30%",
         }}
@@ -241,27 +344,80 @@ export const Main = () => {
 
   return (
     <Container>
-      <ResponsiveLogoContainer isDesktop={isDesktop}>
-        <Image src={logo} alt="eproprietar" fill style={{ objectFit: "contain" }} />
-      </ResponsiveLogoContainer>
-      <Subtitle>Tu ce cauți azi?</Subtitle>
-
       {isDesktop ? (
-        <SearchContainer
-          style={{
-            width: "80%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
-          {renderFilters()}
-        </SearchContainer>
+        <>
+          <SearchContainer
+            style={{
+              width: "80%",
+              margin: "0 auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            {renderTransactionTabs()}
+            {renderFilters()}
+          </SearchContainer>
+
+          <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
+
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              marginTop: isDesktop ? "24px" : "16px",
+              marginBottom: isDesktop ? "24px" : "32px",
+            }}
+          >
+            <Image
+              src={bannerEproprietar}
+              alt="Beneficii eproprietar"
+              // Helps with LCP (it’s above the fold)
+              priority
+              placeholder="blur" // works with static imports
+              // Let the image keep its intrinsic ratio and scale to container
+              style={{
+                width: isDesktop ? "60%" : "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: isDesktop ? "12px" : "0",
+              }}
+              // Tell the browser how wide the image appears at different viewports
+              sizes={isDesktop ? "60vw" : "100vw"}
+            />
+          </div>
+        </>
       ) : (
-        <FloatingCardWrapper>
-          <div style={{ padding: "16px", width: "100%" }}>{renderFilters()}</div>
-        </FloatingCardWrapper>
+        <>
+          <FloatingCardWrapper>
+            <div style={{ padding: "16px", width: "100%" }}>
+              {renderTransactionTabs()}
+              {renderFilters()}
+            </div>
+          </FloatingCardWrapper>
+
+          <Subtitle>Direct.Proprietar.Fara comision</Subtitle>
+
+          <div
+            style={{
+              width: "100%",
+              marginTop: "16px",
+              marginBottom: "32px",
+            }}
+          >
+            <Image
+              src={bannerEproprietar}
+              alt="Beneficii eproprietar"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "0", // dacă vrei fără colțuri rotunjite
+              }}
+            />
+          </div>
+        </>
       )}
     </Container>
   );
