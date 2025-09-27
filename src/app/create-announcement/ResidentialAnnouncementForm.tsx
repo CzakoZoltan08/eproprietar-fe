@@ -70,6 +70,13 @@ const Styled = {
   `,
 };
 
+const TEXTAREA_AUTOSIZE_SX = {
+  '& .MuiInputBase-inputMultiline': {
+    resize: 'vertical',   // permite drag pe verticală
+    overflow: 'auto',     // scrollbar când depășește maxRows
+  },
+};
+
 const INITIAL_DATA = {
   providerType: "ensemble",
   announcementType: "",
@@ -576,7 +583,9 @@ const ResidentialAnnouncementForm = () => {
               helperText={formErrors.description}
               fullWidth
               multiline
-              rows={4}
+              minRows={4}      // pornește de la 4 rânduri
+              maxRows={20}     // se mărește automat până la 20
+              sx={TEXTAREA_AUTOSIZE_SX}
             />
 
             <Typography variant="h6" mt={2}>
@@ -635,8 +644,11 @@ const ResidentialAnnouncementForm = () => {
               onChange={handleInputChange}
               fullWidth
               multiline
-              rows={3}
+              minRows={3}
+              maxRows={12}
+              sx={TEXTAREA_AUTOSIZE_SX}
             />
+
 
             <TextField
               label="Site dezvoltator"
@@ -657,7 +669,9 @@ const ResidentialAnnouncementForm = () => {
                 helperText={formErrors.apartmentTypeOther}
                 fullWidth
                 multiline
-                rows={4}
+                minRows={4}
+                maxRows={16}
+                sx={TEXTAREA_AUTOSIZE_SX}
               />
             )}
 

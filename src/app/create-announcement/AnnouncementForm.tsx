@@ -1115,12 +1115,22 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 value={formData.description}
                 onChange={handleInputChange}
                 multiline
-                rows={4}
+                minRows={4}          // pornește de la 4 rânduri
+                maxRows={20}         // se mărește automat până la 20
                 fullWidth
                 required
                 error={isSubmitted && !formData.description}
                 helperText={isSubmitted && !formData.description ? 'Acest câmp este obligatoriu' : ''}
+
+                // permite și redimensionarea manuală (drag) pe verticală
+                sx={{
+                  '& .MuiInputBase-inputMultiline': {
+                    resize: 'vertical',
+                    overflow: 'auto',
+                  },
+                }}
               />
+
             </Box>
 
             {/* Phone Number */}
