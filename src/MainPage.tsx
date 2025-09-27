@@ -36,6 +36,10 @@ const TRANSACTION_TABS = [
   { id: "inchiriere", label: "Închiriere", value: "Închiriere" },
 ];
 
+// Extra presets for Terenuri (added before the default list)
+const TERENURI_MAX_SURFACE_PRESETS = [1000, 2000, 3000, 5000, 10000];
+const terenuriExtraOptions = TERENURI_MAX_SURFACE_PRESETS.map(v => ({ id: v, value: v }));
+
 export const Main = () => {
   const {
     userStore: { getCurrentUser, user },
@@ -80,7 +84,7 @@ export const Main = () => {
       ...bigSteps,
       ...millionSteps
     ]);
-    
+
     setMinSurfaceOptions(
       getDropdownValuesNumberRange(
         DROPDOWN_RANGES.SURFACE.START,
@@ -88,6 +92,7 @@ export const Main = () => {
         DROPDOWN_RANGES.SURFACE.STEP
       )
     );
+
     setMaxSurfaceOptions(
       getDropdownValuesNumberRange(
         DROPDOWN_RANGES.SURFACE.START,
@@ -155,7 +160,7 @@ export const Main = () => {
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "flex-start", // ← ensures left alignment
+        justifyContent: "flex-start", // ← keeps left alignment
         gap: "16px",
         marginBottom: "16px",
         flexWrap: "wrap",
@@ -163,7 +168,7 @@ export const Main = () => {
         fontSize: "0.875rem",
         fontFamily: '"Roboto", sans-serif',
         lineHeight: "1.75",
-        width: "100%", // ← makes sure it spans full width of parent
+        width: "100%",
       }}
     >
       {TRANSACTION_TABS.map((tab) => (
@@ -194,153 +199,160 @@ export const Main = () => {
     </div>
   );
 
-  const renderFilters = () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: isDesktop ? "row" : "column",
-        flexWrap: "nowrap",
-        gap: "16px",
-        alignItems: isDesktop ? "center" : "stretch",
-        justifyContent: "space-between",
-        width: isDesktop ? "100%" : "90%",
-      }}
-    >
-      {["Cabane/Case la tara", "Terenuri"].includes(filters.TYPE) ? (
-        <AutocompleteCounties
-          onChange={(event, value) =>
-            setFilters({ ...filters, COUNTY: value?.toString() ?? "" })
-          }
-          label={MESSAGES.SEARCH_COUNTY_LABEL}
-          customWidth={isDesktop ? undefined : "100%"}
-        />
-      ) : (
-        <AutocompleteCities
-          onChange={(event, value) =>
-            setFilters({ ...filters, CITY: value?.toString() ?? "" })
-          }
-          label={MESSAGES.SEARCH_CITY_LABEL}
-          customWidth={isDesktop ? undefined : "100%"}
-        />
-      )}
+  const renderFilters = () => {
+    const maxSurfaceMerged =
+      filters.TYPE === "Terenuri"
+        ? [...maxSurfaceOptions, ...terenuriExtraOptions]
+        : maxSurfaceOptions;
 
-      {filters.TYPE === "Terenuri" && (
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: isDesktop ? "row" : "column",
+          flexWrap: "nowrap",
+          gap: "16px",
+          alignItems: isDesktop ? "center" : "stretch",
+          justifyContent: "space-between",
+          width: isDesktop ? "100%" : "90%",
+        }}
+      >
+        {["Cabane/Case la tara", "Terenuri"].includes(filters.TYPE) ? (
+          <AutocompleteCounties
+            onChange={(event, value) =>
+              setFilters({ ...filters, COUNTY: value?.toString() ?? "" })
+            }
+            label={MESSAGES.SEARCH_COUNTY_LABEL}
+            customWidth={isDesktop ? undefined : "100%"}
+          />
+        ) : (
           <AutocompleteCities
-          onChange={(event, value) =>
-            setFilters({ ...filters, CITY: value?.toString() ?? "" })
-          }
-          label={MESSAGES.SEARCH_CITY_LABEL}
-          customWidth={isDesktop ? undefined : "100%"}
-        />
+            onChange={(event, value) =>
+              setFilters({ ...filters, CITY: value?.toString() ?? "" })
+            }
+            label={MESSAGES.SEARCH_CITY_LABEL}
+            customWidth={isDesktop ? undefined : "100%"}
+          />
         )}
 
-      <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
-        <SelectDropdown
-          name="type"
-          label={MESSAGES.SEARCH_TYPE_LABEL}
-          options={typeOptions}
-          value={filters.TYPE}
-          handleChange={(event) =>
-            setFilters({ ...filters, TYPE: event.target.value.toString() })
-          }
-        />
-      </SelectDropdownContainer>
+        {filters.TYPE === "Terenuri" && (
+          <AutocompleteCities
+            onChange={(event, value) =>
+              setFilters({ ...filters, CITY: value?.toString() ?? "" })
+            }
+            label={MESSAGES.SEARCH_CITY_LABEL}
+            customWidth={isDesktop ? undefined : "100%"}
+          />
+        )}
 
-      {filters.TYPE === "Apartamente" && (
+        <SelectDropdownContainer $isWide={!isDesktop} style={{ width: "100%" }}>
+          <SelectDropdown
+            name="type"
+            label={MESSAGES.SEARCH_TYPE_LABEL}
+            options={typeOptions}
+            value={filters.TYPE}
+            handleChange={(event) =>
+              setFilters({ ...filters, TYPE: event.target.value.toString() })
+            }
+          />
+        </SelectDropdownContainer>
+
+        {filters.TYPE === "Apartamente" && (
+          <SelectDropdown
+            name="rooms"
+            label={MESSAGES.SEARCH_ROOMS_LABEL}
+            options={roomOptions}
+            value={filters.ROOMS}
+            handleChange={(event) =>
+              setFilters({ ...filters, ROOMS: Number(event.target.value) })
+            }
+            sx={{ flex: "1 1 30%" }}
+          />
+        )}
+
         <SelectDropdown
-          name="rooms"
-          label={MESSAGES.SEARCH_ROOMS_LABEL}
-          options={roomOptions}
-          value={filters.ROOMS}
+          name="minSurface"
+          label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
+          options={minSurfaceOptions}
+          value={filters.MIN_SURFACE}
           handleChange={(event) =>
-            setFilters({ ...filters, ROOMS: Number(event.target.value) })
+            setFilters({ ...filters, MIN_SURFACE: Number(event.target.value) })
           }
           sx={{ flex: "1 1 30%" }}
         />
-      )}
 
-      <SelectDropdown
-        name="minSurface"
-        label={MESSAGES.SEARCH_MIN_SURFACE_LABEL}
-        options={minSurfaceOptions}
-        value={filters.MIN_SURFACE}
-        handleChange={(event) =>
-          setFilters({ ...filters, MIN_SURFACE: Number(event.target.value) })
-        }
-        sx={{ flex: "1 1 30%" }}
-      />
+        <SelectDropdown
+          name="maxSurface"
+          label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
+          options={maxSurfaceMerged}
+          value={filters.MAX_SURFACE}
+          handleChange={(event) =>
+            setFilters({ ...filters, MAX_SURFACE: Number(event.target.value) })
+          }
+          sx={{ flex: "1 1 30%" }}
+        />
 
-      <SelectDropdown
-        name="maxSurface"
-        label={MESSAGES.SEARCH_MAX_SURFACE_LABEL}
-        options={maxSurfaceOptions}
-        value={filters.MAX_SURFACE}
-        handleChange={(event) =>
-          setFilters({ ...filters, MAX_SURFACE: Number(event.target.value) })
-        }
-        sx={{ flex: "1 1 30%" }}
-      />
+        {["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE) && (
+          <>
+            <SelectDropdown
+              name="minLandSurface"
+              label="Suprafață teren minimă"
+              options={minSurfaceOptions}
+              value={filters.LAND_SURFACE_MIN}
+              handleChange={(event) =>
+                setFilters({ ...filters, LAND_SURFACE_MIN: Number(event.target.value) })
+              }
+              sx={{ flex: "1 1 30%" }}
+            />
 
-      {["Case/Vile", "Cabane/Case la tara"].includes(filters.TYPE) && (
-        <>
-          <SelectDropdown
-            name="minLandSurface"
-            label="Suprafață teren minimă"
-            options={minSurfaceOptions}
-            value={filters.LAND_SURFACE_MIN}
-            handleChange={(event) =>
-              setFilters({ ...filters, LAND_SURFACE_MIN: Number(event.target.value) })
-            }
-            sx={{ flex: "1 1 30%" }}
-          />
+            <SelectDropdown
+              name="maxLandSurface"
+              label="Suprafață teren maximă"
+              options={maxSurfaceOptions}
+              value={filters.LAND_SURFACE_MAX}
+              handleChange={(event) =>
+                setFilters({ ...filters, LAND_SURFACE_MAX: Number(event.target.value) })
+              }
+              sx={{ flex: "1 1 30%" }}
+            />
+          </>
+        )}
 
-          <SelectDropdown
-            name="maxLandSurface"
-            label="Suprafață teren maximă"
-            options={maxSurfaceOptions}
-            value={filters.LAND_SURFACE_MAX}
-            handleChange={(event) =>
-              setFilters({ ...filters, LAND_SURFACE_MAX: Number(event.target.value) })
-            }
-            sx={{ flex: "1 1 30%" }}
-          />
-        </>
-      )}
+        <SelectDropdown
+          name="minPrice"
+          label="Preț minim"
+          options={priceOptions}
+          value={filters.MIN_PRICE}
+          handleChange={(event) =>
+            setFilters({ ...filters, MIN_PRICE: Number(event.target.value) })
+          }
+          sx={{ flex: "1 1 30%" }}
+        />
 
-      <SelectDropdown
-        name="minPrice"
-        label="Preț minim"
-        options={priceOptions}
-        value={filters.MIN_PRICE}
-        handleChange={(event) =>
-          setFilters({ ...filters, MIN_PRICE: Number(event.target.value) })
-        }
-        sx={{ flex: "1 1 30%" }}
-      />
+        <SelectDropdown
+          name="maxPrice"
+          label="Preț maxim"
+          options={priceOptions}
+          value={filters.MAX_PRICE}
+          handleChange={(event) =>
+            setFilters({ ...filters, MAX_PRICE: Number(event.target.value) })
+          }
+          sx={{ flex: "1 1 30%" }}
+        />
 
-      <SelectDropdown
-        name="maxPrice"
-        label="Preț maxim"
-        options={priceOptions}
-        value={filters.MAX_PRICE}
-        handleChange={(event) =>
-          setFilters({ ...filters, MAX_PRICE: Number(event.target.value) })
-        }
-        sx={{ flex: "1 1 30%" }}
-      />
-
-      <PrimaryButton
-        icon="search"
-        text="Caută"
-        onClick={onSearch}
-        fullWidth={!isDesktop}
-        size="large"
-        sx={{
-          flex: "1 1 30%",
-        }}
-      />
-    </div>
-  );
+        <PrimaryButton
+          icon="search"
+          text="Caută"
+          onClick={onSearch}
+          fullWidth={!isDesktop}
+          size="large"
+          sx={{
+            flex: "1 1 30%",
+          }}
+        />
+      </div>
+    );
+  };
 
   return (
     <Container>
@@ -376,14 +388,12 @@ export const Main = () => {
               // Helps with LCP (it’s above the fold)
               priority
               placeholder="blur" // works with static imports
-              // Let the image keep its intrinsic ratio and scale to container
               style={{
                 width: isDesktop ? "60%" : "100%",
                 height: "auto",
                 display: "block",
                 borderRadius: isDesktop ? "12px" : "0",
               }}
-              // Tell the browser how wide the image appears at different viewports
               sizes={isDesktop ? "60vw" : "100vw"}
             />
           </div>
@@ -413,7 +423,7 @@ export const Main = () => {
                 width: "100%",
                 height: "auto",
                 display: "block",
-                borderRadius: "0", // dacă vrei fără colțuri rotunjite
+                borderRadius: "0",
               }}
             />
           </div>
