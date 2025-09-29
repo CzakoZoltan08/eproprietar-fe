@@ -29,14 +29,14 @@ const DetailsContainer = styled(Box)<{ $flexdirection: string }>`
   flex-direction: ${(p) => p.$flexdirection};
   justify-content: space-between;
   align-items: stretch;
-  gap: 0px; /* compact spacing */
+  gap: 0px;
   width: 100%;
 `;
 
 const ContactContainer = styled.div`
   flex: 0 0 300px;
   max-width: 300px;
-  margin-left: 8px !important; /* Ensure it doesn't shrink */
+  margin-left: 8px !important;
 
   @media (max-width: 600px) {
     flex: 1 1 100%;
@@ -48,7 +48,7 @@ const ContactContainer = styled.div`
 const ColumnBox = styled(Box)`
   display: flex;
   flex-direction: column;
-  gap: 0px; /* compact vertical spacing */
+  gap: 0px;
 `;
 
 const MediaContainer = styled(Box)<{ $flexdirection: string }>`
@@ -73,8 +73,6 @@ const VideoContainerLegacy = styled(Box)`
   gap: 0px;
   overflow: visible;
 `;
-
-
 
 // 🔹 Custom navigation arrows with better styling
 const ArrowButton = styled.button<{ $left?: boolean }>`
@@ -107,7 +105,7 @@ const ArrowButton = styled.button<{ $left?: boolean }>`
   @media (max-width: 600px) {
     width: 50px;
     height: 50px;
-    
+
     svg {
       width: 30px;
       height: 30px;
@@ -124,11 +122,11 @@ const GalleryContainerImage = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
-    height: auto; /* Allows it to scale dynamically */
+    height: auto;
   }
 
   @media (max-width: 480px) {
-    max-width: 100vw; /* Ensures no horizontal scrolling */
+    max-width: 100vw;
     padding: 0 8px;
     overflow-x: hidden;
   }
@@ -138,7 +136,7 @@ const CustomSliderImage = styled(Slider)`
   position: static;
 
   .slick-slide > div {
-    height: 100%; /* 🛠 Make sure slick slide wrapper fills height */
+    height: 100%;
   }
 
   .slick-dots {
@@ -155,7 +153,7 @@ const CustomSliderImage = styled(Slider)`
   }
 
   .slick-list {
-    overflow: hidden; /* Hides the cloned ones from being visible outside */
+    overflow: hidden;
   }
 
   .slick-dots li button:before {
@@ -172,11 +170,11 @@ const CustomSliderImage = styled(Slider)`
 `;
 
 const CustomSlider = styled(Slider)`
-  position: static; /* Allows for absolute positioning of arrows */
+  position: static;
 
   .slick-dots {
     position: absolute;
-    bottom: 10px; /* Ensures consistent position */
+    bottom: 10px;
     width: 100%;
     display: flex !important;
     justify-content: center;
@@ -184,12 +182,12 @@ const CustomSlider = styled(Slider)`
   }
 
   .slick-dots li {
-    margin: 0 5px; /* Adds spacing between dots */
+    margin: 0 5px;
   }
 
   .slick-dots li button:before {
-    font-size: 12px; /* Adjust dot size */
-    color: white; /* Change color if needed */
+    font-size: 12px;
+    color: white;
     opacity: 0.75;
     transition: opacity 0.3s ease-in-out;
   }
@@ -230,9 +228,9 @@ const ImageContainer = styled.div`
 const Image = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: contain;  // ✅ Ensures full image is visible, adds letterboxing if needed
+  object-fit: contain;
   display: block;
-  background-color: white; // Optional: helps make letterbox areas visually clean
+  background-color: white;
 `;
 
 interface Image {
@@ -268,7 +266,7 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    arrows: !useMediaQuery(SIZES_NUMBER_TINY_SMALL), // Hide arrows on mobile
+    arrows: !useMediaQuery(SIZES_NUMBER_TINY_SMALL),
     swipe: true,
     nextArrow: <NextArrow onClick={undefined} />,
     prevArrow: <PrevArrow onClick={undefined} />,
@@ -296,10 +294,7 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
       >
         <Box height="100%" width="100%" display="flex" alignItems="center" justifyContent="center">
           <Box width="100%" maxWidth="800px">
-            <CustomSliderImage
-              {...settings}
-              initialSlide={selectedIndex ?? 0}
-            >
+            <CustomSliderImage {...settings} initialSlide={selectedIndex ?? 0}>
               {images.map((image, index) => (
                 <ImageContainer key={index}>
                   <Image src={image.original} alt={`Image ${index}`} />
@@ -309,7 +304,6 @@ const ImageGallery: React.FC<{ images: Image[] }> = ({ images }) => {
           </Box>
         </Box>
       </Dialog>
-
     </>
   );
 };
@@ -327,13 +321,13 @@ const VideoWrapper = styled.div`
   max-width: 800px;
   border-radius: 8px;
   overflow: hidden;
-  background: black; /* Added background to prevent transparency issues */
+  background: black;
 `;
 
 const Video = styled.video`
   width: 100%;
   border-radius: 8px;
-  display: block; /* Prevent unwanted space under video */
+  display: block;
 `;
 
 const ControlsContainer = styled.div`
@@ -385,11 +379,10 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
   const [duration, setDuration] = useState<number[]>(Array(videos.length).fill(0));
   const [currentTime, setCurrentTime] = useState<number[]>(Array(videos.length).fill(0));
   const [isPlaying, setIsPlaying] = useState<boolean[]>(Array(videos.length).fill(false));
-  const [mediaReady, setMediaReady] = useState(false);
 
   useEffect(() => {
     videoRefs.current = videoRefs.current.slice(0, videos.length);
-  }, [videos.length]); 
+  }, [videos.length]);
 
   const getVideoRef = (index: number) => (el: HTMLVideoElement | null) => {
     if (el && !videoRefs.current[index]) {
@@ -450,7 +443,7 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
     const video = videoRefs.current[index];
     if (video) {
       if (video.paused) {
-        video.play().catch((error) => console.error("Play error:", error)); // ✅ Catch autoplay errors
+        video.play().catch((error) => console.error("Play error:", error));
       } else {
         video.pause();
       }
@@ -490,8 +483,9 @@ const VideoGallery: React.FC<{ videos: VideoItem[] }> = ({ videos }) => {
             <VideoWrapper>
               <Video
                 ref={getVideoRef(index)}
-                muted // 🔥 Helps with autoplay during testing
+                muted
                 controls={false}
+                playsInline
                 onTimeUpdate={() => handleTimeUpdate(index)}
                 onLoadedMetadata={() => handleLoadedMetadata(index)}
               >
@@ -561,21 +555,16 @@ const Value = styled.span`
 const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }) => {
   if (!announcement) return null;
 
-  // Pull values safely
   const {
-    // Land
     landType,
     landPlacement,
     urbanismDocuments,
     utilities,
-    // House (Casa / Case la tara)
     streetFront,
     streetFrontLength,
     heightRegime,
-    // Apartment
     balconyCount,
     parkingCount,
-    // Commercial
     commercialSpaceType,
     usableSurface,
     builtSurface,
@@ -587,11 +576,8 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
     vehicleAccess,
   } = announcement ?? {};
 
-  // Transform helpers
-  const toYesNo = (v: boolean | null | undefined) =>
-    v === true ? "Da" : v === false ? "Nu" : undefined;
-
-  const joinArr = (arr?: string[]) => Array.isArray(arr) && arr.length ? arr.join(", ") : undefined;
+  const toYesNo = (v: boolean | null | undefined) => (v === true ? "Da" : v === false ? "Nu" : undefined);
+  const joinArr = (arr?: string[]) => (Array.isArray(arr) && arr.length ? arr.join(", ") : undefined);
 
   const utilRows: (string | undefined)[][] = [
     ["Curent", toYesNo(utilities?.curent)],
@@ -600,7 +586,6 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
     ["Gaz", toYesNo(utilities?.gaz)],
   ].filter(([, v]) => v !== undefined);
 
-  // Decide if we have anything to show
   const hasAnything =
     !!landType ||
     !!landPlacement ||
@@ -629,7 +614,6 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
         Detalii suplimentare
       </Typography>
 
-      {/* --- LAND (Teren) --- */}
       {landType && (
         <Row>
           <Label>Tip teren</Label>
@@ -659,7 +643,6 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
         </>
       )}
 
-      {/* --- HOUSE (Casa / Case la tara) --- */}
       {typeof streetFront === "boolean" && (
         <Row>
           <Label>Front la stradă</Label>
@@ -679,7 +662,6 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
         </Row>
       )}
 
-      {/* --- APARTMENT --- */}
       {typeof balconyCount === "number" && balconyCount > 0 && (
         <Row>
           <Label>Număr balcoane</Label>
@@ -693,7 +675,6 @@ const AdditionalDetailsCard: React.FC<{ announcement: any }> = ({ announcement }
         </Row>
       )}
 
-      {/* --- COMMERCIAL (Comercial) --- */}
       {commercialSpaceType && (
         <Row>
           <Label>Tip spațiu</Label>
@@ -761,17 +742,17 @@ const AnnouncementDetailPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
 
-  // Single effect to load everything in sequence
+  // 👉 Ref pentru a putea găsi primul <video> din galerie și a-l porni
+  const galleryRootRef = useRef<HTMLDivElement | null>(null);
+
+  // Load data
   useEffect(() => {
     if (!id) return;
 
     (async () => {
       setLoading(true);
       try {
-        // 1) load the announcement by the route-param ID
         await getAnnouncementById(id);
-
-        // 2) now load media for that same ID (we know it must exist)
         await fetchAnnouncementImages(id);
       } catch (err) {
         console.error("Error loading announcement or images:", err);
@@ -780,6 +761,34 @@ const AnnouncementDetailPage: React.FC = () => {
       }
     })();
   }, [id, getAnnouncementById, fetchAnnouncementImages]);
+
+  // ✅ Autoplay pe primul video după ce media e disponibilă și s-a randat
+  useEffect(() => {
+    if (loading) return;
+
+    // mic delay ca să ne asigurăm că DOM-ul e gata
+    const t = setTimeout(() => {
+      const root = galleryRootRef.current ?? document;
+      const firstVideo = root.querySelector("video") as HTMLVideoElement | null;
+      if (firstVideo) {
+        try {
+          firstVideo.muted = true;        // necesar pentru autoplay pe mobile/desktop
+          // @ts-ignore
+          firstVideo.playsInline = true;  // iOS Safari
+          firstVideo.setAttribute("playsinline", "true");
+          firstVideo.autoplay = true;
+          firstVideo.play().catch((e) => {
+            // dacă browserul blochează autoplay, nu stricăm UX-ul
+            console.warn("Autoplay blocked:", e);
+          });
+        } catch (e) {
+          console.warn("Could not start autoplay:", e);
+        }
+      }
+    }, 50);
+
+    return () => clearTimeout(t);
+  }, [loading]);
 
   if (loading) {
     return (
@@ -793,16 +802,17 @@ const AnnouncementDetailPage: React.FC = () => {
   const videos = currentAnnouncement?.videos ?? [];
   const sketchUrl = currentAnnouncement?.sketchUrl;
 
+  // 🔥 VIDEOURILE PRIMELE
   const media: MediaItem[] = [
-    ...images.map((img) => ({ type: "image" as const, src: img.original })),
     ...videos.map((vid) => ({ type: "video" as const, src: vid.original, format: vid.format })),
+    ...images.map((img) => ({ type: "image" as const, src: img.original })),
     ...(sketchUrl ? [{ type: "floorplan" as const, src: sketchUrl }] : []),
   ];
 
   const renderDetails = () => (
     <DetailsContainer $flexdirection={isMobile ? "column" : "row"}>
       <Box flex={1} display="flex" flexDirection="column" gap={1}>
-        <GalleryAlignmentWrapper>
+        <GalleryAlignmentWrapper ref={galleryRootRef}>
           {media.length > 0 ? (
             <UnifiedMediaGallery media={media} />
           ) : (
@@ -819,11 +829,9 @@ const AnnouncementDetailPage: React.FC = () => {
 
       {/* Right-side content (fixed width) */}
       <ContactContainer>
-          <ContactCardComponent />
-          {currentAnnouncement?.createdAt && (
-            <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />
-          )}
-          <ShareButtonsCard />
+        <ContactCardComponent />
+        {currentAnnouncement?.createdAt && <HistoryStatsCard createdAt={currentAnnouncement.createdAt} />}
+        <ShareButtonsCard />
       </ContactContainer>
     </DetailsContainer>
   );
