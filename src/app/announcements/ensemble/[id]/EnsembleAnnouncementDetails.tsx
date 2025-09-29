@@ -127,14 +127,6 @@ const EnsembleAnnouncementDetailsPage = () => {
                 a.stage && { label: "Stadiu", value: a.stage },
                 a.constructionStart && { label: "Începerea construcției", value: formatMonthYear(a.constructionStart) },
                 a.endDate && { label: "Finalizare", value: formatMonthYear(a.endDate) },
-                a.developerSite && {
-                  label: "Site dezvoltator",
-                  value: (
-                    <Link href={a.developerSite} target="_blank" rel="noopener noreferrer" underline="hover">
-                      {a.developerSite}
-                    </Link>
-                  ),
-                },
                 a.frameType && { label: "Tip chenar (prezentare)", value: a.frameType },
               ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 

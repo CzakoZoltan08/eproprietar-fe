@@ -1,380 +1,393 @@
 "use client";
 
-import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { Box, Typography } from "@mui/material";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 
-import UploadInfoBox from "@/app/create-announcement/UploadInfoBox";
 import styled from "styled-components";
+
+/* -------------------- Limits & Types -------------------- */
+const MAX_IMAGES = 20;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/webp"];
 
 const MAX_VIDEOS = 3;
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-const MAX_IMAGES = 20;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_VIDEO_MIME = ["video/mp4", "video/webm", "video/quicktime"]; // mp4, webm, mov
 
-type MediaUploaderProps = {
-  logo?: File | null;
-  setLogo?: (file: File | null) => void;
+const MAX_LOGO_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_LOGO_MIME = ALLOWED_IMAGE_MIME;
+
+type Props = {
+  logo: File | null;
+  setLogo: (file: File | null) => void;
+
   images: File[];
   setImages: (files: File[]) => void;
+
   videos: File[];
   setVideos: (files: File[]) => void;
-  error?: string;
-  setError: (msg: string) => void;
+
+  error?: string | null;
+  setError?: (msg: string | null) => void;
+
+  /** When false, hide internal thumbnails; still render counters + dropzones */
+  showPreview?: boolean; // default true
+
+  /** Custom UI to render immediately after the images dropzone (e.g., sortable previews) */
+  imagesSlot?: React.ReactNode;
+
+  /** Custom UI to render immediately after the videos dropzone */
+  videosSlot?: React.ReactNode;
 };
 
-const DropArea = styled.div<{ $isDragging: boolean }>`
-  border: 2px dashed ${({ $isDragging }) => ($isDragging ? "#007BFF" : "#ccc")};
-  background-color: ${({ $isDragging }) => ($isDragging ? "#f0f8ff" : "transparent")};
+/* -------------------- Styled -------------------- */
+const Section = styled.div`
+  width: 100%;
+  margin-top: 8px;
+`;
+
+const InfoRow = styled.div`
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+`;
+
+const DropArea = styled.div<{ $drag?: boolean; $error?: boolean }>`
+  border: 2px dashed ${({ $error }) => ($error ? "#f44336" : "#c7c7c7")};
+  background-color: ${({ $drag }) => ($drag ? "#f0f8ff" : "transparent")};
   padding: 16px;
   text-align: center;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s, border-color 0.3s;
-
-  @media (max-width: 360px) {
-    padding: 12px;
-  }
+  transition: background-color 0.2s, border-color 0.2s;
 `;
 
-/* IMAGES: grid ~120px min cell, square aspect; responsive down to 100px */
-const ImagesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+const PreviewGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 16px;
-
-  @media (max-width: 600px) {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  }
+  margin-top: 10px;
 `;
 
-/* VIDEOS: grid ~180px min cell, 16:9 aspect; responsive down to 140px */
-const VideosGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-
-  @media (max-width: 600px) {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  }
-`;
-
-const PreviewImage = styled.img`
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  height: auto;
+const Thumb = styled.img`
+  width: 120px;
+  height: 90px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
-
-  &:hover {
-    opacity: 0.7;
-  }
 `;
 
-const PreviewVideo = styled.video`
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
+const ThumbVideo = styled.video`
+  width: 180px;
+  height: 120px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #ccc;
   cursor: pointer;
-
-  &:hover {
-    opacity: 0.7;
-  }
 `;
 
-const ThumbnailWrapper = styled.div`
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-`;
-
-const ThumbnailBox = styled.div`
-  width: 100%;
-  max-width: 220px; /* puțin mai mare pentru consistență vizuală */
-  aspect-ratio: 1;
-  border: 2px dashed #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  overflow: hidden;
+const LogoThumb = styled.img`
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
   cursor: pointer;
-  background-color: #fafafa;
-  transition: border-color 0.3s;
-
-  &:hover {
-    border-color: #007bff;
-  }
-
-  @media (max-width: 360px) {
-    max-width: 160px;
-    border-radius: 10px;
-  }
 `;
 
-const ThumbnailPreviewImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const MediaUploader: React.FC<MediaUploaderProps> = ({
+/* -------------------- Component -------------------- */
+const MediaUploader: React.FC<Props> = ({
   logo,
   setLogo,
-  images = [],
+  images,
   setImages,
-  videos = [],
+  videos,
   setVideos,
   error,
   setError,
+  showPreview = true,
+  imagesSlot,
+  videosSlot,
 }) => {
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const [dragImg, setDragImg] = useState(false);
+  const [dragVid, setDragVid] = useState(false);
+  const [dragLogo, setDragLogo] = useState(false);
 
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
-  const [isDraggingImages, setIsDraggingImages] = useState(false);
-  const [isDraggingVideos, setIsDraggingVideos] = useState(false);
-
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const vidInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const urls = images.map((file) => URL.createObjectURL(file));
-    setImagePreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [images]);
+  const pushError = useCallback(
+    (msg: string | null) => {
+      if (setError) setError(msg);
+      if (msg) console.warn("[MediaUploader]", msg);
+    },
+    [setError]
+  );
 
-  useEffect(() => {
-    const urls = videos.map((file) => URL.createObjectURL(file));
-    setVideoPreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [videos]);
-
-  useEffect(() => {
-    if (logo) {
-      const url = URL.createObjectURL(logo);
-      setLogoPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setLogoPreview(null);
-  }, [logo]);
-
+  /* ----------- Validation helpers ----------- */
   const validateImages = (files: FileList | File[]) => {
-    return Array.from(files).filter((file) => {
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setError("Doar imagini JPEG, PNG sau WebP sunt permise.");
-        return false;
+    const arr = Array.from(files);
+    const leftSlots = Math.max(0, MAX_IMAGES - images.length);
+    const sliced = arr.slice(0, leftSlots);
+
+    const valid: File[] = [];
+    for (const f of sliced) {
+      if (!ALLOWED_IMAGE_MIME.includes(f.type)) {
+        pushError("Sunt permise doar imagini JPG, PNG sau WEBP.");
+        continue;
       }
-      if (file.size > MAX_IMAGE_SIZE) {
-        setError(`Imaginea ${file.name} depășește limita de 5MB.`);
-        return false;
+      if (f.size > MAX_IMAGE_SIZE) {
+        pushError(`Imaginea ${f.name} depășește 5MB.`);
+        continue;
       }
-      return true;
-    });
+      valid.push(f);
+    }
+    return valid;
   };
 
   const validateVideos = (files: FileList | File[]) => {
-    return Array.from(files).filter((file) => {
-      if (!file.type.startsWith("video/")) {
-        setError("Sunt permise doar fișiere video.");
-        return false;
+    const arr = Array.from(files);
+    const leftSlots = Math.max(0, MAX_VIDEOS - videos.length);
+    const sliced = arr.slice(0, leftSlots);
+
+    const valid: File[] = [];
+    for (const f of sliced) {
+      if (!ALLOWED_VIDEO_MIME.includes(f.type)) {
+        pushError("Sunt permise doar videoclipuri MP4, WEBM sau MOV.");
+        continue;
       }
-      if (file.size > MAX_VIDEO_SIZE) {
-        setError(`Videoclipul ${file.name} depășește limita de 100MB.`);
-        return false;
+      if (f.size > MAX_VIDEO_SIZE) {
+        pushError(`Fișierul video ${f.name} depășește 100MB.`);
+        continue;
       }
-      return true;
-    });
+      valid.push(f);
+    }
+    return valid;
   };
 
-  const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !setLogo) return;
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      if (img.width > 1920 || img.height > 1080) {
-        setError("Rezoluția logo-ului nu poate depăși 1920x1080.");
-        return;
-      }
-      setLogo(file);
-      setError("");
-    };
+  const validateLogo = (file: File) => {
+    if (!ALLOWED_LOGO_MIME.includes(file.type)) {
+      pushError("Logo-ul trebuie să fie imagine (JPG, PNG, WEBP).");
+      return null;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      pushError("Logo-ul depășește 5MB.");
+      return null;
+    }
+    return file;
   };
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  /* ----------- Image handlers ----------- */
+  const onImgClick = () => imgInputRef.current?.click();
+  const onImgChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = e.target.files;
     if (!files) return;
     const valid = validateImages(files);
-    if (images.length + valid.length > MAX_IMAGES) {
-      setError(`Poți încărca maxim ${MAX_IMAGES} imagini.`);
-      return;
-    }
-    setImages([...images, ...valid]);
-    setError("");
-
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
-    }
+    if (valid.length) setImages([...images, ...valid]);
+    e.currentTarget.value = "";
+  };
+  const onImgDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
+    e.preventDefault();
+    setDragImg(false);
+    const valid = validateImages(e.dataTransfer.files);
+    if (valid.length) setImages([...images, ...valid]);
   };
 
-  const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  /* ----------- Video handlers ----------- */
+  const onVidClick = () => vidInputRef.current?.click();
+  const onVidChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = e.target.files;
     if (!files) return;
     const valid = validateVideos(files);
-    if (videos.length + valid.length > MAX_VIDEOS) {
-      setError(`Poți încărca maxim ${MAX_VIDEOS} videoclipuri.`);
-      return;
-    }
-    setVideos([...videos, ...valid]);
-    setError("");
-
-    if (videoInputRef.current) {
-      videoInputRef.current.value = "";
-    }
+    if (valid.length) setVideos([...videos, ...valid]);
+    e.currentTarget.value = "";
   };
-
-  const removeImage = (index: number) => {
-    const updated = images.filter((_, i) => i !== index);
-    setImages(updated);
-  };
-
-  const removeVideo = (index: number) => {
-    const updated = videos.filter((_, i) => i !== index);
-    setVideos(updated);
-  };
-
-  const handleImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const onVidDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    setIsDraggingImages(false);
-    const valid = validateImages(e.dataTransfer.files);
-    if (images.length + valid.length > MAX_IMAGES) {
-      setError(`Maxim ${MAX_IMAGES} imagini permise.`);
-      return;
-    }
-    setImages([...images, ...valid]);
-    setError("");
-  };
-
-  const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingVideos(false);
+    setDragVid(false);
     const valid = validateVideos(e.dataTransfer.files);
-    if (videos.length + valid.length > MAX_VIDEOS) {
-      setError(`Maxim ${MAX_VIDEOS} videoclipuri permise.`);
-      return;
-    }
-    setVideos([...videos, ...valid]);
-    setError("");
+    if (valid.length) setVideos([...videos, ...valid]);
   };
+
+  /* ----------- Logo handlers ----------- */
+  const onLogoClick = () => logoInputRef.current?.click();
+  const onLogoChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const valid = validateLogo(file);
+    if (valid) setLogo(valid);
+    e.currentTarget.value = "";
+  };
+  const onLogoDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
+    e.preventDefault();
+    setDragLogo(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const valid = validateLogo(file);
+    if (valid) setLogo(valid);
+  };
+
+  /* ----------- Object URLs for previews ----------- */
+  const imgURLs = useMemo(() => images.map((f) => URL.createObjectURL(f)), [images]);
+  const vidURLs = useMemo(() => videos.map((f) => URL.createObjectURL(f)), [videos]);
+  const logoURL = useMemo(() => (logo ? URL.createObjectURL(logo) : ""), [logo]);
+
+  React.useEffect(() => {
+    return () => {
+      imgURLs.forEach((u) => URL.revokeObjectURL(u));
+      vidURLs.forEach((u) => URL.revokeObjectURL(u));
+      if (logoURL) URL.revokeObjectURL(logoURL);
+    };
+  }, [imgURLs, vidURLs, logoURL]);
 
   return (
-    <Box width="100%" maxWidth={isXs ? "100%" : 600} mx="auto" mt={4} px={isXs ? 1 : 0}>
-      {/* Logo */}
-      <ThumbnailWrapper>
-        <Typography variant="h6">Logo agenție/dezvoltator (opțional)</Typography>
-        <ThumbnailBox onClick={() => logoInputRef.current?.click()}>
-          {logoPreview ? (
-            <ThumbnailPreviewImage src={logoPreview} />
-          ) : (
-            <Typography color="textSecondary">Apasă pentru a încărca</Typography>
-          )}
-        </ThumbnailBox>
+    <Box width="100%">
+      {/* ---------------- LOGO ---------------- */}
+      <Section>
+        <Typography variant="h6">Logo</Typography>
+        <InfoRow>
+          {logo ? "1 / 1 fișier" : "0 / 1 fișier"} • Dimensiune maximă: 5MB • Formate permise: JPG, PNG, WEBP
+        </InfoRow>
+
+        <DropArea
+          $drag={dragLogo}
+          onClick={onLogoClick}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragLogo(true);
+          }}
+          onDragLeave={() => setDragLogo(false)}
+          onDrop={onLogoDrop}
+        >
+          Trage logo-ul aici sau apasă pentru a selecta
+        </DropArea>
         <input
-          type="file"
-          accept="image/*"
           ref={logoInputRef}
+          type="file"
+          accept={ALLOWED_LOGO_MIME.join(",")}
           style={{ display: "none" }}
-          onChange={handleLogoChange}
+          onChange={onLogoChange}
         />
-      </ThumbnailWrapper>
 
-      {/* Imagini */}
-      <Typography mt={4} variant="h6">Imagini</Typography>
-      <UploadInfoBox
-        maxFiles={MAX_IMAGES}
-        maxSizeMB={MAX_IMAGE_SIZE / 1024 / 1024}
-        allowedTypes={["JPG", "PNG", "WEBP"]}
-        uploadedCount={images.length}
-      />
-      <DropArea
-        $isDragging={isDraggingImages}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDraggingImages(true);
-        }}
-        onDragLeave={() => setIsDraggingImages(false)}
-        onDrop={handleImageDrop}
-        onClick={() => imageInputRef.current?.click()}
-      >
-        Trage imaginile aici sau apasă pentru a selecta
-      </DropArea>
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        ref={imageInputRef}
-        style={{ display: "none" }}
-        onChange={handleImageUpload}
-      />
-      <ImagesGrid>
-        {imagePreviews.map((src, idx) => (
-          <PreviewImage key={idx} src={src} alt="previzualizare" onClick={() => removeImage(idx)} />
-        ))}
-      </ImagesGrid>
+        {showPreview && logoURL && (
+          <PreviewGrid>
+            <LogoThumb
+              src={logoURL}
+              alt="logo"
+              title="Click pentru a elimina"
+              onClick={() => setLogo(null)}
+            />
+          </PreviewGrid>
+        )}
+      </Section>
 
-      {/* Videoclipuri */}
-      <Typography mt={4} variant="h6">Videoclipuri</Typography>
-      <UploadInfoBox
-        maxFiles={MAX_VIDEOS}
-        maxSizeMB={MAX_VIDEO_SIZE / 1024 / 1024}
-        allowedTypes={["MP4", "WEBM", "MOV"]}
-        uploadedCount={videos.length}
-      />
-      <DropArea
-        $isDragging={isDraggingVideos}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDraggingVideos(true);
-        }}
-        onDragLeave={() => setIsDraggingVideos(false)}
-        onDrop={handleVideoDrop}
-        onClick={() => videoInputRef.current?.click()}
-      >
-        Trage videoclipurile aici sau apasă pentru a selecta
-      </DropArea>
-      <input
-        type="file"
-        accept="video/*"
-        multiple
-        ref={videoInputRef}
-        style={{ display: "none" }}
-        onChange={handleVideoUpload}
-      />
-      <VideosGrid>
-        {videoPreviews.map((src, idx) => (
-          <PreviewVideo key={idx} src={src} controls onClick={() => removeVideo(idx)} />
-        ))}
-      </VideosGrid>
+      {/* ---------------- IMAGES ---------------- */}
+      <Section>
+        <Typography variant="h6" mt={2}>
+          Imagini
+        </Typography>
+        <InfoRow>
+          Încărcate {images.length} / {MAX_IMAGES} fișiere • Dimensiune maximă: 5MB • Formate permise: JPG, PNG, WEBP
+        </InfoRow>
 
-      {error && (
-        <Typography color="error" mt={2} align="center">
+        <DropArea
+          $drag={dragImg}
+          onClick={onImgClick}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragImg(true);
+          }}
+          onDragLeave={() => setDragImg(false)}
+          onDrop={onImgDrop}
+        >
+          Trage imaginile aici sau apasă pentru a selecta
+        </DropArea>
+        <input
+          ref={imgInputRef}
+          type="file"
+          accept={ALLOWED_IMAGE_MIME.join(",")}
+          multiple
+          style={{ display: "none" }}
+          onChange={onImgChange}
+        />
+
+        {/* Internal previews (optional) */}
+        {showPreview && images.length > 0 && (
+          <PreviewGrid>
+            {imgURLs.map((src, i) => (
+              <Thumb
+                key={i}
+                src={src}
+                alt={`img-${i}`}
+                title="Click pentru a elimina"
+                onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+              />
+            ))}
+          </PreviewGrid>
+        )}
+
+        {/* Custom slot just below the images area */}
+        {imagesSlot}
+      </Section>
+
+      {/* ---------------- VIDEOS ---------------- */}
+      <Section>
+        <Typography variant="h6" mt={3}>
+          Videoclipuri
+        </Typography>
+        <InfoRow>
+          Încărcate {videos.length} / {MAX_VIDEOS} fișiere • Dimensiune maximă: 100MB • Formate permise: MP4, WEBM, MOV
+        </InfoRow>
+
+        <DropArea
+          $drag={dragVid}
+          onClick={onVidClick}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragVid(true);
+          }}
+          onDragLeave={() => setDragVid(false)}
+          onDrop={onVidDrop}
+        >
+          Trage videoclipurile aici sau apasă pentru a selecta
+        </DropArea>
+        <input
+          ref={vidInputRef}
+          type="file"
+          accept={ALLOWED_VIDEO_MIME.join(",")}
+          multiple
+          style={{ display: "none" }}
+          onChange={onVidChange}
+        />
+
+        {/* Internal previews (optional) */}
+        {showPreview && videos.length > 0 && (
+          <PreviewGrid>
+            {vidURLs.map((src, i) => (
+              <ThumbVideo
+                key={i}
+                src={src}
+                controls
+                title="Click pentru a elimina"
+                onClick={() => setVideos(videos.filter((_, idx) => idx !== i))}
+              />
+            ))}
+          </PreviewGrid>
+        )}
+
+        {/* Custom slot just below the videos area */}
+        {videosSlot}
+      </Section>
+
+      {/* Error line (optional) */}
+      {error ? (
+        <Typography color="error" mt={1}>
           {error}
         </Typography>
-      )}
+      ) : null}
     </Box>
   );
 };
