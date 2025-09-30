@@ -161,7 +161,7 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
 
   return (
     <>
-      <GalleryContainer>
+      <GalleryContainer className="gallery-container">
         <GalleryWrapper>
           <Slider
             {...sliderSettings}

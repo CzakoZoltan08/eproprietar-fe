@@ -26,15 +26,29 @@ const AutocompleteCities = ({
   const [inputValue, setInputValue] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
+  // Normalize helper: remove diacritics and handle common ligatures
+  const normalizeToEnglish = (s: string) =>
+    s
+      .normalize?.("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ß/g, "ss")
+      .replace(/œ/g, "oe");
+
+  // Memoize a normalized version of the source city list
+  const normalizedCities = useMemo(
+    () => uniqueCities.map((c) => normalizeToEnglish(c)),
+    []
+  );
+
   const debouncedFilter = useMemo(
     () =>
       debounce((input: string) => {
-        const filtered = uniqueCities.filter((city) =>
+        const filtered = normalizedCities.filter((city) =>
           city.toLowerCase().includes(input.toLowerCase())
         );
         setCityOptions(filtered);
       }, 300),
-    []
+    [normalizedCities]
   );
 
   useEffect(() => {
@@ -43,7 +57,7 @@ const AutocompleteCities = ({
 
   useEffect(() => {
     if (value) {
-      setSelectedCity(value);
+      setSelectedCity(normalizeToEnglish(value));
     }
   }, [value]);
 
@@ -51,8 +65,9 @@ const AutocompleteCities = ({
     <AutocompleteDisabledOptions
       options={cityOptions}
       onChange={(event, newValue) => {
-        setSelectedCity(newValue);
-        onChange(event, newValue);
+        const normalized = newValue ? normalizeToEnglish(newValue) : null;
+        setSelectedCity(normalized);
+        onChange(event, normalized);
       }}
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       label={label}
