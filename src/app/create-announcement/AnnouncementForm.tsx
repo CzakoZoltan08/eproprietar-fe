@@ -382,6 +382,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     vehicleAccess: [] as string[],
   });
 
+  const role = userStore.user?.role ?? "";
+  const canPublishImmediately = role === "admin" || role === "editor";
+
   type MediaItem = {
     file?: File;
     url?: string;
@@ -937,7 +940,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           data.balconyCount !== undefined && data.balconyCount !== null ? Number(data.balconyCount) : undefined,
         parkingCount:
           data.parkingCount !== undefined && data.parkingCount !== null ? Number(data.parkingCount) : undefined,
-        status: userStore.user && userStore.user.role === "admin" ? "active" : "pending",
+        status: canPublishImmediately ? "active" : "pending",
         phoneContact: contactPhone,
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
         deleteMedia: false,
@@ -972,7 +975,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
         const isAdmin = userStore.user?.role === "admin";
 
-        if (isAdmin) {
+        if (canPublishImmediately) {
           // record free payment for admin
           await announcementStore.createPaymentSession({
             orderId: newAnnouncement.id,

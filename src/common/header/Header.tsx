@@ -205,6 +205,7 @@ const Header = () => {
   }, [user, getCurrentUser]);
 
   const isAdmin = user?.role === "admin";
+  const isEditor = user?.role === "editor";
 
   const handleMouseEnter = (menu: string) => setOpenMenu(menu);
   const handleMouseLeave = () => setOpenMenu(null);
@@ -280,7 +281,7 @@ const Header = () => {
         <FullWidth>
           <PrimaryButton
             icon="add"
-            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
+            text={isAdmin ? "Anunț - Admin" : isEditor ? "Anunț - Editor" : "Adaugă anunț"}
             onClick={handleAddAnnouncementClick}
           />
         </FullWidth>
@@ -335,7 +336,7 @@ const Header = () => {
         <RightSection>
           <PrimaryButton
             icon="add"
-            text={isAdmin ? "Anunț - Admin" : "Adaugă anunț"}
+            text={isAdmin ? "Anunț - Admin" : isEditor ? "Anunț - Editor" : "Adaugă anunț"}
             onClick={handleAddAnnouncementClick}
           />
           {isAdmin && (

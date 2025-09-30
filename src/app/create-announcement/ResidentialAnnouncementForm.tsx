@@ -171,6 +171,8 @@ const INITIAL_DATA = {
 const ResidentialAnnouncementForm = () => {
   const { userStore, announcementStore, pricingStore } = useStore();
   const { user, updateUser, fetchAllUsers, users, getCurrentUser } = userStore;
+  const role = user?.role ?? "";
+  const canPublishImmediately = role === "admin" || role === "editor";
   const {
     createAnnouncement,
     updateAnnouncement,
@@ -308,7 +310,7 @@ const ResidentialAnnouncementForm = () => {
         await updateUser(selectedUser.id, { phoneNumber: contactPhone });
       }
 
-      const isAdmin = user?.role === "admin";
+      const isAdminOrEditor = canPublishImmediately;
       const payload = {
         ...cleanFormData,
         ...(formData.apartmentTypeOther ? { apartmentTypeOther: formData.apartmentTypeOther } : {}),
@@ -319,7 +321,7 @@ const ResidentialAnnouncementForm = () => {
         rooms: 0,
         surface: 0,
         price: 0,
-        status: isAdmin ? "active" : "pending",
+        status: isAdminOrEditor ? "active" : "pending",
         user: { id: selectedUser.id, firebaseId: selectedUser.firebaseId ?? "" },
         streetFront: false,
         heightRegime: [] as string[],
@@ -351,7 +353,7 @@ const ResidentialAnnouncementForm = () => {
       await uploadMedia(newAnnouncement.id);
       await new Promise((r) => setTimeout(r, 1000));
 
-      if (isAdmin) {
+      if (isAdminOrEditor) {
         await createPaymentSession({
           orderId: newAnnouncement.id,
           packageId: pricingStore.freePlanId ?? "",
