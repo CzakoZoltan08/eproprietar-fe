@@ -195,7 +195,7 @@ const ResidentialAnnouncementForm = () => {
   const [dragVideoIndex, setDragVideoIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setFormData((prev) => ({ ...prev, city: "Abrud", county: "Alba", announcementType: "Apartament" }));
+    setFormData((prev) => ({ ...prev, announcementType: "Apartament" }));
   }, []);
   useEffect(() => { if (!user?.id) getCurrentUser(); }, [user?.id, getCurrentUser]);
   useEffect(() => {
