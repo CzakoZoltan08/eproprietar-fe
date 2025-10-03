@@ -32,6 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               ad_personalization: 'denied'
             });
 
+            // We'll use this flag to trigger Meta PageView once fbq is ready
+            window.__ep_marketingGranted = false;
+
             // Restore stored choice ASAP (sync) from your banner's storage key
             try {
               var raw = localStorage.getItem('ep_cookie_consent_v1');
@@ -39,6 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 var c = JSON.parse(raw);
                 var analyticsGranted = !!c.analytics;
                 var marketingGranted = !!c.marketing;
+
+                // Remember marketing for Meta Pixel first PageView after init
+                window.__ep_marketingGranted = marketingGranted;
 
                 gtag('consent', 'update', {
                   analytics_storage: analyticsGranted ? 'granted' : 'denied',
@@ -51,7 +57,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `}
         </Script>
 
-        {/* 2) Bridge: listen for your CookieBanner's "cookie-consent-updated" and update Consent Mode */}
+        {/* 2) Meta Pixel bootstrap (init only; no PageView until consent granted) */}
+        <Script id="meta-pixel-init" strategy="afterInteractive">
+          {`
+            (function() {
+              var PID = '${process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ""}';
+              if (!PID) return;
+
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+
+              fbq('init', PID);
+
+              // If user had already granted marketing before load, send first PageView now
+              if (window.__ep_marketingGranted) {
+                try { fbq('track', 'PageView'); } catch(e) {}
+              }
+            })();
+          `}
+        </Script>
+
+        {/* 3) Bridge: listen for your CookieBanner's event and update GA consent + trigger Meta PV when allowed */}
         <Script id="consent-bridge" strategy="afterInteractive">
           {`
             window.addEventListener('cookie-consent-updated', function (e) {
@@ -59,22 +91,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               var analyticsGranted = !!v.analytics;
               var marketingGranted = !!v.marketing;
 
+              // GA Consent Mode update
               gtag('consent', 'update', {
                 analytics_storage: analyticsGranted ? 'granted' : 'denied',
                 ad_storage: marketingGranted ? 'granted' : 'denied',
                 ad_user_data: marketingGranted ? 'granted' : 'denied',
                 ad_personalization: marketingGranted ? 'granted' : 'denied'
               });
+
+              // Remember current marketing state for later navigations
+              window.__ep_marketingGranted = marketingGranted;
+
+              // Meta Pixel: fire first PageView when user grants marketing
+              if (marketingGranted && typeof fbq !== 'undefined') {
+                try { fbq('track', 'PageView'); } catch(e) {}
+              }
             });
           `}
         </Script>
 
         <AppInitializer>
-          {/* GA loads after consent defaults are set; your GA component should keep send_page_view: false */}
+          {/* GA loads after consent defaults are set; GA.tsx should keep send_page_view: false */}
           <GA />
+          {/* Your GA SPA pageview tracker. 
+              (Optional) If you want Meta to track SPA navigations too, 
+              call fbq('track','PageView') inside that tracker as well when window.__ep_marketingGranted is true. */}
           <PageViewTracker />
           {children}
         </AppInitializer>
+
+        {/* (Optional) Noscript fallback for Meta Pixel (won't run in most SPA flows, but standard snippet) */}
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ""}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
       </body>
     </html>
   );
