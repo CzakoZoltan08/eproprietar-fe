@@ -36,7 +36,6 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
-import FormHelpTooltip from "./FormHelpTooltip";
 import PhoneInputField from "@/common/input/PhoneInputField";
 import { PrimaryButton } from "@/common/button/PrimaryButton";
 import { PropertyAnnouncementModel } from "@/models/announcementModels";
@@ -81,7 +80,7 @@ import sketch9 from "../../assets/sketches/garsoniera 1.svg";
 import styled from "styled-components";
 import { useStore } from "@/hooks/useStore";
 
-/* ---------- NEW: reorder helper ---------- */
+/* ---------- helpers ---------- */
 const reorder = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
   const result = list.slice();
   const [removed] = result.splice(startIndex, 1);
@@ -123,6 +122,7 @@ const PREDEFINED_SKETCHES = [
   sketch31,
 ];
 
+/* ---------- styled ---------- */
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -280,7 +280,6 @@ const StyledTextField = styled(TextField)`
   width: 100%;
 `;
 
-/* ---------- NEW: item wrapper + inline controls ---------- */
 const PreviewItem = styled.div`
   position: relative;
   display: inline-flex;
@@ -309,9 +308,9 @@ const Controls = styled.div`
   }
 `;
 
+/* ---------- limits ---------- */
 const MAX_VIDEOS = 1;
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-
 const MAX_IMAGES = 15;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -385,15 +384,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const role = userStore.user?.role ?? "";
   const canPublishImmediately = role === "admin" || role === "editor";
 
-  type MediaItem = {
-    file?: File;
-    url?: string;
-  };
+  type MediaItem = { file?: File; url?: string };
 
   const [imageItems, setImageItems] = useState<MediaItem[]>([]);
   const [videoItems, setVideoItems] = useState<MediaItem[]>([]);
 
-  /* ---------- NEW: DnD state ---------- */
+  /* ---------- DnD state ---------- */
   const [dragImageIndex, setDragImageIndex] = useState<number | null>(null);
   const [dragVideoIndex, setDragVideoIndex] = useState<number | null>(null);
 
@@ -426,8 +422,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     error.toLowerCase().includes("mp4") ||
     error.toLowerCase().includes("100mb");
 
-  const [originalMediaCounts, setOriginalMediaCounts] = useState({ images: 0, videos: 0 });
-
   // Load current user
   useEffect(() => {
     if (!userStore.user?.id) {
@@ -451,7 +445,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     }));
   }, []);
 
-  // (1) Fetch currentAnnouncement when in edit mode
+  // Fetch current announcement when in edit mode
   useEffect(() => {
     if (isEdit && params?.id) {
       const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -469,6 +463,19 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
     }
   }, []);
+
+  // Prefill contact phone from announcement (edit) or from user (create)
+  useEffect(() => {
+    if (isEdit && announcementStore.currentAnnouncement) {
+      const phone =
+        announcementStore.currentAnnouncement.phoneContact ||
+        userStore.user?.phoneNumber ||
+        "";
+      setContactPhone(phone);
+    } else if (!isEdit && userStore.user?.phoneNumber) {
+      setContactPhone(userStore.user.phoneNumber);
+    }
+  }, [isEdit, announcementStore.currentAnnouncement, userStore.user]);
 
   // Load current announcement for editing
   useEffect(() => {
@@ -490,94 +497,79 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           serviceTypes.find((type) => type.toLowerCase() === announcement.transactionType?.toLowerCase()) ||
           serviceTypes[0];
 
-        // Sketch
         if (announcement.sketchUrl) {
           setSketchPreview(announcement.sketchUrl);
-          setFormData({
-            userId: announcement.user?.id ?? "",
-            announcementType: normalizedTypeId,
-            providerType: formData.providerType,
-            transactionType: normalizedTrans,
-            title: announcement.title || "",
-            description: announcement.description || "",
-            price: announcement.price?.toString() || "",
-            surface: announcement.surface?.toString() || "",
-            landSurface: announcement.landSurface?.toString() || "",
-            city: announcement.city || "",
-            county: announcement.county || "",
-            street: announcement.street || "",
-            rooms: announcement.rooms?.toString() || "",
-            baths: announcement.baths?.toString() || "",
-            partitioning: announcement.partitioning || "",
-            comfortLevel: announcement.comfortLevel?.toString() || "",
-            floor: announcement.floor?.toString() || "",
-            numberOfKitchens: announcement.numberOfKitchens?.toString() || "",
-            balcony: announcement.balcony || "",
-            parking: announcement.parking || "",
-            balconyCount: announcement.balconyCount?.toString() || "",
-            parkingCount: announcement.parkingCount?.toString() || "",
-            images: [],
-            videos: [],
-            sketch: announcement.sketchUrl || null,
-            heightRegime: announcement.heightRegime || [],
-            streetFront: announcement.streetFront || false,
-            landPlacement: announcement.landPlacement || "",
-            streetFrontLength: announcement.streetFrontLength || 0,
-            landType: announcement.landType || "",
-            urbanismDocuments: announcement.urbanismDocuments || [],
-            utilities: {
-              curent: announcement.utilities?.curent ?? null,
-              apa: announcement.utilities?.apa ?? null,
-              canalizare: announcement.utilities?.canalizare ?? null,
-              gaz: announcement.utilities?.gaz ?? null,
-            },
-            builtSurface: announcement.builtSurface || 0,
-            commercialSpaceType: announcement.commercialSpaceType || "",
-            hasLift: announcement.hasLift || false,
-            usableSurface: announcement.usableSurface || 0,
-            spaceHeight: announcement.spaceHeight || 0,
-            hasStreetWindow: announcement.hasStreetWindow || false,
-            streetWindowLength: announcement.streetWindowLength || 0,
-            hasStreetEntrance: announcement.hasStreetEntrance || false,
-            vehicleAccess: announcement.vehicleAccess || [],
-          });
         }
 
-        // Videos
+        setFormData({
+          userId: announcement.user?.id ?? "",
+          announcementType: normalizedTypeId,
+          providerType: formData.providerType,
+          transactionType: normalizedTrans,
+          title: announcement.title || "",
+          description: announcement.description || "",
+          price: announcement.price?.toString() || "",
+          surface: announcement.surface?.toString() || "",
+          landSurface: announcement.landSurface?.toString() || "",
+          city: announcement.city || "",
+          county: announcement.county || "",
+          street: announcement.street || "",
+          rooms: announcement.rooms?.toString() || "",
+          baths: announcement.baths?.toString() || "",
+          partitioning: announcement.partitioning || "",
+          comfortLevel: announcement.comfortLevel?.toString() || "",
+          floor: announcement.floor?.toString() || "",
+          numberOfKitchens: announcement.numberOfKitchens?.toString() || "",
+          balcony: announcement.balcony || "",
+          parking: announcement.parking || "",
+          balconyCount: announcement.balconyCount?.toString() || "",
+          parkingCount: announcement.parkingCount?.toString() || "",
+          images: [],
+          videos: [],
+          sketch: announcement.sketchUrl || null,
+          heightRegime: announcement.heightRegime || [],
+          streetFront: announcement.streetFront || false,
+          landPlacement: announcement.landPlacement || "",
+          streetFrontLength: announcement.streetFrontLength || 0,
+          landType: announcement.landType || "",
+          urbanismDocuments: announcement.urbanismDocuments || [],
+          utilities: {
+            curent: announcement.utilities?.curent ?? null,
+            apa: announcement.utilities?.apa ?? null,
+            canalizare: announcement.utilities?.canalizare ?? null,
+            gaz: announcement.utilities?.gaz ?? null,
+          },
+          builtSurface: announcement.builtSurface || 0,
+          commercialSpaceType: announcement.commercialSpaceType || "",
+          hasLift: announcement.hasLift || false,
+          usableSurface: announcement.usableSurface || 0,
+          spaceHeight: announcement.spaceHeight || 0,
+          hasStreetWindow: announcement.hasStreetWindow || false,
+          streetWindowLength: announcement.streetWindowLength || 0,
+          hasStreetEntrance: announcement.hasStreetEntrance || false,
+          vehicleAccess: announcement.vehicleAccess || [],
+        });
+
+        // Fill media lists from existing announcement (URLs)
         if (Array.isArray(announcement.videos)) {
-          const videoUrls = announcement.videos.map((v) => v.original);
-          setVideoItems(videoUrls.map((url) => ({ url })));
+          const videoUrls = announcement.videos.map((v: any) => v.original);
+          setVideoItems(videoUrls.map((url: string) => ({ url })));
           setVideoPreviews(videoUrls);
         }
 
-        // Images
-        const filteredImages = (announcement.images ?? []).filter((img) => img.original !== announcement.sketchUrl);
-        setImageItems(filteredImages.map((img) => ({ url: img.original })));
-        setImagePreviews(filteredImages.map((img) => img.original));
-
-        // userId
-        const announcementUserId = announcement.user?.id;
-        if (announcementUserId && users.some((u) => u.id === announcementUserId)) {
-          setFormData((prev) => ({
-            ...prev,
-            userId: announcementUserId,
-          }));
-        }
-
-        setOriginalMediaCounts({
-          images: filteredImages.length,
-          videos: announcement.videos?.length ?? 0,
-        });
+        const filteredImages = (announcement.images ?? []).filter(
+          (img: any) => img.original !== announcement.sketchUrl
+        );
+        setImageItems(filteredImages.map((img: any) => ({ url: img.original })));
+        setImagePreviews(filteredImages.map((img: any) => img.original));
       },
-      {
-        fireImmediately: true,
-        delay: 0,
-      }
+      { fireImmediately: true, delay: 0 }
     );
 
     return () => disposer();
-  }, [isEdit, contactPhone]);
+  }, [isEdit]);
 
+  /* ---------- inputs ---------- */
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setFormData({ ...formData, [name]: value });
@@ -588,8 +580,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setFormData({ ...formData, [name as string]: value });
   };
 
-  const validateImageFiles = (files: FileList | File[]) => {
-    let validImages: File[] = Array.from(files).filter((file) => {
+  const validateImageFiles = (files: FileList | File[]) =>
+    Array.from(files).filter((file) => {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
         setError("Sunt permise doar imagini JPEG, PNG sau WebP.");
         return false;
@@ -598,20 +590,14 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         setError(`Imaginea ${file.name} depășește limita de 10MB.`);
         return false;
       }
-
       return true;
     });
-
-    return validImages;
-  };
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
-
     const validImages = validateImageFiles(files);
     const newItems = validImages.map((file) => ({ file }));
-
     setImageItems((prev) => [...prev, ...newItems]);
     event.target.value = "";
   };
@@ -620,29 +606,46 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     event.preventDefault();
     setIsDragging(false);
     const files = event.dataTransfer.files;
-
     const validImages = validateImageFiles(files);
     if (imageItems.length + validImages.length > MAX_IMAGES) {
       setError(`Poți încărca maximum ${MAX_IMAGES} imagini.`);
       return;
     }
-
     const newItems = validImages.map((file) => ({ file }));
     setImageItems((prev) => [...prev, ...newItems]);
     setError("");
+  };
+
+  const validateVideoFiles = (files: FileList | File[]) =>
+    Array.from(files).filter((file) => {
+      if (!file.type.startsWith("video/")) {
+        setError("Sunt permise doar fișiere video.");
+        return false;
+      }
+      if (file.size > MAX_VIDEO_SIZE) {
+        setError(`Fișierul ${file.name} depășește limita de 100MB.`);
+        return false;
+      }
+      return true;
+    });
+
+  const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+    const validVideos = validateVideoFiles(files);
+    const newItems = validVideos.map((file) => ({ file }));
+    setVideoItems((prev) => [...prev, ...newItems]);
   };
 
   const handleVideoDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDraggingVideos(false);
     const files = event.dataTransfer.files;
-
     const validVideos = validateVideoFiles(files);
     if (videoItems.length + validVideos.length > MAX_VIDEOS) {
       setError(`Poți încărca maximum ${MAX_VIDEOS} videoclipuri.`);
       return;
     }
-
     const newItems = validVideos.map((file) => ({ file }));
     setVideoItems((prev) => [...prev, ...newItems]);
     setError("");
@@ -652,62 +655,18 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     event.preventDefault();
     setIsDragging(true);
   };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleImageRemove = (index: number) => {
-    setImageItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const validateVideoFiles = (files: FileList | File[]) => {
-    let validVideos: File[] = Array.from(files).filter((file) => {
-      if (!file.type.startsWith("video/")) {
-        setError("Sunt permise doar fișiere video.");
-        return false;
-      }
-
-      if (file.size > MAX_VIDEO_SIZE) {
-        setError(`Fișierul ${file.name} depășește limita de 100MB.`);
-        return false;
-      }
-
-      return true;
-    });
-
-    return validVideos;
-  };
-
-  const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    const validVideos = validateVideoFiles(files);
-    const newItems = validVideos.map((file) => ({ file }));
-
-    setVideoItems((prev) => [...prev, ...newItems]);
-  };
+  const handleDragLeave = () => setIsDragging(false);
+  const handleClick = () => fileInputRef.current?.click();
 
   const handleVideoDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDraggingVideos(true);
   };
+  const handleVideoDragLeave = () => setIsDraggingVideos(false);
+  const handleVideoClick = () => videoFileInputRef.current?.click();
 
-  const handleVideoDragLeave = () => {
-    setIsDraggingVideos(false);
-  };
-
-  const handleVideoClick = () => {
-    if (videoFileInputRef.current) {
-      videoFileInputRef.current.click();
-    }
+  const handleImageRemove = (index: number) => {
+    setImageItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleVideoRemove = (index: number) => {
@@ -730,7 +689,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setOpenModal(false);
   };
 
-  /* ---------- NEW: image DnD + arrow controls ---------- */
+  /* ---------- DnD reorder ---------- */
   const onImageDragStart = (index: number) => setDragImageIndex(index);
   const onImageDragOver = (e: React.DragEvent) => e.preventDefault();
   const onImageDrop = (index: number) => {
@@ -738,16 +697,9 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setImageItems((prev) => reorder(prev, dragImageIndex, index));
     setDragImageIndex(null);
   };
-  const moveImageLeft = (index: number) => {
-    if (index <= 0) return;
-    setImageItems((prev) => reorder(prev, index, index - 1));
-  };
-  const moveImageRight = (index: number) => {
-    if (index >= imageItems.length - 1) return;
-    setImageItems((prev) => reorder(prev, index, index + 1));
-  };
+  const moveImageLeft = (index: number) => index > 0 && setImageItems((prev) => reorder(prev, index, index - 1));
+  const moveImageRight = (index: number) => index < imageItems.length - 1 && setImageItems((prev) => reorder(prev, index, index + 1));
 
-  /* ---------- NEW: video DnD + arrow controls ---------- */
   const onVideoDragStart = (index: number) => setDragVideoIndex(index);
   const onVideoDragOver = (e: React.DragEvent) => e.preventDefault();
   const onVideoDrop = (index: number) => {
@@ -755,130 +707,102 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     setVideoItems((prev) => reorder(prev, dragVideoIndex, index));
     setDragVideoIndex(null);
   };
-  const moveVideoLeft = (index: number) => {
-    if (index <= 0) return;
-    setVideoItems((prev) => reorder(prev, index, index - 1));
-  };
-  const moveVideoRight = (index: number) => {
-    if (index >= videoItems.length - 1) return;
-    setVideoItems((prev) => reorder(prev, index, index + 1));
+  const moveVideoLeft = (index: number) => index > 0 && setVideoItems((prev) => reorder(prev, index, index - 1));
+  const moveVideoRight = (index: number) => index < videoItems.length - 1 && setVideoItems((prev) => reorder(prev, index, index + 1));
+
+  /* ---------- upload logic: upload files OR fetch+upload URLs ---------- */
+  const fileFromUrl = async (url: string, namePrefix: string) => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const inferredExt = (blob.type.split("/")[1] || url.split(".").pop() || "jpg").split("?")[0];
+    return new File([blob], `${namePrefix}-${Date.now()}.${inferredExt}`, { type: blob.type || "application/octet-stream" });
   };
 
   const uploadMedia = async (announcementId: string) => {
-    const totalImages =
-      imageItems.filter((i) => i.file).length +
-      imageItems.filter((i) => i.url).length +
-      (formData.sketch ? 1 : 0);
-
-    const totalVideos = videoItems.filter((i) => i.file).length + videoItems.filter((i) => i.url).length;
+    // Progress counts: we are (re)uploading everything currently visible in the UI
+    const totalImages = imageItems.length + (formData.sketch ? 1 : 0);
+    const totalVideos = videoItems.length;
 
     setImageUploadProgress({ uploaded: 0, total: totalImages });
     setVideoUploadProgress({ uploaded: 0, total: totalVideos });
 
     const incrementImage = () =>
-      setImageUploadProgress((prev) => ({
-        ...prev,
-        uploaded: prev.uploaded + 1,
-      }));
-
+      setImageUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
     const incrementVideo = () =>
-      setVideoUploadProgress((prev) => ({
-        ...prev,
-        uploaded: prev.uploaded + 1,
-      }));
+      setVideoUploadProgress((prev) => ({ ...prev, uploaded: prev.uploaded + 1 }));
 
-    const uploadAll = async (items: MediaItem[], type: "image" | "video", increment: () => void) => {
-      for (const item of items) {
-        if (!item.file) continue; // skip existing if not deleting
-
-        const form = new FormData();
-
-        if (item.file) {
-          form.append("file", item.file);
-        } else if (item.url) {
-          const res = await fetch(item.url);
-          const blob = await res.blob();
-          const ext = blob.type.split("/")[1] || "jpg";
-          const file = new File([blob], `existing-${Date.now()}.${ext}`, {
-            type: blob.type,
-          });
-          form.append("file", file);
-        } else {
-          continue;
-        }
-
-        form.append("type", type);
-        await announcementStore.createImageOrVideo(form, announcementId);
-        increment();
-      }
-    };
-
-    // 1) Thumbnail = prima imagine după ordinea actuală
+    // Thumbnail = first image (file or url)
     const firstImage = imageItems[0];
     if (firstImage) {
       const form = new FormData();
       if (firstImage.file) {
         form.append("file", firstImage.file);
       } else if (firstImage.url) {
-        const res = await fetch(firstImage.url);
-        const blob = await res.blob();
-        const ext = blob.type.split("/")[1] || "jpg";
-        const file = new File([blob], `thumbnail-${Date.now()}.${ext}`, {
-          type: blob.type,
-        });
-        form.append("file", file);
-      } else {
-        console.warn("⚠️ No valid file or URL for thumbnail", firstImage);
-        return;
+        const f = await fileFromUrl(firstImage.url, "thumbnail");
+        form.append("file", f);
       }
-
       form.append("type", "image");
       const result = await announcementStore.createImageOrVideo(form, announcementId);
-
       if (result?.optimized_url) {
-        await announcementStore.updateAnnouncement(announcementId, {
-          imageUrl: result.optimized_url,
-        });
-      } else {
-        console.warn("⚠️ Thumbnail uploaded, but no optimized_url returned");
+        await announcementStore.updateAnnouncement(announcementId, { imageUrl: result.optimized_url });
       }
       incrementImage();
     }
 
-    // 2) Restul imaginilor (după prima)
-    await uploadAll(imageItems.slice(1), "image", incrementImage);
+    // Rest of images
+    for (let idx = 1; idx < imageItems.length; idx++) {
+      const item = imageItems[idx];
+      const form = new FormData();
+      if (item.file) {
+        form.append("file", item.file);
+      } else if (item.url) {
+        const f = await fileFromUrl(item.url, "image");
+        form.append("file", f);
+      } else {
+        continue;
+      }
+      form.append("type", "image");
+      await announcementStore.createImageOrVideo(form, announcementId);
+      incrementImage();
+    }
 
-    // 3) Sketch
+    // Sketch (file or url)
     if (formData.sketch) {
       const form = new FormData();
       if (formData.sketch instanceof File) {
         form.append("file", formData.sketch);
       } else if (typeof formData.sketch === "string") {
-        const res = await fetch(formData.sketch);
-        const blob = await res.blob();
-        const file = new File([blob], `sketch-${Date.now()}.jpg`, {
-          type: blob.type,
-        });
-        form.append("file", file);
+        const f = await fileFromUrl(formData.sketch, "sketch");
+        form.append("file", f);
       }
       form.append("type", "image");
       const result = await announcementStore.createImageOrVideo(form, announcementId);
       if (result?.optimized_url) {
-        await announcementStore.updateAnnouncement(announcementId, {
-          sketchUrl: result.optimized_url,
-        });
-      } else {
-        console.warn("⚠️ Sketch upload succeeded but no optimized_url returned");
+        await announcementStore.updateAnnouncement(announcementId, { sketchUrl: result.optimized_url });
       }
       incrementImage();
     }
 
-    // 4) Video-uri
-    await uploadAll(videoItems, "video", incrementVideo);
+    // Videos (file or url)
+    for (const item of videoItems) {
+      const form = new FormData();
+      if (item.file) {
+        form.append("file", item.file);
+      } else if (item.url) {
+        const f = await fileFromUrl(item.url, "video");
+        form.append("file", f);
+      } else {
+        continue;
+      }
+      form.append("type", "video");
+      await announcementStore.createImageOrVideo(form, announcementId);
+      incrementVideo();
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   };
 
+  /* ---------- submit ---------- */
   const onSubmit = async () => {
     setIsSubmitted(true);
 
@@ -925,14 +849,14 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           : userStore.user;
       if (!selectedUser || !selectedUser.id) throw new Error("User not found");
 
-      const announcementDraft = {
+      const announcementDraft: any = {
         ...data,
         announcementType: normalizeAnnouncementType(data.announcementType),
         price: Number(data.price),
         rooms: Number(data.rooms),
         baths: Number(data.baths),
         numberOfKitchens: Number(data.numberOfKitchens),
-        floor: Number(data.floor),
+        floor: data.floor,
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
         streetFrontLength: Number(data.streetFrontLength) ?? 0,
@@ -940,13 +864,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           data.balconyCount !== undefined && data.balconyCount !== null ? Number(data.balconyCount) : undefined,
         parkingCount:
           data.parkingCount !== undefined && data.parkingCount !== null ? Number(data.parkingCount) : undefined,
-        status: canPublishImmediately ? "active" : "pending",
+        status: "active", // always active on edit-recreate
         phoneContact: contactPhone,
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
         deleteMedia: false,
       };
 
-      // Update phone if changed
+      // Update user's phone if changed
       const normalizePhone = (p: string) => p.replace(/^\+?4/, "").replace(/\s/g, "");
       if (normalizePhone(contactPhone) !== normalizePhone(userStore.user?.phoneNumber || "")) {
         if (userStore.user && typeof userStore.user.id === "string") {
@@ -955,44 +879,82 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       }
 
       if (isEdit && announcementStore.currentAnnouncement?.id) {
-        // EDIT
-        announcementDraft.status = "active";
-        announcementDraft.deleteMedia = true;
+        // ---------- EDIT MODE: recreate ----------
+        const oldId = announcementStore.currentAnnouncement.id;
 
-        await announcementStore.updateAnnouncement(announcementStore.currentAnnouncement.id, announcementDraft);
-
-        await uploadMedia(announcementStore.currentAnnouncement.id);
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        window.location.href = `/announcements/${announcementStore.currentAnnouncement.id}`;
-      } else {
-        // CREATE
+        // 1) Create new announcement (no payment required)
         const newAnnouncement =
           (await announcementStore.createAnnouncement(announcementDraft)) as unknown as PropertyAnnouncementModel;
 
+        // 2) Upload all media shown in UI (files + URLs)
         await uploadMedia(newAnnouncement.id);
 
-        const isAdmin = userStore.user?.role === "admin";
+        // 3) Optionally record a free "payment" session for bookkeeping (safe no-op for non-admins)
+        try {
+          if (pricingStore.freePlanId) {
+            await announcementStore.createPaymentSession({
+              orderId: newAnnouncement.id,
+              packageId: pricingStore.freePlanId,
+              amount: 0,
+              originalAmount: 0,
+              currency: "RON",
+              invoiceDetails: {
+                name: "",
+                address: "",
+                city: "",
+                country: "",
+                email: "",
+                isTaxPayer: false,
+              },
+              products: [],
+            });
+          }
+        } catch (e) {
+          console.warn("Free payment session failed or not required:", e);
+        }
+
+        // 4) Delete old announcement AFTER all uploads succeed
+        try {
+          await announcementStore.deleteAnnouncement(oldId);
+        } catch (e) {
+          console.warn("Failed to delete old announcement", e);
+          // continue; not fatal for user
+        }
+
+        // 5) Redirect to the new announcement
+        window.location.href = `/announcements/${newAnnouncement.id}`;
+      } else {
+        // ---------- CREATE MODE (unchanged) ----------
+        const newAnnouncement =
+          (await announcementStore.createAnnouncement(announcementDraft)) as unknown as PropertyAnnouncementModel;
+
+        // Upload selected media (only files exist in create mode)
+        await uploadMedia(newAnnouncement.id);
 
         if (canPublishImmediately) {
-          // record free payment for admin
-          await announcementStore.createPaymentSession({
-            orderId: newAnnouncement.id,
-            packageId: pricingStore.freePlanId ?? "",
-            amount: 0,
-            originalAmount: 0,
-            currency: "RON",
-            invoiceDetails: {
-              name: "",
-              address: "",
-              city: "",
-              country: "",
-              email: "",
-              isTaxPayer: false,
-            },
-            products: [],
-          });
+          // record free payment for admin/editor and go to success
+          try {
+            if (pricingStore.freePlanId) {
+              await announcementStore.createPaymentSession({
+                orderId: newAnnouncement.id,
+                packageId: pricingStore.freePlanId ?? "",
+                amount: 0,
+                originalAmount: 0,
+                currency: "RON",
+                invoiceDetails: {
+                  name: "",
+                  address: "",
+                  city: "",
+                  country: "",
+                  email: "",
+                  isTaxPayer: false,
+                },
+                products: [],
+              });
+            }
+          } catch (e) {
+            console.warn("Free payment session failed or not required:", e);
+          }
 
           const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!;
           const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`;
@@ -1007,8 +969,8 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=${item}`;
         }
       }
-    } catch (error) {
-      console.error("Error saving announcement:", error);
+    } catch (err) {
+      console.error("Error saving announcement:", err);
       setError("A apărut o eroare la salvarea anunțului.");
     } finally {
       setLoading(false);
@@ -1157,8 +1119,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               <Box width="100%" mb={2}>
                 <Typography variant="subtitle1">Titlu</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
-                  Gândește-te la un titlu clar și captivant pentru a atrage potențiali cumpărători. Nu include majuscule,
-                  numere de telefon, emailuri sau linkuri.
+                  Gândește-te la un titlu clar și captivant. Nu include majuscule, numere de telefon, emailuri sau linkuri.
                 </Typography>
                 <StyledTextField
                   label="Titlu"
@@ -1177,8 +1138,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <Box width="100%" mb={2}>
               <Typography variant="subtitle1">Descriere</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
-                Vrei să atragi cumpărători serioși? Include detalii reale despre suprafață, camere, anul construcției,
-                renovări, zonă și facilități. Evită exagerările.
+                Include detalii reale despre suprafață, camere, anul construcției, renovări, zonă și facilități.
               </Typography>
               <StyledTextField
                 label="Descriere"
@@ -1192,12 +1152,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 required
                 error={isSubmitted && !formData.description}
                 helperText={isSubmitted && !formData.description ? "Acest câmp este obligatoriu" : ""}
-                sx={{
-                  "& .MuiInputBase-inputMultiline": {
-                    resize: "vertical",
-                    overflow: "auto",
-                  },
-                }}
+                sx={{ "& .MuiInputBase-inputMultiline": { resize: "vertical", overflow: "auto" } }}
               />
             </Box>
 
@@ -1257,10 +1212,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 <Box width="100%" textAlign="center" mt={3}>
                   <Typography variant="h6">Front la stradă</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                    Bifează dacă imobilul are deschidere directă la drum public. Aceasta este o caracteristică importantă
-                    în evaluarea proprietății.
-                  </Typography>
                 </Box>
 
                 <FormControl component="fieldset" sx={{ mt: 2 }}>
@@ -1297,14 +1248,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
 
                 <Box width="100%" textAlign="center" mt={3}>
                   <Typography variant="h6">Regim înălțime</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                    Selectează nivelurile de înălțime existente ale clădirii. Poți alege mai multe opțiuni dacă este cazul
-                    (ex: Subsol + Parter + Etaj).
-                  </Typography>
                 </Box>
 
                 <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
-                  {HEIGHT_REGIMES.map((regime) => (
+                  {["S", "D", "P", "E", "E2", "E3", "E4", "E5", "M", "POD"].map((regime) => (
                     <FormControlLabel
                       key={regime}
                       control={
@@ -1448,169 +1395,6 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               </>
             )}
 
-            {formData.announcementType === "Comercial" && (
-              <>
-                <FormControl fullWidth required sx={{ mb: 2 }}>
-                  <InputLabel id="commercial-space-type-label">Tip spațiu</InputLabel>
-                  <Select
-                    labelId="commercial-space-type-label"
-                    id="commercialSpaceType"
-                    value={formData.commercialSpaceType || ""}
-                    label="Tip spațiu"
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        commercialSpaceType: e.target.value,
-                      }))
-                    }
-                    required
-                    error={isSubmitted && !formData.commercialSpaceType}
-                  >
-                    {["comercial", "birouri", "industrial"].map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option[0].toUpperCase() + option.slice(1)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  label="Suprafață utilă (mp)"
-                  type="number"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  value={formData.usableSurface || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      usableSurface: Number(e.target.value),
-                    }))
-                  }
-                  required
-                  error={isSubmitted && !formData.usableSurface}
-                  helperText={isSubmitted && !formData.usableSurface ? "Acest câmp este obligatoriu" : ""}
-                />
-
-                <TextField
-                  label="Suprafață construită (mp)"
-                  type="number"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  value={formData.builtSurface || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      builtSurface: Number(e.target.value),
-                    }))
-                  }
-                />
-
-                <TextField
-                  label="Înălțime spațiu (m)"
-                  type="number"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  value={formData.spaceHeight || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      spaceHeight: Number(e.target.value),
-                    }))
-                  }
-                />
-
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <Typography variant="h6">Vitrină la stradă</Typography>
-                  <RadioGroup
-                    row
-                    value={formData.hasStreetWindow ? "Da" : "Nu"}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        hasStreetWindow: e.target.value === "Da",
-                      }))
-                    }
-                  >
-                    <FormControlLabel value="Da" control={<Radio />} label="Da" />
-                    <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
-                  </RadioGroup>
-                </FormControl>
-
-                <TextField
-                  label="Front vitrină la stradă (ml)"
-                  type="number"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  value={formData.streetWindowLength || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      streetWindowLength: Number(e.target.value),
-                    }))
-                  }
-                />
-
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <Typography variant="h6">Intrare din stradă</Typography>
-                  <RadioGroup
-                    row
-                    value={formData.hasStreetEntrance ? "Da" : "Nu"}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        hasStreetEntrance: e.target.value === "Da",
-                      }))
-                    }
-                  >
-                    <FormControlLabel value="Da" control={<Radio />} label="Da" />
-                    <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
-                  </RadioGroup>
-                </FormControl>
-
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <Typography variant="h6">Lift</Typography>
-                  <RadioGroup
-                    row
-                    value={formData.hasLift ? "Da" : "Nu"}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        hasLift: e.target.value === "Da",
-                      }))
-                    }
-                  >
-                    <FormControlLabel value="Da" control={<Radio />} label="Da" />
-                    <FormControlLabel value="Nu" control={<Radio />} label="Nu" />
-                  </RadioGroup>
-                </FormControl>
-
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <Typography variant="h6">Acces auto</Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    {["TIR", "Autocar", "Camioane", "Autoturism"].map((vehicle) => (
-                      <FormControlLabel
-                        key={vehicle}
-                        control={
-                          <Checkbox
-                            checked={formData.vehicleAccess.includes(vehicle)}
-                            onChange={(e) => {
-                              setFormData((prev) => {
-                                const access = prev.vehicleAccess.includes(vehicle)
-                                  ? prev.vehicleAccess.filter((v) => v !== vehicle)
-                                  : [...prev.vehicleAccess, vehicle];
-                                return { ...prev, vehicleAccess: access };
-                              });
-                            }}
-                          />
-                        }
-                        label={vehicle}
-                      />
-                    ))}
-                  </Box>
-                </FormControl>
-              </>
-            )}
-
             {isApartment && (
               <>
                 <SelectDropdown
@@ -1702,8 +1486,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               <Box width="100%" textAlign="center">
                 <Typography variant="h6">Schiță / Plan</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                  Adaugă schița locuinței tale. Oferă o imagine clară a spațiului și ajută clienții să decidă mai ușor dacă
-                  oferta e potrivită. Anunțurile cu schiță au șanse cu 50% mai mari să genereze interes.
+                  Adaugă schița locuinței tale.
                 </Typography>
               </Box>
 
@@ -1747,11 +1530,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                       📝 Sugestie:
                     </Typography>
                     <Typography variant="body2">
-                      DACA NU AI GĂSIT SCHIȚA IMOBILULUI ÎN DOSARUL TĂU CU ACTE, NICI ÎN MODELE CREATE DE NOI, TE SFĂTUIM SĂ
-                      FACI O SCHIȚĂ DE MÂNĂ, O FOTOGRAFIEZI ȘI O ADAUGI LA ANUNȚ.
-                    </Typography>
-                    <Typography variant="body2" mt={1} fontWeight="600" color="green">
-                      ✅ Ai șanse cu 70% mai mari să vinzi dacă publici schița de imobil!
+                      Dacă nu ai schița, fă una de mână, fotografiaz-o și adaug-o la anunț.
                     </Typography>
                   </Box>
                 </ModalContent>
@@ -1768,8 +1547,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <Box width="100%" textAlign="center">
               <Typography variant="h6">Adaugă imagini</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                Alege imagini clare și bine iluminate care prezintă interiorul și exteriorul imobilului (fațadă, casa
-                scării, lift, stradă etc.). Pozele bune atrag mai mulți clienți!
+                Alege imagini clare și bine iluminate.
               </Typography>
             </Box>
 
@@ -1799,13 +1577,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               onChange={handleImageChange}
             />
 
-            {/* ---------- NEW: Reorderable image list ---------- */}
+            {/* Reorderable image list */}
             <PreviewContainer>
               {imageItems.map((item, index) => {
                 const src = item.url || URL.createObjectURL(item.file!);
                 return (
                   <PreviewItem
-                    key={index}
+                    key={`${item.url ?? "f"}-${index}`}
                     draggable
                     onDragStart={() => onImageDragStart(index)}
                     onDragOver={onImageDragOver}
@@ -1816,16 +1594,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                     <Controls>
                       {imageItems.length > 1 && (
                         <>
-                          <button
-                            aria-label="Mută la stânga"
-                            onClick={(e) => { e.stopPropagation(); moveImageLeft(index); }}
-                          >
+                          <button aria-label="Mută la stânga" onClick={(e) => { e.stopPropagation(); moveImageLeft(index); }}>
                             ◀︎
                           </button>
-                          <button
-                            aria-label="Mută la dreapta"
-                            onClick={(e) => { e.stopPropagation(); moveImageRight(index); }}
-                          >
+                          <button aria-label="Mută la dreapta" onClick={(e) => { e.stopPropagation(); moveImageRight(index); }}>
                             ▶︎
                           </button>
                         </>
@@ -1841,8 +1613,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             <Box width="100%" textAlign="center">
               <Typography variant="h6">Adaugă videoclipuri</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                Încarcă un clip scurt (ideal vertical, tip TikTok sau Instagram) care evidențiază avantajele locuinței.
-                Clipurile video cresc șansele de vânzare cu până la 70%!
+                Ideal scurt, vertical.
               </Typography>
             </Box>
 
@@ -1867,13 +1638,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               onChange={handleVideoChange}
             />
 
-            {/* ---------- NEW: Reorderable video list ---------- */}
+            {/* Reorderable video list */}
             <PreviewContainer>
               {videoItems.map((item, index) => {
                 const src = item.url || URL.createObjectURL(item.file!);
                 return (
                   <PreviewItem
-                    key={index}
+                    key={`${item.url ?? "v"}-${index}`}
                     draggable
                     onDragStart={() => onVideoDragStart(index)}
                     onDragOver={onVideoDragOver}
@@ -1884,16 +1655,10 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                     <Controls>
                       {videoItems.length > 1 && (
                         <>
-                          <button
-                            aria-label="Mută la stânga"
-                            onClick={(e) => { e.stopPropagation(); moveVideoLeft(index); }}
-                          >
+                          <button aria-label="Mută la stânga" onClick={(e) => { e.stopPropagation(); moveVideoLeft(index); }}>
                             ◀︎
                           </button>
-                          <button
-                            aria-label="Mută la dreapta"
-                            onClick={(e) => { e.stopPropagation(); moveVideoRight(index); }}
-                          >
+                          <button aria-label="Mută la dreapta" onClick={(e) => { e.stopPropagation(); moveVideoRight(index); }}>
                             ▶︎
                           </button>
                         </>
@@ -1912,8 +1677,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
             )}
           </InputContainer>
 
-          {/* Submit Button */}
-          <PrimaryButton text={isEdit ? "Actualizează Anunțul" : "Creează Anunțul"} onClick={() => onSubmit()} sx={{ marginTop: "20px" }} />
+          {/* Submit */}
+          <PrimaryButton
+            text={isEdit ? "Actualizează Anunțul" : "Creează Anunțul"}
+            onClick={() => onSubmit()}
+            sx={{ marginTop: "20px" }}
+          />
         </>
       )}
     </Container>
