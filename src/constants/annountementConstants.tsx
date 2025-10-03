@@ -55,9 +55,30 @@ export const roomOptions = [
   },
   {
     id: 5,
-    value: "5+",
+    value: "5",
+  },
+  {
+    id: 6,
+    value: "6",
+  },
+  {
+    id: 7,
+    value: "7",
+  },
+  {
+    id: 8,
+    value: "8",
+  },
+  {
+    id: 9,
+    value: "9",
+  },
+  {
+    id: 10,
+    value: "10",
   },
 ];
+
 
 export const apartamentPartitionings = [
   {
