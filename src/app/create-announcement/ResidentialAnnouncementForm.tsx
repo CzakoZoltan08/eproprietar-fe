@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import React, { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { propertyTypesResidential, serviceTypes } from "@/constants/annountementConstants";
+import { useParams, usePathname } from "next/navigation";
 
 import AutocompleteCities from "@/common/autocomplete/AutocompleteCities";
 import AutocompleteCounties from "@/common/autocomplete/AutocompleteCounties";
@@ -36,6 +37,17 @@ const reorder = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
   return result;
+};
+
+const fileFromUrl = async (url: string, namePrefix: string) => {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const extFromType = (blob.type.split("/")[1] || "").split(";")[0];
+  const extFromUrl = (url.split(".").pop() || "").split("?")[0];
+  const ext = extFromType || extFromUrl || "bin";
+  return new File([blob], `${namePrefix}-${Date.now()}.${ext}`, {
+    type: blob.type || "application/octet-stream",
+  });
 };
 
 const Styled = {
@@ -171,15 +183,19 @@ const INITIAL_DATA = {
 const ResidentialAnnouncementForm = () => {
   const { userStore, announcementStore, pricingStore } = useStore();
   const { user, updateUser, fetchAllUsers, users, getCurrentUser } = userStore;
-  const role = user?.role ?? "";
-  const canPublishImmediately = role === "admin" || role === "editor";
   const {
     createAnnouncement,
     updateAnnouncement,
     createImageOrVideo,
     createPaymentSession,
     sendAnnouncementCreationMail,
+    getAnnouncementById,
+    deleteAnnouncement,
+    currentAnnouncement,
   } = announcementStore;
+
+  const role = user?.role ?? "";
+  const canPublishImmediately = role === "admin" || role === "editor";
 
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [flyerError, setFlyerError] = useState<string | null>(null);
@@ -196,15 +212,94 @@ const ResidentialAnnouncementForm = () => {
   const [dragImageIndex, setDragImageIndex] = useState<number | null>(null);
   const [dragVideoIndex, setDragVideoIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    setFormData((prev) => ({ ...prev, announcementType: "Apartament" }));
-  }, []);
+  const pathname = usePathname();
+  const params = useParams();
+  const isEdit = !!params?.id && pathname.includes("/edit-announcement");
+
+  /* ---------- init ---------- */
+  useEffect(() => { setFormData((prev) => ({ ...prev, announcementType: "Apartament" })); }, []);
   useEffect(() => { if (!user?.id) getCurrentUser(); }, [user?.id, getCurrentUser]);
   useEffect(() => {
     if (user?.id) pricingStore.getAnnouncementPackages(user.id);
     if (user?.role === "admin") fetchAllUsers();
   }, [user?.id, user?.role, fetchAllUsers, pricingStore]);
 
+  /* ---------- load edit data ---------- */
+  useEffect(() => {
+    const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string | undefined);
+    if (isEdit && id) getAnnouncementById(id);
+  }, [isEdit, params?.id, getAnnouncementById]);
+
+  useEffect(() => {
+    (async () => {
+      if (!isEdit || !currentAnnouncement) return;
+
+      // Base fields
+      const ca = currentAnnouncement as any;
+      const amenitiesStr = Array.isArray(ca.amenities) ? ca.amenities.join(", ") : (ca.amenities || "");
+
+      // Convert media URLs -> Files so UI + upload stays unified
+      const imageUrls: string[] = (ca.images || []).map((i: any) => i.original).filter(Boolean);
+      const videoUrls: string[] = (ca.videos || []).map((v: any) => v.original).filter(Boolean);
+      const logoUrl: string | undefined = ca.logoUrl || (ca.logo?.original ?? "");
+      const flyerUrl: string | undefined = ca.flyerUrl || "";
+      const flyerMime: string | undefined = ca.flyerMimeType || "";
+
+      let images: File[] = [];
+      let videos: File[] = [];
+      let logo: File | null = null;
+      let flyer: File | null = null;
+
+      try {
+        images = await Promise.all(imageUrls.map((u, idx) => fileFromUrl(u, `image-${idx + 1}`)));
+      } catch (e) { console.warn("Failed to import images from URLs", e); }
+
+      try {
+        videos = await Promise.all(videoUrls.map((u, idx) => fileFromUrl(u, `video-${idx + 1}`)));
+      } catch (e) { console.warn("Failed to import videos from URLs", e); }
+
+      try {
+        if (logoUrl) logo = await fileFromUrl(logoUrl, "logo");
+      } catch (e) { console.warn("Failed to import logo from URL", e); }
+
+      try {
+        if (flyerUrl) flyer = await fileFromUrl(flyerUrl, "flyer");
+      } catch (e) { console.warn("Failed to import flyer from URL", e); }
+
+      setFormData((prev) => ({
+        ...prev,
+        providerType: "ensemble",
+        announcementType: (ca.announcementType || "apartament").charAt(0).toUpperCase() + (ca.announcementType || "apartament").slice(1),
+        title: ca.title || "",
+        city: ca.city || "",
+        county: ca.county || "",
+        street: ca.street || "",
+        description: ca.description || "",
+        stage: ca.stage || "",
+        endDate: ca.endDate || "",
+        logo,
+        images,
+        videos,
+        apartmentTypeOther: ca.apartmentTypeOther || "",
+        neighborhood: ca.neighborhood || "",
+        constructionStart: ca.constructionStart || "",
+        floorsCount: ca.floorsCount?.toString?.() || "",
+        builtSurface: ca.builtSurface?.toString?.() || "",
+        landSurface: ca.landSurface?.toString?.() || "",
+        amenities: amenitiesStr,
+        developerSite: ca.developerSite || "",
+        frameType: ca.frameType || "",
+        flyer,
+        flyerUrl: flyerUrl || "",
+        flyerMimeType: flyerMime || "",
+        userId: ca.user?.id || "",
+      }));
+
+      setContactPhone(ca.phoneContact || user?.phoneNumber || "");
+    })();
+  }, [isEdit, currentAnnouncement, user?.phoneNumber]);
+
+  /* ---------- handlers ---------- */
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -227,7 +322,11 @@ const ResidentialAnnouncementForm = () => {
   const handleConstructionStartChange = (date: Date | null) => {
     const isoMonthStart = date ? new Date(date.getFullYear(), date.getMonth(), 1).toISOString() : "";
     setFormData((prev) => ({ ...prev, constructionStart: isoMonthStart }));
-    const error = generalValidation(residentialAnnouncementValidationSchema, { ...formData, constructionStart: isoMonthStart }, "constructionStart");
+    const error = generalValidation(
+      residentialAnnouncementValidationSchema,
+      { ...formData, constructionStart: isoMonthStart },
+      "constructionStart"
+    );
     setFormErrors((prev) => ({ ...prev, constructionStart: error ? String(error) : "" } as any));
   };
 
@@ -241,6 +340,7 @@ const ResidentialAnnouncementForm = () => {
     const incImg = () => setImageUploadProgress((p) => ({ ...p, uploaded: p.uploaded + 1 }));
     const incVid = () => setVideoUploadProgress((p) => ({ ...p, uploaded: p.uploaded + 1 }));
 
+    // Thumbnail = first image
     if (formData.images.length > 0) {
       const fd = new FormData();
       fd.append("file", formData.images[0]);
@@ -249,6 +349,8 @@ const ResidentialAnnouncementForm = () => {
       if (resp?.optimized_url) await updateAnnouncement(announcementId, { imageUrl: resp.optimized_url });
       incImg();
     }
+
+    // Rest of images
     for (const img of formData.images.slice(1)) {
       const fd = new FormData();
       fd.append("file", img);
@@ -256,6 +358,8 @@ const ResidentialAnnouncementForm = () => {
       await createImageOrVideo(fd, announcementId);
       incImg();
     }
+
+    // Logo (file or import from existing URL if needed — already converted in edit loader)
     if (formData.logo) {
       const fd = new FormData();
       fd.append("file", formData.logo);
@@ -264,6 +368,8 @@ const ResidentialAnnouncementForm = () => {
       if (resp?.optimized_url) await updateAnnouncement(announcementId, { logoUrl: resp.optimized_url });
       incImg();
     }
+
+    // Videos
     for (const vid of formData.videos) {
       const fd = new FormData();
       fd.append("file", vid);
@@ -271,6 +377,8 @@ const ResidentialAnnouncementForm = () => {
       await createImageOrVideo(fd, announcementId);
       incVid();
     }
+
+    // Flyer (file or existing URL converted in edit loader)
     if (formData.flyer) {
       const fd = new FormData();
       fd.append("file", formData.flyer);
@@ -280,9 +388,11 @@ const ResidentialAnnouncementForm = () => {
       const mime = resp?.mimeType || formData.flyer.type;
       if (url) await updateAnnouncement(announcementId, { flyerUrl: url, flyerMimeType: mime });
     }
-    await new Promise((r) => setTimeout(r, 1000));
+
+    await new Promise((r) => setTimeout(r, 300));
   };
 
+  /* ---------- submit (create or edit-as-recreate) ---------- */
   const handleSubmit = async () => {
     setIsSubmitted(true);
     if (!contactPhone || !formData.county || !formData.city || !formData.announcementType || !formData.title) {
@@ -310,8 +420,7 @@ const ResidentialAnnouncementForm = () => {
         await updateUser(selectedUser.id, { phoneNumber: contactPhone });
       }
 
-      const isAdminOrEditor = canPublishImmediately;
-      const payload = {
+      const basePayload: any = {
         ...cleanFormData,
         ...(formData.apartmentTypeOther ? { apartmentTypeOther: formData.apartmentTypeOther } : {}),
         phoneContact: contactPhone,
@@ -321,7 +430,7 @@ const ResidentialAnnouncementForm = () => {
         rooms: 0,
         surface: 0,
         price: 0,
-        status: isAdminOrEditor ? "active" : "pending",
+        status: "active", // active for recreate
         user: { id: selectedUser.id, firebaseId: selectedUser.firebaseId ?? "" },
         streetFront: false,
         heightRegime: [] as string[],
@@ -347,22 +456,68 @@ const ResidentialAnnouncementForm = () => {
         flyerMimeType: formData.flyerMimeType || "",
       };
 
-      const newAnnouncement = await createAnnouncement(payload);
+      if (isEdit && currentAnnouncement?.id) {
+        // EDIT MODE: recreate
+        const oldId = currentAnnouncement.id;
+
+        const newAnnouncement = await createAnnouncement(basePayload);
+        await uploadMedia(newAnnouncement.id);
+
+        // Optional bookkeeping for admin/editor
+        try {
+          if (canPublishImmediately && pricingStore.freePlanId) {
+            await createPaymentSession({
+              orderId: newAnnouncement.id,
+              packageId: pricingStore.freePlanId,
+              amount: 0,
+              originalAmount: 0,
+              currency: "RON",
+              invoiceDetails: { name: "", address: "", city: "", country: "", email: "", isTaxPayer: false },
+              products: [],
+            });
+          }
+        } catch (e) {
+          console.warn("Free session not recorded:", e);
+        }
+
+        try {
+          await deleteAnnouncement(oldId);
+        } catch (e) {
+          console.warn("Failed to delete old announcement", e);
+        }
+
+        window.location.href = `/announcements/${newAnnouncement.id}`;
+        return;
+      }
+
+      // CREATE MODE (unchanged)
+      const newAnnouncement = await createAnnouncement({
+        ...basePayload,
+        status: canPublishImmediately ? "active" : "pending",
+      });
+
       localStorage.setItem("announcementRealId", newAnnouncement.id);
 
       await uploadMedia(newAnnouncement.id);
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 300));
 
-      if (isAdminOrEditor) {
-        await createPaymentSession({
-          orderId: newAnnouncement.id,
-          packageId: pricingStore.freePlanId ?? "",
-          amount: 0,
-          originalAmount: 0,
-          currency: "RON",
-          invoiceDetails: { name: "", address: "", city: "", country: "", email: "", isTaxPayer: false },
-          products: [],
-        });
+      if (canPublishImmediately) {
+        try {
+          if (pricingStore.freePlanId) {
+            await createPaymentSession({
+              orderId: newAnnouncement.id,
+              packageId: pricingStore.freePlanId ?? "",
+              amount: 0,
+              originalAmount: 0,
+              currency: "RON",
+              invoiceDetails: { name: "", address: "", city: "", country: "", email: "", isTaxPayer: false },
+              products: [],
+            });
+          }
+        } catch (e) {
+          console.warn("Free session not recorded:", e);
+        }
+
         const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!;
         const announcementUrl = `${frontendUrl}/announcements/${newAnnouncement.id}`;
         await sendAnnouncementCreationMail(selectedUser.firstName ?? "", selectedUser.email ?? "", announcementUrl);
@@ -371,7 +526,7 @@ const ResidentialAnnouncementForm = () => {
         window.location.href = `/payment-packages?announcementId=${newAnnouncement.id}&providerType=ensemble`;
       }
     } catch (err) {
-      console.error("Eroare la crearea anunțului:", err);
+      console.error("Eroare la salvarea anunțului:", err);
       setError("A apărut o problemă. Încearcă din nou.");
     } finally {
       setLoading(false);
@@ -458,12 +613,12 @@ const ResidentialAnnouncementForm = () => {
               )}
             </>
           ) : (
-            <Typography mt={2}>Se creează anunțul tău...</Typography>
+            <Typography mt={2}>{isEdit ? "Se actualizează anunțul..." : "Se creează anunțul tău..."}</Typography>
           )}
         </>
       ) : (
         <>
-          <Styled.Subtitle>Publică un ansamblu rezidențial</Styled.Subtitle>
+          <Styled.Subtitle>{isEdit ? "Editează ansamblul rezidențial" : "Publică un ansamblu rezidențial"}</Styled.Subtitle>
           {error && <Typography color="error" mb={2}>{error}</Typography>}
 
           {user?.role === "admin" && (
@@ -502,7 +657,11 @@ const ResidentialAnnouncementForm = () => {
               onChange={(e) => {
                 const value = e.target.value;
                 setContactPhone(value);
-                const phoneError = generalValidation(residentialAnnouncementValidationSchema, { ...formData, contactPhone: value }, "contactPhone");
+                const phoneError = generalValidation(
+                  residentialAnnouncementValidationSchema,
+                  { ...formData, contactPhone: value },
+                  "contactPhone"
+                );
                 setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : undefined }));
               }}
               required
@@ -621,7 +780,6 @@ const ResidentialAnnouncementForm = () => {
               sx={TEXTAREA_AUTOSIZE_SX}
             />
 
-
             {formData.announcementType?.toLowerCase() === "apartament" && (
               <TextField
                 label="Tipuri de apartamente (ex: garsonieră, o cameră, două camere, etc.)"
@@ -671,7 +829,7 @@ const ResidentialAnnouncementForm = () => {
               />
             </Box>
 
-            {/* MediaUploader with slots; no other previews below = no duplicates */}
+            {/* MediaUploader with slots; previews below */}
             <MediaUploader
               showPreview={false}
               logo={formData.logo}
@@ -684,105 +842,81 @@ const ResidentialAnnouncementForm = () => {
               setError={setError}
               imagesSlot={
                 formData.images.length > 0 ? (
-                  <>
-                    <Styled.PreviewContainer>
-                      {imagePreviews.map((src, index) => (
-                        <Styled.PreviewItem
-                          key={index}
-                          draggable
-                          onDragStart={() => onImageDragStart(index)}
-                          onDragOver={onImageDragOver}
-                          onDrop={() => onImageDrop(index)}
-                          title="Trage pentru a rearanja. Click pentru a elimina."
-                        >
-                          <Styled.PreviewImage
-                            src={src}
-                            alt={`img-${index}`}
-                            onClick={() =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                images: prev.images.filter((_, i) => i !== index),
-                              }))
-                            }
-                          />
-                          <Styled.Controls>
-                            {formData.images.length > 1 && (
-                              <>
-                                <button
-                                  aria-label="Mută la stânga"
-                                  onClick={(e) => { e.stopPropagation(); moveImageLeft(index); }}
-                                >
-                                  ◀︎
-                                </button>
-                                <button
-                                  aria-label="Mută la dreapta"
-                                  onClick={(e) => { e.stopPropagation(); moveImageRight(index); }}
-                                >
-                                  ▶︎
-                                </button>
-                              </>
-                            )}
-                            <span style={{ fontSize: 12, opacity: 0.8 }}>#{index + 1}</span>
-                          </Styled.Controls>
-                        </Styled.PreviewItem>
-                      ))}
-                    </Styled.PreviewContainer>
-                  </>
+                  <Styled.PreviewContainer>
+                    {imagePreviews.map((src, index) => (
+                      <Styled.PreviewItem
+                        key={index}
+                        draggable
+                        onDragStart={() => onImageDragStart(index)}
+                        onDragOver={onImageDragOver}
+                        onDrop={() => onImageDrop(index)}
+                        title="Trage pentru a rearanja. Click pentru a elimina."
+                      >
+                        <Styled.PreviewImage
+                          src={src}
+                          alt={`img-${index}`}
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              images: prev.images.filter((_, i) => i !== index),
+                            }))
+                          }
+                        />
+                        <Styled.Controls>
+                          {formData.images.length > 1 && (
+                            <>
+                              <button aria-label="Mută la stânga" onClick={(e) => { e.stopPropagation(); moveImageLeft(index); }}>◀︎</button>
+                              <button aria-label="Mută la dreapta" onClick={(e) => { e.stopPropagation(); moveImageRight(index); }}>▶︎</button>
+                            </>
+                          )}
+                          <span style={{ fontSize: 12, opacity: 0.8 }}>#{index + 1}</span>
+                        </Styled.Controls>
+                      </Styled.PreviewItem>
+                    ))}
+                  </Styled.PreviewContainer>
                 ) : null
               }
               videosSlot={
                 formData.videos.length > 0 ? (
-                  <>
-                    <Styled.PreviewContainer>
-                      {videoPreviews.map((src, index) => (
-                        <Styled.PreviewItem
-                          key={index}
-                          draggable
-                          onDragStart={() => onVideoDragStart(index)}
-                          onDragOver={onVideoDragOver}
-                          onDrop={() => onVideoDrop(index)}
-                          title="Trage pentru a rearanja. Click pentru a elimina."
-                        >
-                          <Styled.PreviewVideo
-                            src={src}
-                            controls
-                            onClick={() =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                videos: prev.videos.filter((_, i) => i !== index),
-                              }))
-                            }
-                          />
-                          <Styled.Controls>
-                            {formData.videos.length > 1 && (
-                              <>
-                                <button
-                                  aria-label="Mută la stânga"
-                                  onClick={(e) => { e.stopPropagation(); moveVideoLeft(index); }}
-                                >
-                                  ◀︎
-                                </button>
-                                <button
-                                  aria-label="Mută la dreapta"
-                                  onClick={(e) => { e.stopPropagation(); moveVideoRight(index); }}
-                                >
-                                  ▶︎
-                                </button>
-                              </>
-                            )}
-                            <span style={{ fontSize: 12, opacity: 0.8 }}>#{index + 1}</span>
-                          </Styled.Controls>
-                        </Styled.PreviewItem>
-                      ))}
-                    </Styled.PreviewContainer>
-                  </>
+                  <Styled.PreviewContainer>
+                    {videoPreviews.map((src, index) => (
+                      <Styled.PreviewItem
+                        key={index}
+                        draggable
+                        onDragStart={() => onVideoDragStart(index)}
+                        onDragOver={onVideoDragOver}
+                        onDrop={() => onVideoDrop(index)}
+                        title="Trage pentru a rearanja. Click pentru a elimina."
+                      >
+                        <Styled.PreviewVideo
+                          src={src}
+                          controls
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              videos: prev.videos.filter((_, i) => i !== index),
+                            }))
+                          }
+                        />
+                        <Styled.Controls>
+                          {formData.videos.length > 1 && (
+                            <>
+                              <button aria-label="Mută la stânga" onClick={(e) => { e.stopPropagation(); moveVideoLeft(index); }}>◀︎</button>
+                              <button aria-label="Mută la dreapta" onClick={(e) => { e.stopPropagation(); moveVideoRight(index); }}>▶︎</button>
+                            </>
+                          )}
+                          <span style={{ fontSize: 12, opacity: 0.8 }}>#{index + 1}</span>
+                        </Styled.Controls>
+                      </Styled.PreviewItem>
+                    ))}
+                  </Styled.PreviewContainer>
                 ) : null
               }
             />
           </Styled.FormBox>
 
           <Box mt={4}>
-            <PrimaryButton text="Creează anunțul" onClick={handleSubmit} />
+            <PrimaryButton text={isEdit ? "Actualizează anunțul" : "Creează anunțul"} onClick={handleSubmit} />
           </Box>
         </>
       )}
