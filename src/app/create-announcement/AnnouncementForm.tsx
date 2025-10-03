@@ -856,7 +856,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
         rooms: Number(data.rooms),
         baths: Number(data.baths),
         numberOfKitchens: Number(data.numberOfKitchens),
-        floor: Number(data.floor),
+        floor: data.floor,
         surface: Number(data.surface),
         landSurface: Number(data.landSurface),
         streetFrontLength: Number(data.streetFrontLength) ?? 0,
