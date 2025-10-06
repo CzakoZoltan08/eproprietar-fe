@@ -1,16 +1,10 @@
 import {
-  Auth,
-  GoogleAuthProvider,
   browserLocalPersistence,
+  browserSessionPersistence,
   getAuth,
   setPersistence,
 } from "firebase/auth";
-import {
-  FirebaseApp,
-  getApp,
-  getApps,
-  initializeApp,
-} from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -19,17 +13,17 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!,
 };
 
-// Initialize Firebase app once
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 
-// Auth & provider
-export const auth: Auth = getAuth(app);
-export const googleAuth = new GoogleAuthProvider();
-
-// ✅ Create a function to ensure persistence is set
+// ✅ Exported function you can await anywhere (e.g., in UserStore)
 export async function initAuthPersistence() {
-  await setPersistence(auth, browserLocalPersistence);
+  if (typeof window === "undefined") return;
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch {
+    await setPersistence(auth, browserSessionPersistence);
+  }
 }
