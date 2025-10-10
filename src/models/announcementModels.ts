@@ -37,6 +37,7 @@ export interface PropertyAnnouncementModel {
   logoUrl?: string;
   developerName?: string;
   phoneContact?: string;
+  phoneContactName?: string;
   sketchUrl?: string;
   createdAt: string;
   isPromoted?: boolean;
@@ -99,6 +100,7 @@ export class CreateAnnouncementDto {
   status: string = 'pending';
   logoUrl?: string;
   phoneContact: string | undefined;
+  phoneContactName: string | undefined;
   sketchUrl?: string;
   apartmentTypeOther?: string = '';
   streetFront: boolean = false;

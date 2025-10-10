@@ -20,13 +20,11 @@ import styled from "styled-components";
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
-// --- page-only wrapper to expand gallery full width ---
 const WideGalleryWrapper = styled.div`
   width: 100%;
   max-width: 1300px;
   margin: 0 auto;
 
-  /* Override the internal width cap ONLY on this page */
   .gallery-container {
     max-width: 100% !important;
     width: 100% !important;
@@ -55,23 +53,14 @@ const EnsembleAnnouncementDetailsPage = () => {
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   useEffect(() => {
-    if (id) {
-      getAnnouncementById(id);
-    }
+    if (id) getAnnouncementById(id);
   }, [id, getAnnouncementById]);
 
-  if (!currentAnnouncement?.id) {
-    return (
-      <Box sx={{ p: 1.5, display: "flex", justifyContent: "center" }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
-
   const announcement = currentAnnouncement;
+  const galleryScopeRef = useRef<HTMLDivElement | null>(null);
 
-  // Build media: VIDEOS first, then IMAGES, then FLOORPLAN
   const media: MediaItem[] = useMemo(() => {
+    if (!announcement) return [];
     const images = Array.isArray(announcement.images) ? announcement.images : [];
     const videos = Array.isArray(announcement.videos) ? announcement.videos : [];
     const fallback = announcement.imageUrl ? [{ original: announcement.imageUrl }] : [];
@@ -89,40 +78,59 @@ const EnsembleAnnouncementDetailsPage = () => {
     ];
   }, [announcement]);
 
-  const amenities: string[] = Array.isArray(announcement.amenities)
-    ? announcement.amenities.filter(Boolean)
-    : [];
+  const hasVideos = useMemo(() => {
+    if (!announcement) return false;
+    return Array.isArray(announcement.videos) && announcement.videos.length > 0;
+  }, [announcement]);
 
-  // --- Autoplay first video on this page only ---
-  const galleryScopeRef = useRef<HTMLDivElement | null>(null);
+  const amenities: string[] = useMemo(() => {
+    if (!announcement) return [];
+    return Array.isArray(announcement.amenities) ? announcement.amenities.filter(Boolean) : [];
+  }, [announcement]);
+
+  // ✅ Autoplay with sound if there are videos
   useEffect(() => {
+    if (!hasVideos) return;
+
     const scope = galleryScopeRef.current;
     if (!scope) return;
 
-    // small delay to ensure children are mounted
     const t = setTimeout(() => {
       const firstVideo = scope.querySelector("video") as HTMLVideoElement | null;
       if (!firstVideo) return;
+
       try {
-        firstVideo.muted = true;
+        // Try to autoplay with sound
+        firstVideo.muted = false;
+        firstVideo.volume = 1.0;
+        firstVideo.autoplay = true;
         // @ts-ignore
         firstVideo.playsInline = true;
         firstVideo.setAttribute("playsinline", "true");
-        firstVideo.autoplay = true;
-        firstVideo.play().catch(() => {
-          /* autoplay might be blocked; fail silently */
+        firstVideo.play().catch((err) => {
+          console.warn("Autoplay with sound blocked:", err);
         });
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.warn("Video autoplay failed:", err);
       }
     }, 60);
 
     return () => clearTimeout(t);
-  }, [media]);
+  }, [hasVideos, media]);
+
+  const isLoading = !currentAnnouncement?.id;
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 1.5, display: "flex", justifyContent: "center" }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  const ann = announcement!;
 
   return (
     <Box sx={{ px: 1.5, py: 2, maxWidth: "1300px", mx: "auto" }}>
-      {/* Full-width media only on this page */}
       <Box sx={{ mb: 1 }} ref={galleryScopeRef}>
         {media.length > 0 ? (
           <WideGalleryWrapper>
@@ -156,10 +164,10 @@ const EnsembleAnnouncementDetailsPage = () => {
             fontSize: "1.2rem",
           }}
         >
-          {announcement.title}
+          {ann.title}
         </Typography>
         <Typography variant="subtitle2" sx={{ mt: 0.5, color: "#555" }}>
-          {[announcement.city, announcement.county].filter(Boolean).join(", ")}
+          {[ann.city, ann.county].filter(Boolean).join(", ")}
         </Typography>
       </Box>
 
@@ -173,27 +181,27 @@ const EnsembleAnnouncementDetailsPage = () => {
 
             {(() => {
               const details: { label: string; value?: React.ReactNode }[] = [
-                announcement.city && { label: "Oraș", value: announcement.city },
-                announcement.county && { label: "Județ", value: announcement.county },
-                announcement.street && { label: "Stradă", value: announcement.street },
-                announcement.neighborhood && { label: "Cartier/Zonă", value: announcement.neighborhood },
-                announcement.announcementType && { label: "Tip", value: announcement.announcementType },
-                hasNumber(announcement.rooms) && { label: "Camere", value: announcement.rooms },
-                hasNumber(announcement.surface) && { label: "Suprafață utilă", value: `${announcement.surface} mp` },
-                hasNumber(announcement.builtSurface) && { label: "Suprafață construită", value: `${announcement.builtSurface} mp` },
-                hasNumber(announcement.landSurface) && { label: "Suprafață teren", value: `${announcement.landSurface} mp` },
-                hasNumber(announcement.floorsCount) && { label: "Nr. de etaje", value: announcement.floorsCount },
-                hasNumber(announcement.price) && {
+                ann.city && { label: "Oraș", value: ann.city },
+                ann.county && { label: "Județ", value: ann.county },
+                ann.street && { label: "Stradă", value: ann.street },
+                ann.neighborhood && { label: "Cartier/Zonă", value: ann.neighborhood },
+                ann.announcementType && { label: "Tip", value: ann.announcementType },
+                hasNumber(ann.rooms) && { label: "Camere", value: ann.rooms },
+                hasNumber(ann.surface) && { label: "Suprafață utilă", value: `${ann.surface} mp` },
+                hasNumber(ann.builtSurface) && { label: "Suprafață construită", value: `${ann.builtSurface} mp` },
+                hasNumber(ann.landSurface) && { label: "Suprafață teren", value: `${ann.landSurface} mp` },
+                hasNumber(ann.floorsCount) && { label: "Nr. de etaje", value: ann.floorsCount },
+                hasNumber(ann.price) && {
                   label: "Preț",
-                  value: `${announcement.price} ${announcement.currency || "EUR"}`,
+                  value: `${ann.price} ${ann.currency || "EUR"}`,
                 },
-                announcement.stage && { label: "Stadiu", value: announcement.stage },
-                announcement.constructionStart && {
+                ann.stage && { label: "Stadiu", value: ann.stage },
+                ann.constructionStart && {
                   label: "Începerea construcției",
-                  value: formatMonthYear(announcement.constructionStart),
+                  value: formatMonthYear(ann.constructionStart),
                 },
-                announcement.endDate && { label: "Finalizare", value: formatMonthYear(announcement.endDate) },
-                announcement.frameType && { label: "Tip chenar (prezentare)", value: announcement.frameType },
+                ann.endDate && { label: "Finalizare", value: formatMonthYear(ann.endDate) },
+                ann.frameType && { label: "Tip chenar (prezentare)", value: ann.frameType },
               ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 
               return (
@@ -230,18 +238,18 @@ const EnsembleAnnouncementDetailsPage = () => {
             </Typography>
             <Divider sx={{ mb: 1 }} />
             <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-              {announcement.description || "Fără descriere disponibilă."}
+              {ann.description || "Fără descriere disponibilă."}
             </Typography>
           </Paper>
 
-          {announcement.apartmentTypeOther && (
+          {ann.apartmentTypeOther && (
             <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1 }}>
               <Typography variant="subtitle1" fontWeight={600} mb={0.5}>
                 Tipuri de apartamente
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-                {announcement.apartmentTypeOther}
+                {ann.apartmentTypeOther}
               </Typography>
             </Paper>
           )}
@@ -257,19 +265,19 @@ const EnsembleAnnouncementDetailsPage = () => {
               gap: 1,
             }}
           >
-            {announcement.flyerUrl && (
+            {ann.flyerUrl && (
               <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, width: "100%" }}>
                 <Divider sx={{ mb: 1 }} />
-                <FlyerViewer url={announcement.flyerUrl} mimeType={announcement.flyerMimeType} />
+                <FlyerViewer url={ann.flyerUrl} mimeType={ann.flyerMimeType} />
               </Paper>
             )}
 
-            {(announcement.logoUrl || announcement.phoneContact) && (
+            {(ann.logoUrl || ann.phoneContact) && (
               <Paper elevation={1} sx={{ p: 1.5, borderRadius: 1, width: "100%", justifyContent: "center" }}>
                 <DeveloperContactCard
-                  name={announcement.developerName || "Dezvoltator"}
-                  phone={announcement.phoneContact || "N/A"}
-                  logoUrl={announcement.logoUrl || "/default-logo.png"}
+                  name={ann.phoneContactName || "Contact"}
+                  phone={ann.phoneContact || "N/A"}
+                  logoUrl={ann.logoUrl || "/default-logo.png"}
                 />
               </Paper>
             )}
@@ -286,11 +294,11 @@ const EnsembleAnnouncementDetailsPage = () => {
           justifyContent: { xs: "center", md: "flex-start" },
         }}
       >
-        {announcement.city && <Chip label={announcement.city} size="small" />}
-        {announcement.announcementType && <Chip label={announcement.announcementType} size="small" />}
-        {announcement.neighborhood && <Chip label={announcement.neighborhood} size="small" />}
-        {announcement.stage && <Chip label={`Stadiu: ${announcement.stage}`} size="small" />}
-        {announcement.endDate && <Chip label={`Finalizare: ${formatMonthYear(announcement.endDate)}`} size="small" />}
+        {ann.city && <Chip label={ann.city} size="small" />}
+        {ann.announcementType && <Chip label={ann.announcementType} size="small" />}
+        {ann.neighborhood && <Chip label={ann.neighborhood} size="small" />}
+        {ann.stage && <Chip label={`Stadiu: ${ann.stage}`} size="small" />}
+        {ann.endDate && <Chip label={`Finalizare: ${formatMonthYear(ann.endDate)}`} size="small" />}
       </Box>
     </Box>
   );

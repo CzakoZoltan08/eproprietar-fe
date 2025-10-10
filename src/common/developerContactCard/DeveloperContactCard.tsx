@@ -114,6 +114,13 @@ const PhoneButton = styled.a<{ $compact?: boolean }>`
   }
 `;
 
+const NameText = styled.p`
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+`;
+
 export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
   name,
   phone,
@@ -132,6 +139,7 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
         />
       </LogoWrapper>
 
+      {name && <NameText>{name}</NameText>} {/* ✅ SHOW CONTACT NAME */}
 
       <PhoneButton $compact={compact} href={`tel:${phone}`}>
         {phone}

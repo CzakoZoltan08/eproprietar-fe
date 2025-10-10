@@ -396,6 +396,7 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
   const isApartment = formData.announcementType === "Apartament";
 
   const [contactPhone, setContactPhone] = useState<string>("");
+  const [contactName, setContactName] = useState<string>("");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -464,18 +465,12 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
     }
   }, []);
 
-  // Prefill contact phone from announcement (edit) or from user (create)
   useEffect(() => {
-    if (isEdit && announcementStore.currentAnnouncement) {
-      const phone =
-        announcementStore.currentAnnouncement.phoneContact ||
-        userStore.user?.phoneNumber ||
-        "";
-      setContactPhone(phone);
-    } else if (!isEdit && userStore.user?.phoneNumber) {
-      setContactPhone(userStore.user.phoneNumber);
+  if (isEdit && announcementStore.currentAnnouncement) {
+      setContactPhone(announcementStore.currentAnnouncement.phoneContact ?? "");
+      setContactName(announcementStore.currentAnnouncement.phoneContactName ?? "");
     }
-  }, [isEdit, announcementStore.currentAnnouncement, userStore.user]);
+  }, [isEdit, announcementStore.currentAnnouncement]);
 
   // Load current announcement for editing
   useEffect(() => {
@@ -811,6 +806,11 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
       return;
     }
 
+    if (!contactName) {
+      setError("Numele persoanei de contact este obligatoriu.");
+      return;
+    }
+
     if (!contactPhone) {
       setError("Numărul de telefon este obligatoriu.");
       return;
@@ -866,17 +866,13 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
           data.parkingCount !== undefined && data.parkingCount !== null ? Number(data.parkingCount) : undefined,
         status: "active", // always active on edit-recreate
         phoneContact: contactPhone,
+        phoneContactName: contactName,
         user: { id: selectedUser.id as string, firebaseId: selectedUser.firebaseId ?? "" },
         deleteMedia: false,
       };
 
       // Update user's phone if changed
       const normalizePhone = (p: string) => p.replace(/^\+?4/, "").replace(/\s/g, "");
-      if (normalizePhone(contactPhone) !== normalizePhone(userStore.user?.phoneNumber || "")) {
-        if (userStore.user && typeof userStore.user.id === "string") {
-          await userStore.updateUser(userStore.user.id, { phoneNumber: contactPhone });
-        }
-      }
 
       if (isEdit && announcementStore.currentAnnouncement?.id) {
         // ---------- EDIT MODE: recreate ----------
@@ -1155,6 +1151,18 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
                 sx={{ "& .MuiInputBase-inputMultiline": { resize: "vertical", overflow: "auto" } }}
               />
             </Box>
+
+            {/* Contact Name */}
+            <TextField
+              label="Nume persoană contact"
+              name="contactName"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              fullWidth
+              required
+              error={isSubmitted && !contactName}
+              helperText={isSubmitted && !contactName ? "Acest câmp este obligatoriu" : ""}
+            />
 
             {/* Phone Number */}
             <PhoneInputField

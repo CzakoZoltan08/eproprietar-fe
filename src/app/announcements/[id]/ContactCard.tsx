@@ -29,25 +29,41 @@ const ContactCardComponent: React.FC = () => {
     announcementStore: { currentAnnouncement },
   } = useStore();
 
-  if (!currentAnnouncement || !currentAnnouncement.user) return null;
+  if (!currentAnnouncement) return null;
 
-  const { firstName, lastName, phoneNumber } = currentAnnouncement.user;
+  const contactName =
+    currentAnnouncement.phoneContactName ||
+    // fallback (rare) – show user's name if contact name missing
+    `${currentAnnouncement.user?.firstName ?? ""} ${currentAnnouncement.user?.lastName ?? ""}`.trim() ||
+    "Contact";
+
+  const contactPhone = currentAnnouncement.phoneContact || currentAnnouncement.user?.phoneNumber || "";
+
+  const providerLabel =
+    currentAnnouncement.providerType === "owner"
+      ? ProviderType.OWNER
+      : currentAnnouncement.providerType === "agency"
+      ? ProviderType.AGENCY
+      : ProviderType.ENSEMBLE;
+
+  const handleCall = () => {
+    if (contactPhone) {
+      // strip spaces just in case
+      const tel = contactPhone.toString().replace(/\s+/g, "");
+      window.location.href = `tel:${tel}`;
+    }
+  };
 
   return (
     <TitleCard $alignItems="center">
       <StyledPersonIcon />
-      <TextGrayLabel>
-        {currentAnnouncement.providerType === "owner"
-          ? ProviderType.OWNER
-          : currentAnnouncement.providerType === "agency"
-          ? ProviderType.AGENCY
-          : ProviderType.ENSEMBLE}
-      </TextGrayLabel>
-      <Title>{`${firstName} ${lastName}`}</Title>
+      <TextGrayLabel>{providerLabel}</TextGrayLabel>
+      <Title>{contactName}</Title>
       <StyledPrimaryButton
         icon={ButtonIcon.PHONE}
-        text={phoneNumber ? phoneNumber.toString() : "N/A"}
-        onClick={() => {}}
+        text={contactPhone ? contactPhone.toString() : "N/A"}
+        onClick={handleCall}
+        disabled={!contactPhone}
       />
     </TitleCard>
   );

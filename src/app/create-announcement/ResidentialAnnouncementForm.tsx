@@ -199,11 +199,12 @@ const ResidentialAnnouncementForm = () => {
 
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [flyerError, setFlyerError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string }>({
+  const [formErrors, setFormErrors] = useState<typeof INITIAL_DATA & { contactPhone?: string; contactName?: string }>({
     ...INITIAL_DATA,
   });
   const [loading, setLoading] = useState(false);
-  const [contactPhone, setContactPhone] = useState(user?.phoneNumber || "");
+  const [contactName, setContactName] = useState<string>("");
+  const [contactPhone, setContactPhone] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [imageUploadProgress, setImageUploadProgress] = useState({ uploaded: 0, total: 0 });
   const [videoUploadProgress, setVideoUploadProgress] = useState({ uploaded: 0, total: 0 });
@@ -295,7 +296,8 @@ const ResidentialAnnouncementForm = () => {
         userId: ca.user?.id || "",
       }));
 
-      setContactPhone(ca.phoneContact || user?.phoneNumber || "");
+      setContactPhone(ca.phoneContact || "");
+      setContactName(ca.phoneContactName || "");   // ✅ NEW
     })();
   }, [isEdit, currentAnnouncement, user?.phoneNumber]);
 
@@ -395,8 +397,10 @@ const ResidentialAnnouncementForm = () => {
   /* ---------- submit (create or edit-as-recreate) ---------- */
   const handleSubmit = async () => {
     setIsSubmitted(true);
-    if (!contactPhone || !formData.county || !formData.city || !formData.announcementType || !formData.title) {
+    if (!contactPhone || !contactPhone || !formData.county || !formData.city || !formData.announcementType || !formData.title) {
       setError("Te rugăm să completezi toate câmpurile obligatorii.");
+      if (!contactName) setFormErrors((p) => ({ ...p, contactName: "Acest câmp este obligatoriu" }));
+      if (!contactPhone) setFormErrors((p) => ({ ...p, contactPhone: "Acest câmp este obligatoriu" }));
       return;
     }
 
@@ -416,14 +420,11 @@ const ResidentialAnnouncementForm = () => {
       if (user?.role === "admin") selectedUser = users.find((u) => u.id === formData.userId) || user;
       if (!selectedUser?.id) throw new Error("Utilizator neautentificat sau nevalid.");
 
-      if (contactPhone && contactPhone !== (user?.phoneNumber || "")) {
-        await updateUser(selectedUser.id, { phoneNumber: contactPhone });
-      }
-
       const basePayload: any = {
         ...cleanFormData,
         ...(formData.apartmentTypeOther ? { apartmentTypeOther: formData.apartmentTypeOther } : {}),
         phoneContact: contactPhone,
+        phoneContactName: contactName,
         transactionType: serviceTypes[0],
         announcementType: formData.announcementType.toLowerCase(),
         providerType: "ensemble",
@@ -651,6 +652,22 @@ const ResidentialAnnouncementForm = () => {
             />
 
             <TextField
+              label="Nume persoană contact"
+              name="contactName"
+              value={contactName}
+              onChange={(e) => {
+                const v = e.target.value;
+                setContactName(v);
+                // optional single-field validation hook
+                setFormErrors((prev) => ({ ...prev, contactName: v ? "" : "Acest câmp este obligatoriu" }));
+              }}
+              required
+              error={!!formErrors.contactName || (isSubmitted && !contactName)}
+              helperText={formErrors.contactName || (isSubmitted && !contactName ? "Acest câmp este obligatoriu" : "")}
+              fullWidth
+            />
+
+            <TextField
               label="Telefon de contact"
               name="contactPhone"
               value={contactPhone}
@@ -662,11 +679,11 @@ const ResidentialAnnouncementForm = () => {
                   { ...formData, contactPhone: value },
                   "contactPhone"
                 );
-                setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : undefined }));
+                setFormErrors((prev) => ({ ...prev, contactPhone: typeof phoneError === "string" ? phoneError : "" }));
               }}
               required
-              error={isSubmitted && !contactPhone}
-              helperText={isSubmitted && !contactPhone ? "Acest câmp este obligatoriu" : ""}
+              error={!!formErrors.contactPhone || (isSubmitted && !contactPhone)}
+              helperText={formErrors.contactPhone || (isSubmitted && !contactPhone ? "Acest câmp este obligatoriu" : "")}
               fullWidth
             />
 
