@@ -314,7 +314,8 @@ const AnnouncementDetailPage: React.FC = () => {
       const firstVideo = root.querySelector("video") as HTMLVideoElement | null;
       if (firstVideo) {
         try {
-          firstVideo.muted = true;        // necesar pentru autoplay pe mobile/desktop
+          firstVideo.muted = false;        // necesar pentru autoplay pe mobile/desktop
+          firstVideo.volume = 1.0;
           // @ts-ignore
           firstVideo.playsInline = true;  // iOS Safari
           firstVideo.setAttribute("playsinline", "true");

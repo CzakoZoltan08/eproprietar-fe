@@ -20,13 +20,11 @@ import styled from "styled-components";
 import { useParams } from "next/navigation";
 import { useStore } from "@/hooks/useStore";
 
-// --- page-only wrapper to expand gallery full width ---
 const WideGalleryWrapper = styled.div`
   width: 100%;
   max-width: 1300px;
   margin: 0 auto;
 
-  /* Override the internal width cap ONLY on this page */
   .gallery-container {
     max-width: 100% !important;
     width: 100% !important;
@@ -55,17 +53,12 @@ const EnsembleAnnouncementDetailsPage = () => {
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   useEffect(() => {
-    if (id) {
-      getAnnouncementById(id);
-    }
+    if (id) getAnnouncementById(id);
   }, [id, getAnnouncementById]);
 
-  // ⚠️ Keep hooks above any conditional return
-  const announcement = currentAnnouncement; // may be undefined during load
-
+  const announcement = currentAnnouncement;
   const galleryScopeRef = useRef<HTMLDivElement | null>(null);
 
-  // Build media: VIDEOS first, then IMAGES, then FLOORPLAN
   const media: MediaItem[] = useMemo(() => {
     if (!announcement) return [];
     const images = Array.isArray(announcement.images) ? announcement.images : [];
@@ -85,7 +78,6 @@ const EnsembleAnnouncementDetailsPage = () => {
     ];
   }, [announcement]);
 
-  // Quick flag to know if we have any videos
   const hasVideos = useMemo(() => {
     if (!announcement) return false;
     return Array.isArray(announcement.videos) && announcement.videos.length > 0;
@@ -96,9 +88,9 @@ const EnsembleAnnouncementDetailsPage = () => {
     return Array.isArray(announcement.amenities) ? announcement.amenities.filter(Boolean) : [];
   }, [announcement]);
 
-  // Autoplay ONLY if there is at least one video
+  // ✅ Autoplay with sound if there are videos
   useEffect(() => {
-    if (!hasVideos) return; // ← no videos: skip autoplay entirely
+    if (!hasVideos) return;
 
     const scope = galleryScopeRef.current;
     if (!scope) return;
@@ -106,17 +98,20 @@ const EnsembleAnnouncementDetailsPage = () => {
     const t = setTimeout(() => {
       const firstVideo = scope.querySelector("video") as HTMLVideoElement | null;
       if (!firstVideo) return;
+
       try {
-        firstVideo.muted = true;
+        // Try to autoplay with sound
+        firstVideo.muted = false;
+        firstVideo.volume = 1.0;
+        firstVideo.autoplay = true;
         // @ts-ignore
         firstVideo.playsInline = true;
         firstVideo.setAttribute("playsinline", "true");
-        firstVideo.autoplay = true;
-        firstVideo.play().catch(() => {
-          /* autoplay might be blocked; fail silently */
+        firstVideo.play().catch((err) => {
+          console.warn("Autoplay with sound blocked:", err);
         });
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.warn("Video autoplay failed:", err);
       }
     }, 60);
 
@@ -132,12 +127,10 @@ const EnsembleAnnouncementDetailsPage = () => {
     );
   }
 
-  // From here on, announcement is defined
   const ann = announcement!;
 
   return (
     <Box sx={{ px: 1.5, py: 2, maxWidth: "1300px", mx: "auto" }}>
-      {/* Full-width media only on this page */}
       <Box sx={{ mb: 1 }} ref={galleryScopeRef}>
         {media.length > 0 ? (
           <WideGalleryWrapper>
