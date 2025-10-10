@@ -7,6 +7,7 @@ export interface UserModel {
   id?: string;
   favourites?: string[];
   role: string;
+  authProvider: string; // ✅ add this
 }
 
 export interface CreateUserModel {
