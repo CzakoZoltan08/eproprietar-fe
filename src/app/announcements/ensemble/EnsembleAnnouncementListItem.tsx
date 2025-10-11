@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Typography, useTheme } from "@mui/material";
+import React, { useCallback } from "react";
 
 import { Endpoints } from "@/constants/endpoints";
 import Image from "next/image";
@@ -12,15 +13,20 @@ const EnsembleAnnouncementListItem = ({ item }: { item: PropertyAnnouncementMode
   const router = useRouter();
   const theme = useTheme();
 
+  const goToDetails = useCallback(() => {
+    router.push(`${Endpoints.ENSEMBLE_ANNOUNCEMENTS}/${item.id}`);
+  }, [router, item.id]);
+
   return (
     <Box
       sx={{
         display: "flex",
-        justifyContent: "center", // centers the card horizontally
-        px: 2, // horizontal padding for mobile
+        justifyContent: "center",
+        px: 2,
       }}
     >
       <Box
+        onClick={goToDetails}
         sx={{
           display: "flex",
           flexDirection: { xs: "column", sm: "row" },
@@ -30,7 +36,13 @@ const EnsembleAnnouncementListItem = ({ item }: { item: PropertyAnnouncementMode
           marginBottom: "16px",
           boxShadow: { xs: 1, sm: 2 },
           width: "100%",
-          maxWidth: 800, // limit card width
+          maxWidth: 800,
+          cursor: "pointer",
+          transition: "transform 0.15s ease, box-shadow 0.15s ease",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: 3,
+          },
         }}
       >
         <Box
@@ -44,10 +56,11 @@ const EnsembleAnnouncementListItem = ({ item }: { item: PropertyAnnouncementMode
           <Image
             src={item.imageUrl || "https://eproprietar.ro/storage/2903/vand-camera-camin-1.jpg"}
             alt={item.title}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
           />
         </Box>
+
         <Box sx={{ padding: 2, flexGrow: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
             {item.title}
@@ -58,10 +71,16 @@ const EnsembleAnnouncementListItem = ({ item }: { item: PropertyAnnouncementMode
           <Typography variant="subtitle2" sx={{ fontStyle: "italic", mb: 2 }}>
             Contactați dezvoltatorul pentru detalii
           </Typography>
-          <PrimaryButton
-            text="Vezi detalii"
-            onClick={() => router.push(`${Endpoints.ENSEMBLE_ANNOUNCEMENTS}/${item.id}`)}
-          />
+
+          {/* Stop event propagation so the card click doesn't trigger when pressing the button */}
+          <Box
+            onClick={(e) => e.stopPropagation()}
+          >
+            <PrimaryButton
+              text="Vezi detalii"
+              onClick={goToDetails}
+            />
+          </Box>
         </Box>
       </Box>
     </Box>

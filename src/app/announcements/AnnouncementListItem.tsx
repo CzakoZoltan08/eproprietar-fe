@@ -136,6 +136,12 @@ const AnnouncementListItem = ({
     [router]
   );
 
+  // Optional: support a custom onSelect, else navigate
+  const handleCardClick = useCallback(() => {
+    if (onSelect) onSelect();
+    else goToItem(item.id);
+  }, [onSelect, goToItem, item.id]);
+
   // Favorite/unfavorite handler
   const handleFavourite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -179,8 +185,8 @@ const AnnouncementListItem = ({
 
   return (
     <AnnouncementCard
-      onClick={onSelect}
-      style={{ position: "relative", cursor: onSelect ? "pointer" : "default" }}
+      onClick={handleCardClick}
+      style={{ position: "relative", cursor: "pointer" }}
     >
       {item.isPromoted && <PromotedBadge>Promovat</PromotedBadge>}
       <IconButtonWrapper>
