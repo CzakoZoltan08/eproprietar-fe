@@ -1188,19 +1188,20 @@ const AnnouncementFormContent = ({ item }: { item: ProviderType }) => {
               helperText={isSubmitted && !formData.price ? "Acest câmp este obligatoriu" : ""}
             />
 
-            {/* Surface */}
-            <TextField
-              label="Suprafață (sqm)"
-              name="surface"
-              value={formData.surface}
-              onChange={handleInputChange}
-              type="number"
-              fullWidth
-              sx={{ marginBottom: "16px" }}
-              required
-              error={isSubmitted && !formData.surface}
-              helperText={isSubmitted && !formData.surface ? "Acest câmp este obligatoriu" : ""}
-            />
+            {formData.announcementType !== "Teren" && (
+              <TextField
+                label="Suprafață (mp)"
+                name="surface"
+                value={formData.surface}
+                onChange={handleInputChange}
+                type="number"
+                fullWidth
+                sx={{ marginBottom: "16px" }}
+                required
+                error={isSubmitted && !formData.surface}
+                helperText={isSubmitted && !formData.surface ? "Acest câmp este obligatoriu" : ""}
+              />
+            )}
 
             {/* Land Surface - only for houses */}
             {(formData.announcementType === "Casa" || formData.announcementType === "Case la tara") && (
