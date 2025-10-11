@@ -3,13 +3,14 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Close,
   Collections,
   Layers,
   Photo,
   VideoLibrary,
 } from "@mui/icons-material";
 import { Box, Dialog, IconButton, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import Slider from "react-slick";
 import styled from "styled-components";
@@ -118,11 +119,25 @@ const CategoryButton = styled(IconButton)<{ selected: boolean }>`
   }
 `;
 
+const CloseBtn = styled(IconButton)`
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20000;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+`;
+
 const PrevArrow = (props: any) => (
   <ArrowButton $left onClick={props.onClick}>
     <ArrowLeft />
   </ArrowButton>
 );
+
 const NextArrow = (props: any) => (
   <ArrowButton onClick={props.onClick}>
     <ArrowRight />
@@ -131,12 +146,14 @@ const NextArrow = (props: any) => (
 
 const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
   const [fullscreen, setFullscreen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0); // Global index in media[]
-  const [mainSlide, setMainSlide] = useState(0); // Filtered view index
-  const [fullscreenSlide, setFullscreenSlide] = useState(0); // Fullscreen slider index
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [mainSlide, setMainSlide] = useState(0);
+  const [fullscreenSlide, setFullscreenSlide] = useState(0);
   const [selectedType, setSelectedType] = useState<
     "all" | "image" | "video" | "floorplan"
   >("all");
+
+  const dialogRootRef = useRef<HTMLDivElement | null>(null);
 
   const hasImages = media.some((item) => item.type === "image");
   const hasVideos = media.some((item) => item.type === "video");
@@ -159,8 +176,20 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
     prevArrow: <PrevArrow />,
   };
 
+  const handleCloseFullscreen = () => {
+    const videos = dialogRootRef.current?.querySelectorAll("video") ?? [];
+    videos.forEach((v) => {
+      try {
+        v.pause();
+      } catch {}
+    });
+    setFullscreen(false);
+    setFullscreenSlide(0);
+  };
+
   return (
     <>
+      {/* Main Gallery */}
       <GalleryContainer className="gallery-container">
         <GalleryWrapper>
           <Slider
@@ -217,6 +246,7 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
           </Typography>
         </GalleryWrapper>
 
+        {/* Category buttons */}
         <CategoryRow>
           {hasImages && (
             <CategoryButton
@@ -264,15 +294,13 @@ const UnifiedMediaGallery: React.FC<Props> = ({ media }) => {
       </GalleryContainer>
 
       {/* Fullscreen Dialog */}
-      <Dialog
-        fullScreen
-        open={fullscreen}
-        onClose={() => {
-          setFullscreen(false);
-          setFullscreenSlide(0);
-        }}
-      >
+      <Dialog fullScreen open={fullscreen} onClose={handleCloseFullscreen}>
+        <CloseBtn aria-label="Închide" onClick={handleCloseFullscreen}>
+          <Close />
+        </CloseBtn>
+
         <Box
+          ref={dialogRootRef}
           width="100%"
           height="100%"
           display="flex"
