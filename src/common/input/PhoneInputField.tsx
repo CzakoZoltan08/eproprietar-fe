@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import HelperText from "@/common/error/HelperText";
 import InputLabel from "@mui/material/InputLabel";
-import PhoneInput from "react-phone-input-2";
-import { ROMANIAN_PHONE_REGEX } from "../../constants/regex/romanianPhoneRegex";
+import TextField from "@mui/material/TextField";
 import styled from "styled-components";
 
-type PhoneInputFieldProps = {
-  value: string;
+type PhoneTextFieldProps = {
+  value: string;                 // expected NATIONAL format: 07xxxxxxxx
   name?: string;
   onChange: (phoneValue: string) => void;
   onFocus?: () => void;
@@ -18,7 +17,10 @@ type PhoneInputFieldProps = {
   isSmall?: boolean;
 };
 
-const PhoneInputFieldWrapper = styled.div.withConfig({
+// Romanian national mobile: 07 + 8 digits
+const RO_MOBILE_NATIONAL_REGEX = /^07\d{8}$/;
+
+const PhoneFieldWrapper = styled.div.withConfig({
   shouldForwardProp: (prop) =>
     !["isSmall", "isInputFocused", "hasError"].includes(prop),
 })<{
@@ -30,18 +32,9 @@ const PhoneInputFieldWrapper = styled.div.withConfig({
   display: flex;
   flex-direction: column;
   gap: 4px;
-
-  .form-control {
-    width: 100%;
-    height: ${(props) => (props.isSmall ? "35px" : "48px")};
-  }
-
-  .special-label {
-    display: none;
-  }
 `;
 
-const PhoneInputField = ({
+const PhoneTextField = ({
   value,
   name,
   onChange,
@@ -51,22 +44,38 @@ const PhoneInputField = ({
   error,
   setError,
   isSmall = false,
-}: PhoneInputFieldProps) => {
+}: PhoneTextFieldProps) => {
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [hasInputBeenTouched, setHasInputBeenTouched] = useState(false);
 
-  const validatePhoneOnBlur = () => {
+  const digitsOnly = (val: string) => val.replace(/\D/g, "").slice(0, 10);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let digits = digitsOnly(e.target.value);
+
+    // Disallow country code: if it starts with 40, drop it
+    if (digits.startsWith("40")) digits = digits.slice(2);
+
+    onChange(digits);
+    if (setError) setError(""); // clear live error while typing
+  };
+
+  const validateOnBlur = () => {
     if (!setError) return;
-    const isRO = value.startsWith("40") || value.startsWith("+40");
-    if (isRO && !ROMANIAN_PHONE_REGEX.test(value)) {
-      setError("Format de telefon invalid");
-    } else {
-      setError("");
+
+    // Enforce leading 0 if user pasted 7xxxxxxxx
+    let normalized = value;
+    if (normalized && normalized[0] !== "0") {
+      normalized = "0" + normalized;
+      normalized = digitsOnly(normalized);
+      if (normalized !== value) onChange(normalized);
     }
+
+    const isValid = RO_MOBILE_NATIONAL_REGEX.test(normalized);
+    setError(isValid ? "" : "Introduceți un număr valid: 07xxxxxxxx");
   };
 
   return (
-    <PhoneInputFieldWrapper
+    <PhoneFieldWrapper
       isSmall={isSmall}
       isInputFocused={isInputFocused}
       hasError={!!error}
@@ -76,37 +85,36 @@ const PhoneInputField = ({
           {label}
         </InputLabel>
       )}
-      <PhoneInput
-        inputClass="phone-input"
-        country={"ro"}
+
+      <TextField
+        id={name}
+        name={name || "contact_phone_national"} // name to avoid autofill collisions
         value={value}
-        countryCodeEditable={false}
-        onChange={(value) => {
-          onChange(value); // ✅ Only update value, not error
+        onChange={handleChange}
+        onFocus={() => {
+          setIsInputFocused(true);
+          onFocus?.();
         }}
+        onBlur={() => {
+          setIsInputFocused(false);
+          validateOnBlur();
+          onBlur?.();
+        }}
+        placeholder="07xxxxxxxx"
+        error={!!error}
         inputProps={{
-          onFocus: () => {
-            setIsInputFocused(true);
-            setHasInputBeenTouched(true);
-            onFocus && onFocus();
-          },
-          onBlur: () => {
-            setIsInputFocused(false);
-            validatePhoneOnBlur(); // ✅ Validate only on blur
-            onBlur && onBlur();
-          },
-          name,
-          autoComplete: "off",
+          inputMode: "tel",
+          autoComplete: "tel-national", // helps prevent Chrome autofill
+          pattern: "[0-9]*",            // mobile keyboards show digits
+          maxLength: 10,
         }}
-        inputStyle={{
-          fontSize: "16px",
-          boxShadow: "none",
-          height: "40px",
-        }}
+        fullWidth
+        size={isSmall ? "small" : "medium"}
       />
+
       {error && <HelperText>{error}</HelperText>}
-    </PhoneInputFieldWrapper>
+    </PhoneFieldWrapper>
   );
 };
 
-export default PhoneInputField;
+export default PhoneTextField;
