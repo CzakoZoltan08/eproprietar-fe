@@ -99,12 +99,6 @@ const MyAccountComponent = () => {
         {/* Existing info section */}
         <Box className={styles.section}>
           <InputField name="email" value={user?.email || ""} onChange={onChange} disabled />
-          <InputField
-            label={LABELS.phone}
-            name="phone"
-            value={formData.phone}
-            onChange={onChange}
-          />
         </Box>
 
         {/* Password section */}
