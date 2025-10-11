@@ -136,6 +136,7 @@ export class AnnouncementApi {
       regCom?: string;
       address: string;
       city: string;
+      county: string;
       country: string;
       email: string;
       isTaxPayer: boolean;

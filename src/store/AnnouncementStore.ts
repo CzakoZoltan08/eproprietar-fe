@@ -175,6 +175,7 @@ export class AnnouncementStore {
       regCom?: string;
       address: string;
       city: string;
+      county: string;
       country: string;
       email: string;
       isTaxPayer: boolean;

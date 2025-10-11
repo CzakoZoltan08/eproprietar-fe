@@ -22,6 +22,7 @@ const defaultValues = {
   regCom: "",
   address: "",
   city: "",
+  county: "",
   country: "România",
   email: "",
   isTaxPayer: false,
@@ -63,6 +64,7 @@ const InvoiceDetailsPage = () => {
       regCom: tab === 1 ? form.regCom : undefined,
       address: form.address,
       city: form.city,
+      county: form.county,
       country: form.country,
       email: form.email,
       isTaxPayer: false,
@@ -144,6 +146,9 @@ const InvoiceDetailsPage = () => {
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Oraș" name="city" onChange={handleChange} value={form.city} />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField fullWidth label="Județ" name="county" onChange={handleChange} value={form.county} /> {/* ⬅️ NEW */}
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Țară" name="country" onChange={handleChange} value={form.country} />
